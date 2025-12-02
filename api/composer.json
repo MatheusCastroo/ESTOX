@@ -1,0 +1,19 @@
+{
+  "name": "estox/api",
+  "description": "ESTOX API - Backend PHP",
+  "type": "project",
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "": "classes/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true
+  }
+}
+
+
+

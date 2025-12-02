@@ -1,0 +1,163 @@
+// Authentication JavaScript
+
+const API_URL = 'http://localhost/api'; // Change to your API URL
+
+// Toggle password visibility
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if (eyeIcon) {
+                eyeIcon.classList.toggle('bi-eye');
+                eyeIcon.classList.toggle('bi-eye-slash');
+            }
+        });
+    }
+    
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Register form
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+});
+
+// Handle login
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const errorAlert = document.getElementById('errorAlert');
+    
+    // Show loading
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    try {
+        const response = await fetch(`${API_URL}/auth?action=login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Save token
+            localStorage.setItem('token', data.data.token);
+            localStorage.setItem('user', JSON.stringify(data.data.user));
+            
+            // Redirect to dashboard
+            window.location.href = 'dashboard.html';
+        } else {
+            // Show error
+            errorAlert.textContent = data.error || 'Erro ao fazer login';
+            errorAlert.classList.remove('d-none');
+        }
+    } catch (error) {
+        errorAlert.textContent = 'Erro de conexão. Tente novamente.';
+        errorAlert.classList.remove('d-none');
+    } finally {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+
+// Handle register
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const errorAlert = document.getElementById('errorAlert');
+    const successAlert = document.getElementById('successAlert');
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        errorAlert.textContent = 'As senhas não coincidem';
+        errorAlert.classList.remove('d-none');
+        return;
+    }
+    
+    // Show loading
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    errorAlert.classList.add('d-none');
+    successAlert.classList.add('d-none');
+    
+    try {
+        const response = await fetch(`${API_URL}/auth?action=register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password, name })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Save token
+            localStorage.setItem('token', data.data.token);
+            localStorage.setItem('user', JSON.stringify(data.data.user));
+            
+            // Show success and redirect
+            successAlert.textContent = 'Conta criada com sucesso! Redirecionando...';
+            successAlert.classList.remove('d-none');
+            
+            setTimeout(() => {
+                window.location.href = 'onboarding.html';
+            }, 1500);
+        } else {
+            // Show error
+            errorAlert.textContent = data.error || 'Erro ao criar conta';
+            errorAlert.classList.remove('d-none');
+        }
+    } catch (error) {
+        errorAlert.textContent = 'Erro de conexão. Tente novamente.';
+        errorAlert.classList.remove('d-none');
+    } finally {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+
+// Check if user is authenticated
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
+// Logout
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
+
+
+
