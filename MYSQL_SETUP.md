@@ -44,23 +44,49 @@ Execute os scripts na ordem abaixo:
 
 ### 3. Configurar a API
 
-1. Crie um arquivo `.env` na raiz do projeto (se ainda não existir):
+#### Opção A: Usar Script Automático (Recomendado)
+
+1. Execute o script PHP na raiz do projeto:
+   ```bash
+   php criar-env.php
+   ```
+   
+   O script irá:
+   - Criar o arquivo `.env` automaticamente
+   - Gerar uma chave JWT segura automaticamente
+   - Configurar todas as variáveis necessárias
+
+#### Opção B: Criar Manualmente
+
+1. Crie um arquivo chamado `.env` na raiz do projeto (mesmo nível que a pasta `api/` e `scripts/`)
+
+2. Adicione o seguinte conteúdo:
 
 ```env
+# ESTOX - Configuração do Banco de Dados MySQL
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=estox
 DB_USER=root
 DB_PASSWORD=
 
-JWT_SECRET=seu-secret-key-muito-seguro-aqui-gere-um-aleatorio
-CORS_ORIGINS=http://localhost:8080
+# JWT Secret - Gere uma chave segura
+# Para gerar: php -r "echo bin2hex(random_bytes(32));"
+JWT_SECRET=3f8a9b2c7d4e1f6a5b8c9d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a
+
+# CORS Origins - URLs permitidas (separadas por vírgula)
+CORS_ORIGINS=http://localhost:8080,http://localhost:3000
 ```
 
-2. Ajuste as credenciais se necessário:
+3. **Ajuste as credenciais se necessário:**
    - `DB_USER`: padrão do XAMPP é `root`
-   - `DB_PASSWORD`: padrão do XAMPP é vazio (deixe em branco)
-   - `JWT_SECRET`: gere uma chave aleatória e segura
+   - `DB_PASSWORD`: padrão do XAMPP é vazio (deixe em branco ou adicione sua senha)
+   - `JWT_SECRET`: **IMPORTANTE** - Gere uma nova chave segura:
+     ```bash
+     php -r "echo bin2hex(random_bytes(32));"
+     ```
+     Substitua o valor no arquivo `.env` pela chave gerada.
+   - `CORS_ORIGINS`: Adicione todas as URLs do frontend (separadas por vírgula)
 
 ### 4. Verificar Extensões PHP
 
@@ -135,4 +161,5 @@ Após configurar o banco:
 4. Crie uma loja via `POST /api/stores`
 
 Para mais informações, consulte `api/README.md`.
+
 
