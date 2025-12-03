@@ -88,7 +88,7 @@ if ($isPublic && $storeSlug) {
             $params['transmission'] = $filters['transmission'];
         }
         if (isset($filters['search'])) {
-            $query .= " AND (brand ILIKE :search OR model ILIKE :search)";
+            $query .= " AND (LOWER(brand) LIKE LOWER(:search) OR LOWER(model) LIKE LOWER(:search))";
             $params['search'] = '%' . $filters['search'] . '%';
         }
         
@@ -141,7 +141,7 @@ if ($isPublic && $storeSlug) {
                 }
                 
                 if (isset($filters['search'])) {
-                    $query .= " AND (brand ILIKE :search OR model ILIKE :search)";
+                    $query .= " AND (LOWER(brand) LIKE LOWER(:search) OR LOWER(model) LIKE LOWER(:search))";
                     $params['search'] = '%' . $filters['search'] . '%';
                 }
                 

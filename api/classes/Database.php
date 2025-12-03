@@ -9,10 +9,11 @@ class Database {
         
         try {
             $dsn = sprintf(
-                "pgsql:host=%s;port=%s;dbname=%s",
+                "mysql:host=%s;port=%s;dbname=%s;charset=%s",
                 $config['host'],
                 $config['port'],
-                $config['database']
+                $config['database'],
+                $config['charset']
             );
             
             $this->connection = new PDO(
@@ -66,10 +67,17 @@ class Database {
         $columns = implode(', ', array_keys($data));
         $placeholders = ':' . implode(', :', array_keys($data));
         
-        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders}) RETURNING *";
-        $result = $this->query($sql, $data);
+        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
+        $this->query($sql, $data);
         
-        return $result->fetch();
+        // Get the last inserted ID or UUID
+        $id = isset($data['id']) ? $data['id'] : $this->connection->lastInsertId();
+        
+        // Fetch the inserted record
+        return $this->fetchOne(
+            "SELECT * FROM {$table} WHERE id = :id",
+            ['id' => $id]
+        );
     }
 
     public function update($table, $data, $where, $whereParams = []) {
@@ -79,11 +87,13 @@ class Database {
         }
         $setClause = implode(', ', $set);
         
-        $sql = "UPDATE {$table} SET {$setClause} WHERE {$where} RETURNING *";
+        $sql = "UPDATE {$table} SET {$setClause} WHERE {$where}";
         $params = array_merge($data, $whereParams);
+        $this->query($sql, $params);
         
-        $result = $this->query($sql, $params);
-        return $result->fetch();
+        // Fetch the updated record using the WHERE clause
+        $fetchSql = "SELECT * FROM {$table} WHERE {$where}";
+        return $this->fetchOne($fetchSql, $whereParams);
     }
 
     public function delete($table, $where, $params = []) {
@@ -93,7 +103,7 @@ class Database {
     }
 
     public function generateUuid() {
-        $result = $this->query("SELECT uuid_generate_v4() as uuid");
+        $result = $this->query("SELECT UUID() as uuid");
         return $result->fetch()['uuid'];
     }
 }

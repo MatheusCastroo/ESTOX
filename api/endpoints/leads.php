@@ -97,7 +97,7 @@ if ($isPublic && $method === 'POST') {
                 // Get all leads with filters
                 $filters = $_GET;
                 $query = "SELECT l.*, 
-                         json_build_object('id', v.id, 'brand', v.brand, 'model', v.model, 'year', v.year, 'images', v.images) as vehicle
+                         v.id as vehicle_id, v.brand as vehicle_brand, v.model as vehicle_model, v.year as vehicle_year, v.images as vehicle_images
                          FROM leads l
                          LEFT JOIN vehicles v ON l.vehicle_id = v.id
                          WHERE l.store_id = :store_id";
@@ -109,7 +109,7 @@ if ($isPublic && $method === 'POST') {
                 }
                 
                 if (isset($filters['search'])) {
-                    $query .= " AND (l.name ILIKE :search OR l.email ILIKE :search OR l.phone ILIKE :search)";
+                    $query .= " AND (LOWER(l.name) LIKE LOWER(:search) OR LOWER(l.email) LIKE LOWER(:search) OR LOWER(l.phone) LIKE LOWER(:search))";
                     $params['search'] = '%' . $filters['search'] . '%';
                 }
                 
@@ -127,13 +127,21 @@ if ($isPublic && $method === 'POST') {
                 
                 $leads = $db->fetchAll($query, $params);
                 
-                // Parse vehicle JSON
+                // Build vehicle object from columns
                 foreach ($leads as &$lead) {
-                    if (isset($lead['vehicle']) && $lead['vehicle']) {
-                        $lead['vehicle'] = json_decode($lead['vehicle'], true);
+                    if ($lead['vehicle_id']) {
+                        $lead['vehicle'] = [
+                            'id' => $lead['vehicle_id'],
+                            'brand' => $lead['vehicle_brand'],
+                            'model' => $lead['vehicle_model'],
+                            'year' => $lead['vehicle_year'],
+                            'images' => json_decode($lead['vehicle_images'] ?? '[]', true)
+                        ];
                     } else {
                         $lead['vehicle'] = null;
                     }
+                    // Remove vehicle columns to avoid confusion
+                    unset($lead['vehicle_id'], $lead['vehicle_brand'], $lead['vehicle_model'], $lead['vehicle_year'], $lead['vehicle_images']);
                 }
                 
                 Response::success(['leads' => $leads]);
