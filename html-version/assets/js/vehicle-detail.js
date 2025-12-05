@@ -4,12 +4,21 @@ const API_URL = 'http://localhost/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
-    const storeSlug = urlParams.get('slug') || 'demo';
-    const vehicleId = urlParams.get('id');
+    // REQ-FR-020: Usar store_slug (com fallback para slug por compatibilidade)
+    const storeSlug = urlParams.get('store_slug') || urlParams.get('slug') || null;
+    const vehicleId = urlParams.get('vehicle_id') || urlParams.get('id');
     
-    if (vehicleId) {
-        loadVehicleDetail(storeSlug, vehicleId);
+    if (!storeSlug) {
+        showError('Parâmetro store_slug é obrigatório na URL.');
+        return;
     }
+    
+    if (!vehicleId) {
+        showError('Parâmetro vehicle_id é obrigatório na URL.');
+        return;
+    }
+    
+    loadVehicleDetail(storeSlug, vehicleId);
 });
 
 async function loadVehicleDetail(storeSlug, vehicleId) {
@@ -20,31 +29,97 @@ async function loadVehicleDetail(storeSlug, vehicleId) {
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicle && data.data.store) {
-            displayVehicleDetail(data.data.vehicle, data.data.store);
+            displayVehicleDetail(data.data.vehicle, data.data.store, storeSlug);
         } else {
-            content.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Veículo não encontrado</p></div>';
+            showError('Veículo não encontrado ou não está mais disponível.');
         }
     } catch (error) {
         console.error('Error loading vehicle:', error);
-        content.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Erro ao carregar veículo</p></div>';
+        showError('Erro ao carregar veículo. Por favor, tente novamente.');
     }
 }
 
-function displayVehicleDetail(vehicle, store) {
+function showError(message) {
+    const content = document.getElementById('vehicleContent');
+    content.innerHTML = `
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+                    <h2 class="h4 fw-bold mt-4 mb-2">Erro</h2>
+                    <p class="text-muted mb-4">${message}</p>
+                    <a href="catalogo.html?store_slug=${new URLSearchParams(window.location.search).get('store_slug') || ''}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Voltar ao catálogo
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function displayVehicleDetail(vehicle, store, storeSlug) {
     const content = document.getElementById('vehicleContent');
     
-    const whatsappMessage = encodeURIComponent(
-        `Olá! Tenho interesse no ${vehicle.brand} ${vehicle.model} ${vehicle.year} anunciado por ${formatPrice(vehicle.price)}. Poderia me dar mais informações?`
-    );
-    const whatsappUrl = `https://wa.me/${store.whatsapp?.replace(/\D/g, '')}?text=${whatsappMessage}`;
+    // Parse JSON fields if they are strings
+    let images = [];
+    if (vehicle.images) {
+        if (typeof vehicle.images === 'string') {
+            try {
+                images = JSON.parse(vehicle.images || '[]');
+            } catch (e) {
+                images = [];
+            }
+        } else if (Array.isArray(vehicle.images)) {
+            images = vehicle.images;
+        }
+    }
     
-    const mainImage = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : 'assets/images/placeholder.jpg';
+    let features = [];
+    if (vehicle.features) {
+        if (typeof vehicle.features === 'string') {
+            try {
+                features = JSON.parse(vehicle.features || '[]');
+            } catch (e) {
+                features = [];
+            }
+        } else if (Array.isArray(vehicle.features)) {
+            features = vehicle.features;
+        }
+    }
+    
+    // REQ-FR-020: Status (disponível / vendido)
+    const statusInfo = {
+        'available': { text: 'Disponível', class: 'bg-success' },
+        'sold': { text: 'Vendido', class: 'bg-danger' },
+        'reserved': { text: 'Reservado', class: 'bg-warning' }
+    };
+    const status = statusInfo[vehicle.status] || statusInfo['available'];
+    
+    // REQ-FR-020: Botão WhatsApp - https://wa.me/55{telefone}
+    let whatsappUrl = '#';
+    if (store.whatsapp) {
+        let phone = store.whatsapp.replace(/\D/g, '');
+        if (!phone.startsWith('55')) {
+            phone = '55' + phone;
+        }
+        const whatsappMessage = encodeURIComponent(
+            `Olá ${store.name}! Tenho interesse no ${vehicle.brand} ${vehicle.model} ${vehicle.year} anunciado por ${formatPrice(vehicle.price)}. Poderia me dar mais informações?`
+        );
+        whatsappUrl = `https://wa.me/${phone}?text=${whatsappMessage}`;
+    }
+    
+    // REQ-FR-020: Fotos (primeira imagem ou placeholder)
+    const mainImage = images.length > 0 ? images[0] : '../public/placeholder.jpg';
     
     content.innerHTML = `
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="position-relative">
-                    <img src="${mainImage}" alt="${vehicle.brand} ${vehicle.model}" class="card-img-top" style="height: 400px; object-fit: cover;">
+                    <img src="${mainImage}" 
+                         alt="${vehicle.brand} ${vehicle.model}" 
+                         class="card-img-top" 
+                         style="height: 400px; object-fit: cover;"
+                         onerror="this.src='../public/placeholder.jpg'">
                 </div>
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -52,7 +127,7 @@ function displayVehicleDetail(vehicle, store) {
                             <p class="text-primary fw-medium mb-1">${vehicle.brand}</p>
                             <h1 class="h3 fw-bold mb-0">${vehicle.model}</h1>
                         </div>
-                        <span class="badge bg-success">Disponível</span>
+                        <span class="badge ${status.class}">${status.text}</span>
                     </div>
                     
                     <h2 class="text-primary fw-bold mb-4">${formatPrice(vehicle.price)}</h2>
@@ -102,14 +177,30 @@ function displayVehicleDetail(vehicle, store) {
                         </div>
                     ` : ''}
                     
-                    ${vehicle.features && vehicle.features.length > 0 ? `
-                        <div>
+                    ${features && features.length > 0 ? `
+                        <div class="mb-4">
                             <h5 class="fw-bold mb-3">Opcionais</h5>
                             <div class="d-flex flex-wrap gap-2">
-                                ${vehicle.features.map(feature => `
+                                ${features.map(feature => `
                                     <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
                                         <i class="bi bi-check-circle me-1"></i>${feature}
                                     </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${images.length > 1 ? `
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">Galeria de Fotos</h5>
+                            <div class="row g-2">
+                                ${images.slice(0, 6).map((img, idx) => `
+                                    <div class="col-4 col-md-3">
+                                        <img src="${img}" alt="${vehicle.brand} ${vehicle.model} - Foto ${idx + 1}" 
+                                             class="img-fluid rounded cursor-pointer" 
+                                             style="height: 100px; object-fit: cover;"
+                                             onclick="document.querySelector('.card-img-top').src = this.src">
+                                    </div>
                                 `).join('')}
                             </div>
                         </div>
@@ -130,9 +221,11 @@ function displayVehicleDetail(vehicle, store) {
                         ${store.address || ''}${store.city ? `, ${store.city}` : ''}${store.state ? ` - ${store.state}` : ''}
                     </p>
                     
-                    <a href="${whatsappUrl}" target="_blank" class="btn btn-success w-100 mb-2">
-                        <i class="bi bi-whatsapp me-2"></i>Chamar no WhatsApp
-                    </a>
+                    ${store.whatsapp ? `
+                        <a href="${whatsappUrl}" target="_blank" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-whatsapp me-2"></i>Chamar no WhatsApp
+                        </a>
+                    ` : ''}
                     
                     ${store.phone ? `
                         <a href="tel:${store.phone}" class="btn btn-outline-primary w-100 mb-2">
@@ -146,7 +239,7 @@ function displayVehicleDetail(vehicle, store) {
                         </a>
                     ` : ''}
                     
-                    <a href="catalogo.html?slug=${store.slug}" class="btn btn-link w-100 text-decoration-none">
+                    <a href="catalogo.html?store_slug=${storeSlug}" class="btn btn-link w-100 text-decoration-none">
                         <i class="bi bi-arrow-left me-1"></i>Ver todos os veículos
                     </a>
                 </div>

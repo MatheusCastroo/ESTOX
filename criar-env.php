@@ -70,3 +70,6 @@ if (file_put_contents($envPath, $envContent)) {
     exit(1);
 }
 
+
+
+

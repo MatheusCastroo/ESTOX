@@ -40,11 +40,18 @@
         <div class="container py-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1 class="h3 fw-bold mb-1" id="storeName">Nome da Loja</h1>
-                    <p class="text-muted mb-0" id="storeDescription">Descrição da loja</p>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <img id="storeLogo" src="" alt="Logo" class="d-none" style="max-height: 60px; max-width: 200px;">
+                        <h1 class="h3 fw-bold mb-0" id="storeName">Carregando...</h1>
+                    </div>
+                    <p class="text-muted mb-2" id="storeDescription">Carregando informações da loja...</p>
+                    <div class="text-muted small" id="storeContact">
+                        <span id="storePhone" class="d-none"><i class="bi bi-telephone me-1"></i><span id="storePhoneNumber"></span></span>
+                        <span id="storeAddress" class="d-none ms-3"><i class="bi bi-geo-alt me-1"></i><span id="storeAddressText"></span></span>
+                    </div>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <a href="#" class="btn btn-success" id="whatsappBtn" target="_blank">
+                    <a href="#" class="btn btn-success d-none" id="whatsappBtn" target="_blank">
                         <i class="bi bi-whatsapp me-2"></i>Falar no WhatsApp
                     </a>
                 </div>

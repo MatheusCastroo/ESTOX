@@ -130,3 +130,6 @@ Se der erro, verifique:
 - O banco `estox` foi criado
 - As credenciais no `.env` estão corretas
 
+
+
+
