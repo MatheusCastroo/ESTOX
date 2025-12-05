@@ -1,6 +1,6 @@
 // Dashboard JavaScript
 
-const API_URL = 'http://localhost/api'; // Change to your API URL
+const API_URL = 'http://localhost/ESTOX/api'; // Change to your API URL
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', function() {

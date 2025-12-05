@@ -1,6 +1,6 @@
 // Authentication JavaScript
 
-const API_URL = 'http://localhost/api'; // Change to your API URL
+const API_URL = 'http://localhost/ESTOX/api'; // Change to your API URL
 
 // Toggle password visibility
 document.addEventListener('DOMContentLoaded', function() {
@@ -152,9 +152,23 @@ async function handleRegister(e) {
             })
         });
         
+        // Check if response is ok before parsing JSON
+        if (!registerResponse.ok) {
+            let errorMessage = 'Erro ao criar conta';
+            try {
+                const errorData = await registerResponse.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `Erro HTTP ${registerResponse.status}: ${registerResponse.statusText}`;
+            }
+            errorAlert.textContent = errorMessage;
+            errorAlert.classList.remove('d-none');
+            return;
+        }
+        
         const registerData = await registerResponse.json();
         
-        if (!registerResponse.ok || !registerData.success) {
+        if (!registerData.success) {
             errorAlert.textContent = registerData.error || 'Erro ao criar conta';
             errorAlert.classList.remove('d-none');
             return;
@@ -203,7 +217,18 @@ async function handleRegister(e) {
         
     } catch (error) {
         console.error('Erro ao criar conta:', error);
-        errorAlert.textContent = 'Erro de conexão. Verifique se a API está rodando e tente novamente.';
+        let errorMessage = 'Erro de conexão. Verifique se a API está rodando e tente novamente.';
+        
+        // More specific error messages
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
+        } else if (error.message.includes('CORS')) {
+            errorMessage = 'Erro de CORS. Verifique a configuração do servidor.';
+        } else {
+            errorMessage = 'Erro: ' + error.message;
+        }
+        
+        errorAlert.textContent = errorMessage;
         errorAlert.classList.remove('d-none');
     } finally {
         submitBtn.disabled = false;

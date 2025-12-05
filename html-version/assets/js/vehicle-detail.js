@@ -1,6 +1,6 @@
 // Vehicle Detail JavaScript (Public)
 
-const API_URL = 'http://localhost/api';
+const API_URL = 'http://localhost/ESTOX/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);

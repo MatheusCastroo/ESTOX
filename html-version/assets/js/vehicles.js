@@ -1,6 +1,6 @@
 // Vehicles JavaScript
 
-const API_URL = 'http://localhost/api';
+const API_URL = 'http://localhost/ESTOX/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAuth()) return;

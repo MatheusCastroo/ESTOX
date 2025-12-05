@@ -1,6 +1,6 @@
 // New Vehicle JavaScript
 
-const API_URL = 'http://localhost/api';
+const API_URL = 'http://localhost/ESTOX/api';
 
 let features = [];
 let images = [];

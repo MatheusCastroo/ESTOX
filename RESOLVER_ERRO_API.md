@@ -28,12 +28,25 @@ CORS_ORIGINS=http://localhost:8080,http://localhost:3000
 
 ### 3. Verificar se a API está acessível
 
+**⚠️ IMPORTANTE:** Como o projeto está em `C:\xampp\htdocs\ESTOX`, você precisa usar a URL completa:
+
 Abra no navegador:
+```
+http://localhost/ESTOX/api/plans
+```
+
+**OU** se você configurou um Virtual Host:
 ```
 http://localhost/api/plans
 ```
 
 **Resposta esperada:** JSON com os planos ou mensagem de erro da API (não erro 404 ou de conexão)
+
+**Se receber erro 404, verifique:**
+1. Se o módulo `mod_rewrite` do Apache está habilitado
+2. Se o `AllowOverride` está configurado como `All` no `httpd.conf`
+3. Se o arquivo `api/.htaccess` existe
+4. Consulte o arquivo `DIAGNOSTICO_404.md` para mais detalhes
 
 ### 4. Verificar configuração do CORS
 
@@ -45,10 +58,10 @@ O CORS deve permitir requisições de `http://localhost:8080` (onde o frontend H
 
 Execute na raiz do projeto:
 ```bash
-php criar-env.php
+C:\xampp\php\php.exe criar-env.php
 ```
 
-Ou crie manualmente o arquivo `.env` na raiz (`C:\xampp\htdocs\ESTOX\.env`) com:
+**OU** crie manualmente o arquivo `.env` na raiz (`C:\xampp\htdocs\ESTOX\.env`) com:
 
 ```env
 DB_HOST=localhost
@@ -74,14 +87,21 @@ CORS_ORIGINS=http://localhost:8080,http://localhost:3000
 
 ### Passo 3: Testar a API diretamente
 
-**Teste 1 - Planos:**
+**Teste 1 - Arquivo de teste:**
 ```
-http://localhost/api/plans
+http://localhost/ESTOX/api/test.php
+```
+Este teste mostra informações sobre a configuração da API.
+
+**Teste 2 - Planos:**
+```
+http://localhost/ESTOX/api/plans
 ```
 
-**Teste 2 - Health Check (criar se necessário):**
+**Teste 3 - Health Check (se configurou Virtual Host):**
 ```
-http://localhost/api/
+http://localhost/api/test.php
+http://localhost/api/plans
 ```
 
 ### Passo 4: Verificar URL da API no Frontend
@@ -134,8 +154,29 @@ fetch('http://localhost/api/plans')
 ## ⚠️ Problemas Comuns
 
 ### Erro 404 (Not Found)
-- Verifique se o arquivo `.htaccess` está na pasta `api/`
-- Verifique se o módulo `mod_rewrite` do Apache está habilitado
+
+**Causas mais comuns:**
+
+1. **URL incorreta:**
+   - Se o projeto está em `C:\xampp\htdocs\ESTOX`, use: `http://localhost/ESTOX/api/plans`
+   - Se configurou Virtual Host, use: `http://localhost/api/plans`
+
+2. **Módulo `mod_rewrite` não habilitado:**
+   - Abra `C:\xampp\apache\conf\httpd.conf`
+   - Procure: `#LoadModule rewrite_module modules/mod_rewrite.so`
+   - Remova o `#` para descomentar
+   - Reinicie o Apache
+
+3. **`AllowOverride` não configurado:**
+   - No `httpd.conf`, procure por `<Directory "C:/xampp/htdocs">`
+   - Altere `AllowOverride None` para `AllowOverride All`
+   - Reinicie o Apache
+
+4. **Arquivo `.htaccess` ausente:**
+   - Verifique se o arquivo `api/.htaccess` existe
+   - Verifique se o conteúdo está correto
+
+**📋 Consulte o arquivo `DIAGNOSTICO_404.md` para um guia completo de resolução.**
 
 ### Erro 500 (Internal Server Error)
 - Verifique o arquivo `.env`

@@ -1,7 +1,7 @@
 // Catalog JavaScript - REQ-FR-020
 // Landing Page Pública para Catálogo de Veículos
 
-const API_URL = 'http://localhost/api'; // Change to your API URL
+const API_URL = 'http://localhost/ESTOX/api'; // Change to your API URL
 
 // Get store slug from URL parameter (REQ-FR-020: store_slug)
 const urlParams = new URLSearchParams(window.location.search);
