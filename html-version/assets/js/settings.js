@@ -101,14 +101,18 @@ async function saveSettings(e) {
             })
         });
         
+        const storeData = await storeResponse.json();
+        const notificationData = await notificationResponse.json();
+        
         if (storeResponse.ok && notificationResponse.ok) {
-            alert('Configurações salvas com sucesso!');
+            Toast.success('Configurações salvas com sucesso!');
         } else {
-            alert('Erro ao salvar configurações');
+            const errorMsg = storeData.error || notificationData.error || 'Erro ao salvar configurações';
+            Toast.error(errorMsg);
         }
     } catch (error) {
         console.error('Error saving settings:', error);
-        alert('Erro ao salvar configurações');
+        Toast.error('Erro ao salvar configurações. Tente novamente.');
     }
 }
 

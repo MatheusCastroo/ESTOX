@@ -11,8 +11,9 @@ $db = Database::getInstance();
 
 // This endpoint is public (no auth required)
 if ($method === 'GET') {
+    // Return only Professional plan
     $plans = $db->fetchAll(
-        "SELECT * FROM plans WHERE is_active = true ORDER BY price ASC"
+        "SELECT * FROM plans WHERE slug = 'profissional' AND is_active = true ORDER BY price ASC"
     );
     
     // Parse JSON fields

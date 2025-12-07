@@ -8,17 +8,6 @@ let images = [];
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAuth()) return;
     
-    // Populate years
-    const yearSelect = document.getElementById('year');
-    const currentYear = new Date().getFullYear();
-    for (let i = 0; i < 30; i++) {
-        const year = currentYear - i;
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearSelect.appendChild(option);
-    }
-    
     // Image preview
     document.getElementById('imagesInput').addEventListener('change', handleImageUpload);
     
@@ -108,39 +97,112 @@ function removeImage(imageSrc) {
 async function saveVehicle(e) {
     e.preventDefault();
     
+    // Get submit button and disable it
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    }
+    
     try {
+        // Validate required fields
+        const brand = document.getElementById('brand').value;
+        const model = document.getElementById('model').value;
+        const year = document.getElementById('year').value;
+        const mileage = document.getElementById('mileage').value;
+        const price = document.getElementById('price').value;
+        
+        if (!brand || !model || !year || !mileage || !price) {
+            Toast.error('Por favor, preencha todos os campos obrigatórios');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+            }
+            return;
+        }
+        
+        const vehicleData = {
+            brand: brand,
+            model: model,
+            year: parseInt(year),
+            mileage: parseInt(mileage),
+            price: parseFloat(price),
+            fuel: document.getElementById('fuel').value,
+            transmission: document.getElementById('transmission').value,
+            color: document.getElementById('color').value,
+            description: document.getElementById('description').value,
+            features: features,
+            images: images,
+            status: document.getElementById('status').value
+        };
+        
+        console.log('Enviando dados do veículo:', vehicleData);
+        
         const response = await fetch(`${API_URL}/vehicles`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getAuthToken()}`
             },
-            body: JSON.stringify({
-                brand: document.getElementById('brand').value,
-                model: document.getElementById('model').value,
-                year: parseInt(document.getElementById('year').value),
-                mileage: parseInt(document.getElementById('mileage').value),
-                price: parseFloat(document.getElementById('price').value),
-                fuel: document.getElementById('fuel').value,
-                transmission: document.getElementById('transmission').value,
-                color: document.getElementById('color').value,
-                description: document.getElementById('description').value,
-                features: features,
-                images: images,
-                status: document.getElementById('status').value
-            })
+            body: JSON.stringify(vehicleData)
         });
         
+        console.log('Resposta da API:', response.status, response.statusText);
+        
+        // Check if response is OK before parsing JSON
+        if (!response.ok) {
+            let errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                // If response is not JSON, use status text
+                const text = await response.text();
+                if (text) {
+                    errorMessage = text;
+                }
+            }
+            Toast.error(errorMessage);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+            }
+            return;
+        }
+        
         const data = await response.json();
+        console.log('Dados recebidos:', data);
         
         if (data.success) {
-            window.location.href = 'veiculos.html';
+            Toast.success('Veículo salvo com sucesso!');
+            setTimeout(() => {
+                window.location.href = 'veiculos.html';
+            }, 1500);
         } else {
-            alert(data.error || 'Erro ao criar veículo');
+            const errorMsg = data.error || 'Erro ao criar veículo';
+            Toast.error(errorMsg);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+            }
         }
     } catch (error) {
-        console.error('Error saving vehicle:', error);
-        alert('Erro ao criar veículo');
+        console.error('Erro ao salvar veículo:', error);
+        let errorMessage = 'Erro ao criar veículo. Tente novamente.';
+        
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
+        } else if (error.message.includes('JSON')) {
+            errorMessage = 'Erro ao processar resposta do servidor.';
+        } else {
+            errorMessage = 'Erro: ' + error.message;
+        }
+        
+        Toast.error(errorMessage);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+        }
     }
 }
 

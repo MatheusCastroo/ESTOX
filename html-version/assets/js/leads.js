@@ -125,12 +125,14 @@ async function updateLeadStatus(leadId, status) {
         const data = await response.json();
         
         if (data.success) {
+            Toast.success('Status do lead atualizado com sucesso!');
             loadLeads();
         } else {
-            alert(data.error || 'Erro ao atualizar status');
+            Toast.error(data.error || 'Erro ao atualizar status');
         }
     } catch (error) {
-        alert('Erro ao atualizar status');
+        console.error('Error updating lead status:', error);
+        Toast.error('Erro ao atualizar status. Tente novamente.');
     }
 }
 

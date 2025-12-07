@@ -109,7 +109,7 @@ if ($isPublic && $storeSlug) {
     );
     
     if (!$userStore) {
-        Response::error('Loja não encontrada', 404);
+        Response::error('Loja não encontrada. Por favor, configure sua loja primeiro no onboarding.', 404);
     }
     
     $storeId = $userStore['id'];
@@ -159,33 +159,55 @@ if ($isPublic && $storeSlug) {
             break;
             
         case 'POST':
-            $data = Middleware::getJsonInput();
-            
-            $vehicleData = [
-                'id' => $db->generateUuid(),
-                'store_id' => $storeId,
-                'brand' => $data['brand'] ?? '',
-                'model' => $data['model'] ?? '',
-                'year' => $data['year'] ?? 0,
-                'mileage' => $data['mileage'] ?? 0,
-                'price' => $data['price'] ?? 0,
-                'fuel' => $data['fuel'] ?? null,
-                'transmission' => $data['transmission'] ?? null,
-                'color' => $data['color'] ?? null,
-                'description' => $data['description'] ?? null,
-                'features' => json_encode($data['features'] ?? []),
-                'images' => json_encode($data['images'] ?? []),
-                'status' => $data['status'] ?? 'available',
-                'views' => 0,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
-            
-            $vehicle = $db->insert('vehicles', $vehicleData);
-            $vehicle['features'] = json_decode($vehicle['features'], true);
-            $vehicle['images'] = json_decode($vehicle['images'], true);
-            
-            Response::success(['vehicle' => $vehicle], 'Veículo criado com sucesso');
+            try {
+                $data = Middleware::getJsonInput();
+                
+                // Validate required fields
+                if (empty($data['brand'])) {
+                    Response::error('Marca é obrigatória', 400);
+                }
+                if (empty($data['model'])) {
+                    Response::error('Modelo é obrigatório', 400);
+                }
+                if (empty($data['year']) || $data['year'] < 1900 || $data['year'] > 2100) {
+                    Response::error('Ano inválido', 400);
+                }
+                if (empty($data['mileage']) || $data['mileage'] < 0) {
+                    Response::error('Quilometragem inválida', 400);
+                }
+                if (empty($data['price']) || $data['price'] < 0) {
+                    Response::error('Preço inválido', 400);
+                }
+                
+                $vehicleData = [
+                    'id' => $db->generateUuid(),
+                    'store_id' => $storeId,
+                    'brand' => trim($data['brand']),
+                    'model' => trim($data['model']),
+                    'year' => (int)$data['year'],
+                    'mileage' => (int)$data['mileage'],
+                    'price' => (float)$data['price'],
+                    'fuel' => $data['fuel'] ?? null,
+                    'transmission' => $data['transmission'] ?? null,
+                    'color' => $data['color'] ?? null,
+                    'description' => $data['description'] ?? null,
+                    'features' => json_encode($data['features'] ?? []),
+                    'images' => json_encode($data['images'] ?? []),
+                    'status' => $data['status'] ?? 'available',
+                    'views' => 0,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                
+                $vehicle = $db->insert('vehicles', $vehicleData);
+                $vehicle['features'] = json_decode($vehicle['features'], true);
+                $vehicle['images'] = json_decode($vehicle['images'], true);
+                
+                Response::success(['vehicle' => $vehicle], 'Veículo criado com sucesso');
+            } catch (Exception $e) {
+                error_log('Erro ao criar veículo: ' . $e->getMessage());
+                Response::error('Erro ao criar veículo: ' . $e->getMessage(), 500);
+            }
             break;
             
         case 'PUT':

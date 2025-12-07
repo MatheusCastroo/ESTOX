@@ -829,3 +829,4 @@ const API_URL = 'http://localhost/api';
 Este documento contém todas as informações necessárias para entender e expandir o projeto ESTOX.
 
 
+

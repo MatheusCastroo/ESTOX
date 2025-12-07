@@ -116,12 +116,14 @@ async function deleteVehicle(id) {
         const data = await response.json();
         
         if (data.success) {
+            Toast.success('Veículo excluído com sucesso!');
             loadVehicles();
         } else {
-            alert(data.error || 'Erro ao excluir veículo');
+            Toast.error(data.error || 'Erro ao excluir veículo');
         }
     } catch (error) {
-        alert('Erro ao excluir veículo');
+        console.error('Error deleting vehicle:', error);
+        Toast.error('Erro ao excluir veículo. Tente novamente.');
     }
 }
 
