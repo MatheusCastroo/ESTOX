@@ -1,6 +1,5 @@
 // Authentication JavaScript
-
-const API_URL = 'http://localhost/ESTOX/api'; // Change to your API URL
+// API_URL is defined in config.js
 
 // Toggle password visibility
 document.addEventListener('DOMContentLoaded', function() {

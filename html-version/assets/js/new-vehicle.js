@@ -1,6 +1,5 @@
 // New Vehicle JavaScript
-
-const API_URL = 'http://localhost/ESTOX/api';
+// API_URL is defined in config.js
 
 let features = [];
 let images = [];

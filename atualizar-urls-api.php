@@ -69,3 +69,4 @@ echo "   2. Verifique se todas as requisições estão funcionando\n";
 echo "   3. Ou configure um Virtual Host para usar URLs limpas (veja CONFIGURAR_VIRTUAL_HOST.md)\n";
 
 
+

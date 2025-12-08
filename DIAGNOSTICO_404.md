@@ -169,3 +169,4 @@ Após resolver o 404:
 - Habilite `display_errors` temporariamente no `api/index.php`
 
 
+

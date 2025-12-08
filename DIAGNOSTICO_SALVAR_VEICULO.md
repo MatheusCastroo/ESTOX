@@ -156,3 +156,4 @@ fetch('http://localhost/ESTOX/api/vehicles', {
 - As mensagens de erro agora são mais específicas e aparecem como toast
 - Os logs no console ajudam a identificar o problema
 
+
