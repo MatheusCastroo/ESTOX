@@ -8,6 +8,28 @@ Middleware::cors();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
+
+// Check if this is a public endpoint (no auth required)
+$isPublic = isset($_GET['public']) && $_GET['public'] === 'true';
+$slugParam = $_GET['slug'] ?? null;
+
+if ($isPublic && $slugParam && $method === 'GET') {
+    // Public endpoint to get store by slug
+    $store = $db->fetchOne(
+        "SELECT id, name, slug, logo_url, phone, whatsapp, email, address, city, state, description, is_active 
+         FROM stores WHERE slug = :slug",
+        ['slug' => $slugParam]
+    );
+    
+    if (!$store) {
+        Response::error('Loja não encontrada', 404);
+    }
+    
+    Response::success(['store' => $store]);
+    exit;
+}
+
+// Protected endpoints require auth
 $userId = Middleware::requireAuth();
 
 // Helper function to get user's store

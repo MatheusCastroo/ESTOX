@@ -28,9 +28,9 @@ if ($isPublic && $storeSlug) {
     $vehicleId = $_GET['vehicle_id'] ?? null;
     
     if ($method === 'GET' && $vehicleId) {
-        // Get single vehicle for public catalog
+        // Get single vehicle for public catalog (all statuses to show sold badge)
         $vehicle = $db->fetchOne(
-            "SELECT * FROM vehicles WHERE id = :id AND store_id = :store_id AND status = 'available'",
+            "SELECT * FROM vehicles WHERE id = :id AND store_id = :store_id",
             ['id' => $vehicleId, 'store_id' => $store['id']]
         );
         
@@ -58,10 +58,15 @@ if ($isPublic && $storeSlug) {
         Response::success(['store' => $store, 'vehicle' => $vehicle]);
     } 
     elseif ($method === 'GET') {
-        // Get vehicles for public catalog with filters
+        // Get vehicles for public catalog with filters (all statuses to show sold badge)
         $filters = $_GET;
-        $query = "SELECT * FROM vehicles WHERE store_id = :store_id AND status = 'available'";
+        $query = "SELECT * FROM vehicles WHERE store_id = :store_id";
         $params = ['store_id' => $store['id']];
+        
+        // Filter by status if specified, otherwise show all
+        if (isset($filters['status']) && $filters['status'] === 'available') {
+            $query .= " AND status = 'available'";
+        }
         
         if (isset($filters['brand'])) {
             $query .= " AND brand = :brand";
