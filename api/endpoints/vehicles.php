@@ -58,13 +58,22 @@ if ($isPublic && $storeSlug) {
         Response::success(['store' => $store, 'vehicle' => $vehicle]);
     } 
     elseif ($method === 'GET') {
-        // Get vehicles for public catalog with filters (all statuses to show sold badge)
+        // Get vehicles for public catalog with filters
+        // REQ-FR-021: Only show available vehicles by default
         $filters = $_GET;
         $query = "SELECT * FROM vehicles WHERE store_id = :store_id";
         $params = ['store_id' => $store['id']];
         
-        // Filter by status if specified, otherwise show all
-        if (isset($filters['status']) && $filters['status'] === 'available') {
+        // REQ-FR-021: Filter by status - default to 'available' only
+        if (isset($filters['status'])) {
+            if ($filters['status'] === 'all') {
+                // Show all statuses if explicitly requested
+            } else {
+                $query .= " AND status = :status";
+                $params['status'] = $filters['status'];
+            }
+        } else {
+            // Default: only show available vehicles
             $query .= " AND status = 'available'";
         }
         
@@ -87,6 +96,11 @@ if ($isPublic && $storeSlug) {
         if (isset($filters['max_year'])) {
             $query .= " AND year <= :max_year";
             $params['max_year'] = $filters['max_year'];
+        }
+        // REQ-FR-021: Add mileage filter support
+        if (isset($filters['max_mileage'])) {
+            $query .= " AND mileage <= :max_mileage";
+            $params['max_mileage'] = $filters['max_mileage'];
         }
         if (isset($filters['transmission'])) {
             $query .= " AND transmission = :transmission";

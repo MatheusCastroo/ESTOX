@@ -17,12 +17,17 @@ document.addEventListener('DOMContentLoaded', function() {
     loadStoreInfo();
     loadAllVehicles();
     
-    // Filter events
+    // Filter events - REQ-FR-021
     document.getElementById('searchInput').addEventListener('input', debounce(filterVehicles, 500));
     document.getElementById('brandFilter').addEventListener('change', filterVehicles);
     document.getElementById('minYear').addEventListener('input', debounce(filterVehicles, 500));
     document.getElementById('maxYear').addEventListener('input', debounce(filterVehicles, 500));
     document.getElementById('maxPrice').addEventListener('input', debounce(filterVehicles, 500));
+    // REQ-FR-021: Add mileage filter
+    const maxMileageInput = document.getElementById('maxMileage');
+    if (maxMileageInput) {
+        maxMileageInput.addEventListener('input', debounce(filterVehicles, 500));
+    }
     
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -92,6 +97,19 @@ function displayStoreInfo(store) {
     const storeNameHeader = document.getElementById('storeNameHeader');
     if (storeNameHeader) storeNameHeader.textContent = store.name || 'Loja';
     
+    // REQ-FR-021: Display city and state in header
+    const storeCityStateHeader = document.getElementById('storeCityStateHeader');
+    if (storeCityStateHeader) {
+        const cityStateParts = [];
+        if (store.city) cityStateParts.push(store.city);
+        if (store.state) cityStateParts.push(store.state);
+        if (cityStateParts.length > 0) {
+            storeCityStateHeader.textContent = cityStateParts.join(', ');
+        } else {
+            storeCityStateHeader.textContent = '';
+        }
+    }
+    
     const storeLogoHeader = document.getElementById('storeLogoHeader');
     if (store.logo_url) {
         storeLogoHeader.src = store.logo_url;
@@ -145,7 +163,7 @@ function displayStoreInfo(store) {
         }
     }
     
-    // Footer
+    // Footer - REQ-FR-021
     const footerStoreName = document.getElementById('footerStoreName');
     if (footerStoreName) footerStoreName.textContent = store.name;
     
@@ -157,6 +175,21 @@ function displayStoreInfo(store) {
     const footerPhone = document.getElementById('footerPhone');
     if (footerPhone) {
         footerPhone.textContent = store.phone || 'Telefone não informado';
+    }
+    
+    // REQ-FR-021: Footer WhatsApp
+    const footerWhatsApp = document.getElementById('footerWhatsApp');
+    if (footerWhatsApp) {
+        footerWhatsApp.textContent = store.whatsapp || 'WhatsApp não informado';
+    }
+    
+    // REQ-FR-021: Footer city and state
+    const footerCityState = document.getElementById('footerCityState');
+    if (footerCityState) {
+        const cityStateParts = [];
+        if (store.city) cityStateParts.push(store.city);
+        if (store.state) cityStateParts.push(store.state);
+        footerCityState.textContent = cityStateParts.length > 0 ? cityStateParts.join(', ') : 'Cidade não informada';
     }
     
     const footerCopyright = document.getElementById('footerCopyright');
@@ -172,7 +205,7 @@ function displayStoreInfo(store) {
     }
 }
 
-// Setup WhatsApp buttons
+// Setup WhatsApp buttons - REQ-FR-021
 function setupWhatsAppButtons(store) {
     if (!store.whatsapp) {
         // Hide WhatsApp buttons if not configured
@@ -183,6 +216,10 @@ function setupWhatsAppButtons(store) {
         const footerBtn = document.getElementById('footerWhatsAppBtn');
         if (footerBtn) {
             footerBtn.style.display = 'none';
+        }
+        const headerBtn = document.getElementById('headerWhatsAppBtn');
+        if (headerBtn) {
+            headerBtn.classList.add('d-none');
         }
         const floatBtn = document.getElementById('whatsappFloat');
         if (floatBtn) {
@@ -206,6 +243,13 @@ function setupWhatsAppButtons(store) {
         footerBtn.href = whatsappUrl;
     }
     
+    // Header button - REQ-FR-021
+    const headerBtn = document.getElementById('headerWhatsAppBtn');
+    if (headerBtn) {
+        headerBtn.href = whatsappUrl;
+        headerBtn.classList.remove('d-none');
+    }
+    
     // Float button
     const floatBtn = document.getElementById('whatsappFloat');
     if (floatBtn) {
@@ -227,19 +271,24 @@ function getWhatsAppUrl(phone, message = '') {
     return `https://wa.me/${cleanPhone}${message ? '?text=' + encodedMessage : ''}`;
 }
 
-// Load all vehicles
+// Load all vehicles - REQ-FR-021: Only available vehicles
 async function loadAllVehicles() {
     try {
-        const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
+        // REQ-FR-021: API now filters by available by default, but we'll also filter on frontend
+        const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&status=available`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicles) {
-            allVehicles = data.data.vehicles;
+            // REQ-FR-021: Filter only available vehicles (double check)
+            allVehicles = data.data.vehicles.filter(v => v.status === 'available');
+            
+            if (allVehicles.length === 0) {
+                showNoVehicles();
+                return;
+            }
             
             // Display featured vehicles (first 6 available vehicles)
-            const featuredVehicles = allVehicles
-                .filter(v => v.status === 'available')
-                .slice(0, 6);
+            const featuredVehicles = allVehicles.slice(0, 6);
             displayFeaturedVehicles(featuredVehicles);
             
             // Display all vehicles
@@ -282,10 +331,10 @@ function displayAllVehicles(vehicles) {
     grid.innerHTML = vehicles.map(vehicle => createVehicleCard(vehicle, false)).join('');
 }
 
-// Create vehicle card
+// Create vehicle card - REQ-FR-021: All required fields
 function createVehicleCard(vehicle, isFeatured = false) {
     const mainImage = getVehicleImage(vehicle);
-    const isSold = vehicle.status === 'sold';
+    // REQ-FR-021: Only show available vehicles, so no need for sold badge
     
     return `
         <div class="col-md-6 col-lg-4">
@@ -297,7 +346,7 @@ function createVehicleCard(vehicle, isFeatured = false) {
                          style="height: 200px; object-fit: cover;"
                          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
                     ${isFeatured ? '<span class="featured-badge"><i class="bi bi-star-fill me-1"></i>Destaque</span>' : ''}
-                    ${isSold ? '<div class="sold-badge">VENDIDO</div>' : ''}
+                    <span class="badge bg-success position-absolute top-0 end-0 m-2">Disponível</span>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold mb-2">${vehicle.brand} ${vehicle.model}</h5>
@@ -306,8 +355,8 @@ function createVehicleCard(vehicle, isFeatured = false) {
                         <span class="ms-2"><i class="bi bi-speedometer2 me-1"></i>${formatNumber(vehicle.mileage)} km</span>
                     </p>
                     <p class="text-muted small mb-3">
-                        ${vehicle.fuel ? `<i class="bi bi-fuel-pump me-1"></i>${vehicle.fuel}` : ''}
-                        ${vehicle.transmission ? `<span class="ms-2"><i class="bi bi-gear me-1"></i>${vehicle.transmission}</span>` : ''}
+                        ${vehicle.transmission ? `<i class="bi bi-gear me-1"></i>${vehicle.transmission}` : ''}
+                        ${vehicle.fuel ? `<span class="ms-2"><i class="bi bi-fuel-pump me-1"></i>${vehicle.fuel}</span>` : ''}
                     </p>
                     <h4 class="text-primary fw-bold mb-3">${formatPrice(vehicle.price)}</h4>
                     ${vehicle.description ? `
@@ -316,7 +365,7 @@ function createVehicleCard(vehicle, isFeatured = false) {
                         </p>
                     ` : ''}
                     <div class="mt-auto">
-                        <a href="veiculo.html?store_slug=${storeSlug}&vehicle_id=${vehicle.id}" 
+                        <a href="veiculo-detalhe.html?store_slug=${storeSlug}&vehicle_id=${vehicle.id}" 
                            class="btn btn-primary w-100">
                             <i class="bi bi-eye me-2"></i>Ver Detalhes
                         </a>
@@ -347,15 +396,23 @@ function getVehicleImage(vehicle) {
     return images.length > 0 ? images[0] : 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
 }
 
-// Filter vehicles
+// Filter vehicles - REQ-FR-021: Add mileage filter
 function filterVehicles() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const brand = document.getElementById('brandFilter').value;
     const minYear = parseInt(document.getElementById('minYear').value) || 0;
     const maxYear = parseInt(document.getElementById('maxYear').value) || 9999;
     const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+    // REQ-FR-021: Add mileage filter
+    const maxMileageInput = document.getElementById('maxMileage');
+    const maxMileage = maxMileageInput ? (parseInt(maxMileageInput.value) || Infinity) : Infinity;
     
     const filtered = allVehicles.filter(vehicle => {
+        // REQ-FR-021: Only show available vehicles
+        if (vehicle.status !== 'available') {
+            return false;
+        }
+        
         const matchesSearch = !search || 
             vehicle.brand.toLowerCase().includes(search) ||
             vehicle.model.toLowerCase().includes(search) ||
@@ -364,11 +421,26 @@ function filterVehicles() {
         const matchesBrand = !brand || vehicle.brand === brand;
         const matchesYear = vehicle.year >= minYear && vehicle.year <= maxYear;
         const matchesPrice = vehicle.price <= maxPrice;
+        // REQ-FR-021: Add mileage filter
+        const matchesMileage = vehicle.mileage <= maxMileage;
         
-        return matchesSearch && matchesBrand && matchesYear && matchesPrice;
+        return matchesSearch && matchesBrand && matchesYear && matchesPrice && matchesMileage;
     });
     
-    displayAllVehicles(filtered);
+    if (filtered.length === 0) {
+        const grid = document.getElementById('vehiclesGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo encontrado</h3>
+                    <p class="text-muted">Tente ajustar os filtros para ver mais resultados.</p>
+                </div>
+            `;
+        }
+    } else {
+        displayAllVehicles(filtered);
+    }
 }
 
 // Update brand filter
@@ -417,8 +489,18 @@ function showNoVehicles() {
         grid.innerHTML = `
             <div class="col-12 text-center py-5">
                 <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-                <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo cadastrado ainda</h3>
+                <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo disponível no momento.</h3>
                 <p class="text-muted">Esta loja ainda não possui veículos disponíveis em seu catálogo.</p>
+            </div>
+        `;
+    }
+    
+    // Also clear featured vehicles
+    const featuredContainer = document.getElementById('featuredVehicles');
+    if (featuredContainer) {
+        featuredContainer.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">Nenhum veículo em destaque no momento.</p>
             </div>
         `;
     }

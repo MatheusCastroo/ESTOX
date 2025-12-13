@@ -35,3 +35,4 @@ Todas as documentações do projeto foram organizadas na pasta **`documentacoes/
 **💡 Dica:** Comece pelo [README.md](./documentacoes/README.md) para uma visão geral de todas as documentações disponíveis.
 
 
+

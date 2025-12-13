@@ -157,3 +157,4 @@ fetch('http://localhost/ESTOX/api/vehicles', {
 - Os logs no console ajudam a identificar o problema
 
 
+

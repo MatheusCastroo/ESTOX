@@ -48,7 +48,7 @@ function showError(message) {
                     <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
                     <h2 class="h4 fw-bold mt-4 mb-2">Erro</h2>
                     <p class="text-muted mb-4">${message}</p>
-                    <a href="catalogo.html?store_slug=${new URLSearchParams(window.location.search).get('store_slug') || ''}" class="btn btn-primary">
+                    <a href="loja.html?store_slug=${new URLSearchParams(window.location.search).get('store_slug') || ''}" class="btn btn-primary">
                         <i class="bi bi-arrow-left me-2"></i>Voltar ao catálogo
                     </a>
                 </div>
@@ -95,21 +95,31 @@ function displayVehicleDetail(vehicle, store, storeSlug) {
     };
     const status = statusInfo[vehicle.status] || statusInfo['available'];
     
-    // REQ-FR-020: Botão WhatsApp - https://wa.me/55{telefone}
+    // REQ-FR-021: Botão WhatsApp com nome do veículo e link da página
     let whatsappUrl = '#';
     if (store.whatsapp) {
         let phone = store.whatsapp.replace(/\D/g, '');
         if (!phone.startsWith('55')) {
             phone = '55' + phone;
         }
+        // REQ-FR-021: Mensagem deve conter nome do veículo e link da página
+        const vehiclePageUrl = window.location.href;
+        const vehicleName = `${vehicle.brand} ${vehicle.model} ${vehicle.year}`;
         const whatsappMessage = encodeURIComponent(
-            `Olá ${store.name}! Tenho interesse no ${vehicle.brand} ${vehicle.model} ${vehicle.year} anunciado por ${formatPrice(vehicle.price)}. Poderia me dar mais informações?`
+            `Olá ${store.name}! Tenho interesse no veículo:\n\n${vehicleName}\n${formatPrice(vehicle.price)}\n\nLink: ${vehiclePageUrl}\n\nPoderia me dar mais informações?`
         );
         whatsappUrl = `https://wa.me/${phone}?text=${whatsappMessage}`;
     }
     
-    // REQ-FR-020: Fotos (primeira imagem ou placeholder)
-    const mainImage = images.length > 0 ? images[0] : '../public/placeholder.jpg';
+    // REQ-FR-021: Fotos (primeira imagem ou placeholder)
+    const mainImage = images.length > 0 ? images[0] : 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27400%27%3E%3Crect fill=%27%23ddd%27 width=%27400%27 height=%27400%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+    
+    // REQ-FR-021: Setup WhatsApp float button
+    const whatsappFloat = document.getElementById('whatsappFloat');
+    if (whatsappFloat && store.whatsapp) {
+        whatsappFloat.href = whatsappUrl;
+        whatsappFloat.classList.remove('d-none');
+    }
     
     content.innerHTML = `
         <div class="col-lg-8">
@@ -119,7 +129,8 @@ function displayVehicleDetail(vehicle, store, storeSlug) {
                          alt="${vehicle.brand} ${vehicle.model}" 
                          class="card-img-top" 
                          style="height: 400px; object-fit: cover;"
-                         onerror="this.src='../public/placeholder.jpg'">
+                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27400%27%3E%3Crect fill=%27%23ddd%27 width=%27400%27 height=%27400%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
+                    ${status.text !== 'Disponível' ? `<span class="badge ${status.class} position-absolute top-0 end-0 m-2">${status.text}</span>` : ''}
                 </div>
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -198,8 +209,9 @@ function displayVehicleDetail(vehicle, store, storeSlug) {
                                     <div class="col-4 col-md-3">
                                         <img src="${img}" alt="${vehicle.brand} ${vehicle.model} - Foto ${idx + 1}" 
                                              class="img-fluid rounded cursor-pointer" 
-                                             style="height: 100px; object-fit: cover;"
-                                             onclick="document.querySelector('.card-img-top').src = this.src">
+                                             style="height: 100px; object-fit: cover; cursor: pointer;"
+                                             onclick="document.querySelector('.card-img-top').src = this.src"
+                                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23ddd%27 width=%27100%27 height=%27100%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2710%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
                                     </div>
                                 `).join('')}
                             </div>
@@ -222,8 +234,8 @@ function displayVehicleDetail(vehicle, store, storeSlug) {
                     </p>
                     
                     ${store.whatsapp ? `
-                        <a href="${whatsappUrl}" target="_blank" class="btn btn-success w-100 mb-2">
-                            <i class="bi bi-whatsapp me-2"></i>Chamar no WhatsApp
+                        <a href="${whatsappUrl}" target="_blank" class="btn btn-success w-100 mb-2 btn-lg">
+                            <i class="bi bi-whatsapp me-2"></i>Falar com a revenda no WhatsApp
                         </a>
                     ` : ''}
                     
@@ -239,7 +251,7 @@ function displayVehicleDetail(vehicle, store, storeSlug) {
                         </a>
                     ` : ''}
                     
-                    <a href="catalogo.html?store_slug=${storeSlug}" class="btn btn-link w-100 text-decoration-none">
+                    <a href="loja.html?store_slug=${storeSlug}" class="btn btn-link w-100 text-decoration-none">
                         <i class="bi bi-arrow-left me-1"></i>Ver todos os veículos
                     </a>
                 </div>

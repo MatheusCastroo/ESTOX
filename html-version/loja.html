@@ -97,7 +97,10 @@
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center gap-2" href="#" id="storeBrand">
                     <img id="storeLogoHeader" src="" alt="Logo" class="d-none" style="max-height: 40px;">
-                    <span class="fw-bold" id="storeNameHeader">Carregando...</span>
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold" id="storeNameHeader">Carregando...</span>
+                        <small class="text-muted" id="storeCityStateHeader" style="font-size: 0.75rem;"></small>
+                    </div>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -117,6 +120,9 @@
                             <a class="nav-link" href="#contato" id="contactLink">Contato</a>
                         </li>
                     </ul>
+                    <a href="#" class="btn btn-success btn-sm ms-3 d-none" id="headerWhatsAppBtn" target="_blank">
+                        <i class="bi bi-whatsapp me-1"></i>WhatsApp
+                    </a>
                 </div>
             </div>
         </nav>
@@ -174,7 +180,7 @@
             <!-- Filters -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar veículo...">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar por marca ou modelo...">
                 </div>
                 <div class="col-md-2">
                     <select class="form-select" id="brandFilter">
@@ -191,6 +197,14 @@
                     <div class="input-group">
                         <span class="input-group-text">R$</span>
                         <input type="number" class="form-control" id="maxPrice" placeholder="Preço máx.">
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-speedometer2"></i></span>
+                        <input type="number" class="form-control" id="maxMileage" placeholder="Quilometragem máx. (km)">
                     </div>
                 </div>
             </div>
@@ -249,6 +263,8 @@
                     <h5 class="fw-bold mb-3" id="footerStoreName">Nome da Loja</h5>
                     <p class="text-muted small mb-2" id="footerAddress">Endereço</p>
                     <p class="text-muted small mb-2" id="footerPhone">Telefone</p>
+                    <p class="text-muted small mb-2" id="footerWhatsApp">WhatsApp</p>
+                    <p class="text-muted small mb-2" id="footerCityState">Cidade, Estado</p>
                 </div>
                 <div class="col-md-4">
                     <h5 class="fw-bold mb-3">Links Rápidos</h5>
@@ -272,6 +288,7 @@
             <div class="row">
                 <div class="col-12 text-center">
                     <p class="text-muted small mb-0">&copy; 2024 <span id="footerCopyright">Nome da Loja</span>. Todos os direitos reservados.</p>
+                    <p class="text-muted small mb-0 mt-2">Powered by <strong>ESTOX</strong></p>
                 </div>
             </div>
         </div>
@@ -289,4 +306,5 @@
     <script src="assets/js/loja.js"></script>
 </body>
 </html>
+
 

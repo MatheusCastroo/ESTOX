@@ -80,3 +80,4 @@ Este arquivo serve como índice rápido de todas as documentações disponíveis
 - 📋 = Checklist
 
 
+
