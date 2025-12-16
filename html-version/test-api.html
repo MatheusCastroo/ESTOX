@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão API - AutoStock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Teste de Conexão com a API</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">URL da API:</label>
+                            <input type="text" class="form-control" id="apiUrl" value="http://localhost/ESTOX/api">
+                        </div>
+                        <button class="btn btn-primary" onclick="testConnection()">Testar Conexão</button>
+                        
+                        <div id="results" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script>
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Testando...</span></div>';
+            
+            const tests = [
+                { name: 'Teste de API (test.php)', url: `${apiUrl}/test.php` },
+                { name: 'Teste de Endpoint Auth', url: `${apiUrl}/auth?action=login`, method: 'POST', body: JSON.stringify({ email: 'test@test.com', password: 'test' }) }
+            ];
+            
+            let html = '<h5>Resultados dos Testes:</h5><div class="list-group">';
+            
+            for (const test of tests) {
+                try {
+                    const options = {
+                        method: test.method || 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    };
+                    
+                    if (test.body) {
+                        options.body = test.body;
+                    }
+                    
+                    const response = await fetch(test.url, options);
+                    const text = await response.text();
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        data = { raw: text };
+                    }
+                    
+                    html += `
+                        <div class="list-group-item">
+                            <h6 class="mb-2">${test.name}</h6>
+                            <p class="mb-1"><strong>URL:</strong> <code>${test.url}</code></p>
+                            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-${response.ok ? 'success' : 'danger'}">${response.status} ${response.statusText}</span></p>
+                            <pre class="bg-light p-2 rounded small" style="max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="list-group-item">
+                            <h6 class="mb-2">${test.name}</h6>
+                            <p class="mb-1"><strong>URL:</strong> <code>${test.url}</code></p>
+                            <p class="mb-1"><strong>Erro:</strong> <span class="text-danger">${error.message}</span></p>
+                            <p class="mb-0 text-muted small">${error.stack || ''}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', function() {
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html>
+

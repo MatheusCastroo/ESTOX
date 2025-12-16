@@ -31,8 +31,11 @@ $requestUri = strtok($requestUri, '?');
 
 // Remove base path if running in subdirectory
 $basePath = dirname($scriptName);
-if ($basePath !== '/') {
-    $requestUri = substr($requestUri, strlen($basePath));
+if ($basePath !== '/' && $basePath !== '\\') {
+    // Remove the base path from request URI
+    if (strpos($requestUri, $basePath) === 0) {
+        $requestUri = substr($requestUri, strlen($basePath));
+    }
 }
 
 // Remove leading slash
@@ -41,13 +44,20 @@ $requestUri = ltrim($requestUri, '/');
 // Split path into segments
 $pathSegments = explode('/', $requestUri);
 
-// Remove 'api' if present
+// Remove 'api' if present (in case it's still in the path)
 if (isset($pathSegments[0]) && $pathSegments[0] === 'api') {
     array_shift($pathSegments);
 }
 
 // Route to appropriate endpoint
 $endpoint = $pathSegments[0] ?? '';
+
+// Debug mode (uncomment for debugging)
+// error_log("Request URI: " . $_SERVER['REQUEST_URI']);
+// error_log("Script Name: " . $scriptName);
+// error_log("Base Path: " . $basePath);
+// error_log("Request URI after processing: " . $requestUri);
+// error_log("Endpoint: " . $endpoint);
 
 switch ($endpoint) {
     case 'auth':

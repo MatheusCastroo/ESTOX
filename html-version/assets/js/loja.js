@@ -1,5 +1,5 @@
-// Loja JavaScript - REQ-FR-031
-// Mini-Site Público para Lojas com Contato via WhatsApp
+// Loja JavaScript - REQ-FR-LP-001
+// Landing Page Pública do Cliente – Vitrine de Veículos
 
 // Get store slug from URL parameter
 const urlParams = new URLSearchParams(window.location.search);
@@ -7,6 +7,8 @@ const storeSlug = urlParams.get('store_slug') || urlParams.get('slug') || null;
 
 let storeData = null;
 let allVehicles = [];
+let filteredVehicles = [];
+let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!storeSlug) {
@@ -17,17 +19,30 @@ document.addEventListener('DOMContentLoaded', function() {
     loadStoreInfo();
     loadAllVehicles();
     
-    // Filter events - REQ-FR-021
+    // Search event
     document.getElementById('searchInput').addEventListener('input', debounce(filterVehicles, 500));
-    document.getElementById('brandFilter').addEventListener('change', filterVehicles);
+    
+    // Filter events
+    document.getElementById('minPrice').addEventListener('input', debounce(filterVehicles, 500));
+    document.getElementById('maxPrice').addEventListener('input', debounce(filterVehicles, 500));
+    document.getElementById('modelFilter').addEventListener('input', debounce(filterVehicles, 500));
     document.getElementById('minYear').addEventListener('input', debounce(filterVehicles, 500));
     document.getElementById('maxYear').addEventListener('input', debounce(filterVehicles, 500));
-    document.getElementById('maxPrice').addEventListener('input', debounce(filterVehicles, 500));
-    // REQ-FR-021: Add mileage filter
-    const maxMileageInput = document.getElementById('maxMileage');
-    if (maxMileageInput) {
-        maxMileageInput.addEventListener('input', debounce(filterVehicles, 500));
-    }
+    document.getElementById('maxMileage').addEventListener('input', debounce(filterVehicles, 500));
+    document.getElementById('colorFilter').addEventListener('input', debounce(filterVehicles, 500));
+    
+    // Transmission checkboxes
+    document.querySelectorAll('#transmissionFilters input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', filterVehicles);
+    });
+    
+    // Brand checkboxes (will be added dynamically)
+    
+    // Sort event
+    document.getElementById('sortSelect').addEventListener('change', function() {
+        sortVehicles(this.value);
+        displayVehicles();
+    });
     
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -47,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load store information
 async function loadStoreInfo() {
     try {
-        // Try public endpoint first
         const response = await fetch(`${API_URL}/stores?public=true&slug=${storeSlug}`);
         const data = await response.json();
         
@@ -68,7 +82,6 @@ async function loadStoreInfo() {
         }
     } catch (error) {
         console.error('Error loading store info:', error);
-        // Try alternative endpoint (from vehicles)
         try {
             const altResponse = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
             const altData = await altResponse.json();
@@ -94,206 +107,81 @@ function displayStoreInfo(store) {
     }
     
     // Header
-    const storeNameHeader = document.getElementById('storeNameHeader');
-    if (storeNameHeader) storeNameHeader.textContent = store.name || 'Loja';
+    const storeName = document.getElementById('storeName');
+    if (storeName) storeName.textContent = store.name || 'Loja';
     
-    // REQ-FR-021: Display city and state in header
-    const storeCityStateHeader = document.getElementById('storeCityStateHeader');
-    if (storeCityStateHeader) {
-        const cityStateParts = [];
-        if (store.city) cityStateParts.push(store.city);
-        if (store.state) cityStateParts.push(store.state);
-        if (cityStateParts.length > 0) {
-            storeCityStateHeader.textContent = cityStateParts.join(', ');
-        } else {
-            storeCityStateHeader.textContent = '';
-        }
-    }
-    
-    const storeLogoHeader = document.getElementById('storeLogoHeader');
+    const storeLogo = document.getElementById('storeLogo');
     if (store.logo_url) {
-        storeLogoHeader.src = store.logo_url;
-        storeLogoHeader.alt = store.name;
-        storeLogoHeader.classList.remove('d-none');
-        storeLogoHeader.onerror = function() {
+        storeLogo.src = store.logo_url;
+        storeLogo.alt = store.name;
+        storeLogo.classList.remove('d-none');
+        storeLogo.onerror = function() {
             this.classList.add('d-none');
         };
     }
     
-    // Hero Section
-    const heroTitle = document.getElementById('heroTitle');
-    if (heroTitle) heroTitle.textContent = `Bem-vindo à ${store.name}`;
-    
-    const heroDescription = document.getElementById('heroDescription');
-    if (heroDescription) {
-        heroDescription.textContent = store.description || 'Encontre o veículo perfeito para você';
-    }
-    
-    // WhatsApp buttons
-    setupWhatsAppButtons(store);
-    
-    // About Section
-    const storeAbout = document.getElementById('storeAbout');
-    if (storeAbout) {
-        storeAbout.textContent = store.description || 'Somos uma loja especializada em veículos usados, oferecendo qualidade e confiança em cada negócio.';
-    }
-    
-    // Store Info
-    const addressParts = [];
-    if (store.address) addressParts.push(store.address);
-    if (store.city) addressParts.push(store.city);
-    if (store.state) addressParts.push(store.state);
-    
-    const storeAddress = document.getElementById('storeAddress');
-    if (storeAddress) {
-        storeAddress.textContent = addressParts.length > 0 ? addressParts.join(', ') : 'Não informado';
-    }
-    
-    const storePhone = document.getElementById('storePhone');
-    if (storePhone) {
-        storePhone.textContent = store.phone || 'Não informado';
-    }
-    
-    const storeWhatsApp = document.getElementById('storeWhatsApp');
-    if (storeWhatsApp) {
-        if (store.whatsapp) {
-            storeWhatsApp.textContent = store.whatsapp;
-        } else {
-            storeWhatsApp.textContent = 'Contato via WhatsApp não configurado';
-        }
-    }
-    
-    // Footer - REQ-FR-021
-    const footerStoreName = document.getElementById('footerStoreName');
-    if (footerStoreName) footerStoreName.textContent = store.name;
-    
-    const footerAddress = document.getElementById('footerAddress');
-    if (footerAddress) {
-        footerAddress.textContent = addressParts.length > 0 ? addressParts.join(', ') : 'Endereço não informado';
-    }
-    
-    const footerPhone = document.getElementById('footerPhone');
-    if (footerPhone) {
-        footerPhone.textContent = store.phone || 'Telefone não informado';
-    }
-    
-    // REQ-FR-021: Footer WhatsApp
-    const footerWhatsApp = document.getElementById('footerWhatsApp');
-    if (footerWhatsApp) {
-        footerWhatsApp.textContent = store.whatsapp || 'WhatsApp não informado';
-    }
-    
-    // REQ-FR-021: Footer city and state
-    const footerCityState = document.getElementById('footerCityState');
-    if (footerCityState) {
-        const cityStateParts = [];
-        if (store.city) cityStateParts.push(store.city);
-        if (store.state) cityStateParts.push(store.state);
-        footerCityState.textContent = cityStateParts.length > 0 ? cityStateParts.join(', ') : 'Cidade não informada';
-    }
-    
-    const footerCopyright = document.getElementById('footerCopyright');
-    if (footerCopyright) footerCopyright.textContent = store.name;
+    // WhatsApp button
+    setupWhatsAppButton(store);
     
     // Update page title
-    document.title = `${store.name} - Mini-Site`;
-    
-    // Update contact link
-    const contactLink = document.getElementById('contactLink');
-    if (contactLink && store.whatsapp) {
-        contactLink.href = getWhatsAppUrl(store.whatsapp, `Olá ${store.name}! Gostaria de mais informações.`);
-    }
+    document.title = `${store.name} - Vitrine de Veículos`;
 }
 
-// Setup WhatsApp buttons - REQ-FR-021
-function setupWhatsAppButtons(store) {
-    if (!store.whatsapp) {
-        // Hide WhatsApp buttons if not configured
-        const heroBtn = document.getElementById('heroWhatsAppBtn');
-        if (heroBtn) {
-            heroBtn.style.display = 'none';
-        }
-        const footerBtn = document.getElementById('footerWhatsAppBtn');
-        if (footerBtn) {
-            footerBtn.style.display = 'none';
-        }
-        const headerBtn = document.getElementById('headerWhatsAppBtn');
-        if (headerBtn) {
-            headerBtn.classList.add('d-none');
-        }
-        const floatBtn = document.getElementById('whatsappFloat');
-        if (floatBtn) {
-            floatBtn.classList.add('d-none');
-        }
-        return;
+// Setup WhatsApp button
+function setupWhatsAppButton(store) {
+    if (!store.whatsapp) return;
+    
+    let phone = store.whatsapp.replace(/\D/g, '');
+    if (!phone.startsWith('55')) {
+        phone = '55' + phone;
     }
     
     const message = encodeURIComponent(`Olá ${store.name}! Gostaria de mais informações sobre os veículos.`);
-    const whatsappUrl = getWhatsAppUrl(store.whatsapp, message);
+    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
     
-    // Hero button
-    const heroBtn = document.getElementById('heroWhatsAppBtn');
-    if (heroBtn) {
-        heroBtn.href = whatsappUrl;
-    }
-    
-    // Footer button
-    const footerBtn = document.getElementById('footerWhatsAppBtn');
-    if (footerBtn) {
-        footerBtn.href = whatsappUrl;
-    }
-    
-    // Header button - REQ-FR-021
-    const headerBtn = document.getElementById('headerWhatsAppBtn');
-    if (headerBtn) {
-        headerBtn.href = whatsappUrl;
-        headerBtn.classList.remove('d-none');
-    }
-    
-    // Float button
-    const floatBtn = document.getElementById('whatsappFloat');
-    if (floatBtn) {
-        floatBtn.href = whatsappUrl;
-        floatBtn.classList.remove('d-none');
+    const whatsappBtn = document.getElementById('whatsappHeaderBtn');
+    if (whatsappBtn) {
+        whatsappBtn.href = whatsappUrl;
+        whatsappBtn.classList.remove('d-none');
     }
 }
 
-// Get WhatsApp URL
-function getWhatsAppUrl(phone, message = '') {
-    // Remove non-numeric characters
-    let cleanPhone = phone.replace(/\D/g, '');
-    // Add country code if not present
-    if (!cleanPhone.startsWith('55')) {
-        cleanPhone = '55' + cleanPhone;
-    }
-    
-    const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${cleanPhone}${message ? '?text=' + encodedMessage : ''}`;
-}
-
-// Load all vehicles - REQ-FR-021: Only available vehicles
+// Load all vehicles
 async function loadAllVehicles() {
     try {
-        // REQ-FR-021: API now filters by available by default, but we'll also filter on frontend
         const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&status=available`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicles) {
-            // REQ-FR-021: Filter only available vehicles (double check)
             allVehicles = data.data.vehicles.filter(v => v.status === 'available');
             
-            if (allVehicles.length === 0) {
-                showNoVehicles();
-                return;
-            }
+            // Parse JSON fields
+            allVehicles = allVehicles.map(vehicle => {
+                if (vehicle.images && typeof vehicle.images === 'string') {
+                    try {
+                        vehicle.images = JSON.parse(vehicle.images || '[]');
+                    } catch (e) {
+                        vehicle.images = [];
+                    }
+                }
+                if (vehicle.features && typeof vehicle.features === 'string') {
+                    try {
+                        vehicle.features = JSON.parse(vehicle.features || '[]');
+                    } catch (e) {
+                        vehicle.features = [];
+                    }
+                }
+                return vehicle;
+            });
             
-            // Display featured vehicles (first 6 available vehicles)
-            const featuredVehicles = allVehicles.slice(0, 6);
-            displayFeaturedVehicles(featuredVehicles);
+            filteredVehicles = [...allVehicles];
             
-            // Display all vehicles
-            displayAllVehicles(allVehicles);
-            updateBrandFilter(allVehicles);
+            // Update brand filters
+            updateBrandFilters();
+            
+            // Display vehicles
+            sortVehicles('relevance');
+            displayVehicles();
         } else {
             showNoVehicles();
         }
@@ -303,73 +191,167 @@ async function loadAllVehicles() {
     }
 }
 
-// Display featured vehicles
-function displayFeaturedVehicles(vehicles) {
-    const container = document.getElementById('featuredVehicles');
+// Update brand filters
+function updateBrandFilters() {
+    const brands = [...new Set(allVehicles.map(v => v.brand))].sort();
+    const brandFilters = document.getElementById('brandFilters');
     
-    if (vehicles.length === 0) {
-        container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <p class="text-muted">Nenhum veículo em destaque no momento.</p>
+    brandFilters.innerHTML = brands.map(brand => `
+        <div class="filter-checkbox">
+            <input type="checkbox" id="brand-${brand}" value="${brand}" onchange="filterVehicles()">
+            <label for="brand-${brand}">${brand}</label>
+        </div>
+    `).join('');
+}
+
+// Filter vehicles
+function filterVehicles() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
+    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+    const modelFilter = document.getElementById('modelFilter').value.toLowerCase();
+    const minYear = parseInt(document.getElementById('minYear').value) || 0;
+    const maxYear = parseInt(document.getElementById('maxYear').value) || 9999;
+    const maxMileage = parseInt(document.getElementById('maxMileage').value) || Infinity;
+    const colorFilter = document.getElementById('colorFilter').value.toLowerCase();
+    
+    // Get selected brands
+    const selectedBrands = Array.from(document.querySelectorAll('#brandFilters input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+    
+    // Get selected transmissions
+    const selectedTransmissions = Array.from(document.querySelectorAll('#transmissionFilters input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+    
+    filteredVehicles = allVehicles.filter(vehicle => {
+        // Search filter
+        if (search) {
+            const searchText = `${vehicle.brand} ${vehicle.model} ${vehicle.year}`.toLowerCase();
+            if (!searchText.includes(search)) return false;
+        }
+        
+        // Price filter
+        if (vehicle.price < minPrice || vehicle.price > maxPrice) return false;
+        
+        // Brand filter
+        if (selectedBrands.length > 0 && !selectedBrands.includes(vehicle.brand)) return false;
+        
+        // Model filter
+        if (modelFilter && !vehicle.model.toLowerCase().includes(modelFilter)) return false;
+        
+        // Year filter
+        if (vehicle.year < minYear || vehicle.year > maxYear) return false;
+        
+        // Mileage filter
+        if (vehicle.mileage > maxMileage) return false;
+        
+        // Transmission filter
+        if (selectedTransmissions.length > 0 && (!vehicle.transmission || !selectedTransmissions.includes(vehicle.transmission))) return false;
+        
+        // Color filter
+        if (colorFilter && (!vehicle.color || !vehicle.color.toLowerCase().includes(colorFilter))) return false;
+        
+        return true;
+    });
+    
+    sortVehicles(document.getElementById('sortSelect').value);
+    displayVehicles();
+}
+
+// Sort vehicles
+function sortVehicles(sortBy) {
+    switch(sortBy) {
+        case 'price_asc':
+            filteredVehicles.sort((a, b) => a.price - b.price);
+            break;
+        case 'price_desc':
+            filteredVehicles.sort((a, b) => b.price - a.price);
+            break;
+        case 'year_desc':
+            filteredVehicles.sort((a, b) => b.year - a.year);
+            break;
+        case 'year_asc':
+            filteredVehicles.sort((a, b) => a.year - b.year);
+            break;
+        case 'relevance':
+        default:
+            // Keep original order (most recent first)
+            break;
+    }
+}
+
+// Display vehicles
+function displayVehicles() {
+    const grid = document.getElementById('vehiclesGrid');
+    const resultsCount = document.getElementById('resultsCount');
+    
+    // Update results count
+    const count = filteredVehicles.length;
+    resultsCount.textContent = `${count} ${count === 1 ? 'veículo disponível' : 'veículos disponíveis'}`;
+    
+    if (filteredVehicles.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-search empty-state-icon"></i>
+                <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo encontrado</h3>
+                <p class="text-muted">Tente ajustar os filtros para ver mais resultados.</p>
+                <button class="btn btn-primary mt-3" onclick="clearFilters()">Limpar Filtros</button>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = vehicles.map(vehicle => createVehicleCard(vehicle, true)).join('');
+    grid.innerHTML = filteredVehicles.map(vehicle => createVehicleCard(vehicle)).join('');
 }
 
-// Display all vehicles
-function displayAllVehicles(vehicles) {
-    const grid = document.getElementById('vehiclesGrid');
-    
-    if (vehicles.length === 0) {
-        showNoVehicles();
-        return;
-    }
-    
-    grid.innerHTML = vehicles.map(vehicle => createVehicleCard(vehicle, false)).join('');
-}
-
-// Create vehicle card - REQ-FR-021: All required fields
-function createVehicleCard(vehicle, isFeatured = false) {
+// Create vehicle card
+function createVehicleCard(vehicle) {
     const mainImage = getVehicleImage(vehicle);
-    // REQ-FR-021: Only show available vehicles, so no need for sold badge
+    const isFavorite = favorites.includes(vehicle.id);
+    
+    // Determine tags
+    const tags = [];
+    // You can add logic here to determine if vehicle is new or below FIPE
+    // For now, we'll just show example tags
+    // if (isNewVehicle(vehicle)) tags.push('<span class="vehicle-tag new">Novidade</span>');
+    // if (isBelowFIPE(vehicle)) tags.push('<span class="vehicle-tag fipe">Abaixo da FIPE</span>');
     
     return `
-        <div class="col-md-6 col-lg-4">
-            <div class="card vehicle-card h-100 border-0 shadow-sm">
-                <div class="position-relative">
-                    <img src="${mainImage}" 
-                         class="card-img-top" 
-                         alt="${vehicle.brand} ${vehicle.model}"
-                         style="height: 200px; object-fit: cover;"
-                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
-                    ${isFeatured ? '<span class="featured-badge"><i class="bi bi-star-fill me-1"></i>Destaque</span>' : ''}
-                    <span class="badge bg-success position-absolute top-0 end-0 m-2">Disponível</span>
-                </div>
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-2">${vehicle.brand} ${vehicle.model}</h5>
-                    <p class="text-muted small mb-2">
-                        <i class="bi bi-calendar me-1"></i>${vehicle.year}
-                        <span class="ms-2"><i class="bi bi-speedometer2 me-1"></i>${formatNumber(vehicle.mileage)} km</span>
-                    </p>
-                    <p class="text-muted small mb-3">
-                        ${vehicle.transmission ? `<i class="bi bi-gear me-1"></i>${vehicle.transmission}` : ''}
-                        ${vehicle.fuel ? `<span class="ms-2"><i class="bi bi-fuel-pump me-1"></i>${vehicle.fuel}</span>` : ''}
-                    </p>
-                    <h4 class="text-primary fw-bold mb-3">${formatPrice(vehicle.price)}</h4>
-                    ${vehicle.description ? `
-                        <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            ${vehicle.description}
-                        </p>
+        <div class="vehicle-card" onclick="window.location.href='veiculo-detalhe.html?store_slug=${storeSlug}&vehicle_id=${vehicle.id}'">
+            <div class="vehicle-image-container">
+                <img src="${mainImage}" 
+                     alt="${vehicle.brand} ${vehicle.model}"
+                     class="vehicle-image"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27320%27 height=%27220%27%3E%3Crect fill=%27%23f5f5f5%27 width=%27320%27 height=%27220%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
+                ${tags.join('')}
+                <button class="favorite-btn ${isFavorite ? 'active' : ''}" 
+                        onclick="event.stopPropagation(); toggleFavorite('${vehicle.id}')"
+                        title="${isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                    <i class="bi ${isFavorite ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                </button>
+            </div>
+            <div class="vehicle-card-body">
+                <h3 class="vehicle-name">${vehicle.brand} ${vehicle.model}</h3>
+                <div class="vehicle-info">
+                    <span class="vehicle-info-item">
+                        <i class="bi bi-calendar"></i>
+                        ${vehicle.year}
+                    </span>
+                    <span class="vehicle-info-item">
+                        <i class="bi bi-speedometer2"></i>
+                        ${formatMileage(vehicle.mileage)} km
+                    </span>
+                    ${vehicle.transmission ? `
+                        <span class="vehicle-info-item">
+                            <i class="bi bi-gear"></i>
+                            ${vehicle.transmission}
+                        </span>
                     ` : ''}
-                    <div class="mt-auto">
-                        <a href="veiculo-detalhe.html?store_slug=${storeSlug}&vehicle_id=${vehicle.id}" 
-                           class="btn btn-primary w-100">
-                            <i class="bi bi-eye me-2"></i>Ver Detalhes
-                        </a>
-                    </div>
+                </div>
+                <div class="vehicle-price">${formatPrice(vehicle.price)}</div>
+                <div class="vehicle-location">
+                    <i class="bi bi-geo-alt"></i>
+                    ${storeData ? (storeData.city || '') + (storeData.state ? ` - ${storeData.state}` : '') : ''}
                 </div>
             </div>
         </div>
@@ -378,83 +360,40 @@ function createVehicleCard(vehicle, isFeatured = false) {
 
 // Get vehicle image
 function getVehicleImage(vehicle) {
-    if (!vehicle.images) {
-        return 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+    if (!vehicle.images || vehicle.images.length === 0) {
+        return 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27320%27 height=%27220%27%3E%3Crect fill=%27%23f5f5f5%27 width=%27320%27 height=%27220%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
     }
     
-    let images = [];
-    if (typeof vehicle.images === 'string') {
-        try {
-            images = JSON.parse(vehicle.images || '[]');
-        } catch (e) {
-            images = [];
-        }
-    } else if (Array.isArray(vehicle.images)) {
-        images = vehicle.images;
-    }
-    
-    return images.length > 0 ? images[0] : 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+    return Array.isArray(vehicle.images) ? vehicle.images[0] : vehicle.images;
 }
 
-// Filter vehicles - REQ-FR-021: Add mileage filter
-function filterVehicles() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const brand = document.getElementById('brandFilter').value;
-    const minYear = parseInt(document.getElementById('minYear').value) || 0;
-    const maxYear = parseInt(document.getElementById('maxYear').value) || 9999;
-    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
-    // REQ-FR-021: Add mileage filter
-    const maxMileageInput = document.getElementById('maxMileage');
-    const maxMileage = maxMileageInput ? (parseInt(maxMileageInput.value) || Infinity) : Infinity;
-    
-    const filtered = allVehicles.filter(vehicle => {
-        // REQ-FR-021: Only show available vehicles
-        if (vehicle.status !== 'available') {
-            return false;
-        }
-        
-        const matchesSearch = !search || 
-            vehicle.brand.toLowerCase().includes(search) ||
-            vehicle.model.toLowerCase().includes(search) ||
-            (vehicle.description && vehicle.description.toLowerCase().includes(search));
-        
-        const matchesBrand = !brand || vehicle.brand === brand;
-        const matchesYear = vehicle.year >= minYear && vehicle.year <= maxYear;
-        const matchesPrice = vehicle.price <= maxPrice;
-        // REQ-FR-021: Add mileage filter
-        const matchesMileage = vehicle.mileage <= maxMileage;
-        
-        return matchesSearch && matchesBrand && matchesYear && matchesPrice && matchesMileage;
-    });
-    
-    if (filtered.length === 0) {
-        const grid = document.getElementById('vehiclesGrid');
-        if (grid) {
-            grid.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
-                    <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo encontrado</h3>
-                    <p class="text-muted">Tente ajustar os filtros para ver mais resultados.</p>
-                </div>
-            `;
-        }
+// Toggle favorite
+function toggleFavorite(vehicleId) {
+    const index = favorites.indexOf(vehicleId);
+    if (index > -1) {
+        favorites.splice(index, 1);
     } else {
-        displayAllVehicles(filtered);
+        favorites.push(vehicleId);
     }
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    displayVehicles();
 }
 
-// Update brand filter
-function updateBrandFilter(vehicles) {
-    const brands = [...new Set(vehicles.map(v => v.brand))].sort();
-    const brandFilter = document.getElementById('brandFilter');
-    const currentValue = brandFilter.value;
+// Clear filters
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('minPrice').value = '';
+    document.getElementById('maxPrice').value = '';
+    document.getElementById('modelFilter').value = '';
+    document.getElementById('minYear').value = '';
+    document.getElementById('maxYear').value = '';
+    document.getElementById('maxMileage').value = '';
+    document.getElementById('colorFilter').value = '';
     
-    brandFilter.innerHTML = '<option value="">Todas as marcas</option>' + 
-        brands.map(brand => `<option value="${brand}">${brand}</option>`).join('');
+    document.querySelectorAll('#brandFilters input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#transmissionFilters input[type="checkbox"]').forEach(cb => cb.checked = false);
     
-    if (currentValue) {
-        brandFilter.value = currentValue;
-    }
+    filterVehicles();
 }
 
 // Show error messages
@@ -487,22 +426,17 @@ function showNoVehicles() {
     const grid = document.getElementById('vehiclesGrid');
     if (grid) {
         grid.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+            <div class="empty-state">
+                <i class="bi bi-inbox empty-state-icon"></i>
                 <h3 class="h5 fw-bold mt-3 mb-2">Nenhum veículo disponível no momento.</h3>
                 <p class="text-muted">Esta loja ainda não possui veículos disponíveis em seu catálogo.</p>
             </div>
         `;
     }
     
-    // Also clear featured vehicles
-    const featuredContainer = document.getElementById('featuredVehicles');
-    if (featuredContainer) {
-        featuredContainer.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <p class="text-muted">Nenhum veículo em destaque no momento.</p>
-            </div>
-        `;
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+        resultsCount.textContent = '0 veículos disponíveis';
     }
 }
 
@@ -514,8 +448,8 @@ function formatPrice(price) {
     }).format(price);
 }
 
-function formatNumber(number) {
-    return new Intl.NumberFormat('pt-BR').format(number);
+function formatMileage(mileage) {
+    return new Intl.NumberFormat('pt-BR').format(mileage);
 }
 
 // Debounce function
@@ -530,4 +464,3 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
-

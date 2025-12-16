@@ -54,6 +54,17 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleLogin(e) {
     e.preventDefault();
     
+    // Check if API_URL is defined
+    if (typeof API_URL === 'undefined') {
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+            errorAlert.textContent = 'Erro: API_URL não está definido. Verifique se config.js está carregado.';
+            errorAlert.classList.remove('d-none');
+        }
+        console.error('API_URL is not defined');
+        return;
+    }
+    
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const submitBtn = document.getElementById('submitBtn');
@@ -63,6 +74,7 @@ async function handleLogin(e) {
     // Show loading
     submitBtn.disabled = true;
     spinner.classList.remove('d-none');
+    errorAlert.classList.add('d-none');
     
     try {
         const response = await fetch(`${API_URL}/auth?action=login`, {
@@ -73,9 +85,23 @@ async function handleLogin(e) {
             body: JSON.stringify({ email, password })
         });
         
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            let errorMessage = 'Erro ao fazer login';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+            }
+            errorAlert.textContent = errorMessage;
+            errorAlert.classList.remove('d-none');
+            return;
+        }
+        
         const data = await response.json();
         
-        if (response.ok && data.success) {
+        if (data.success) {
             // Save token
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
@@ -88,7 +114,23 @@ async function handleLogin(e) {
             errorAlert.classList.remove('d-none');
         }
     } catch (error) {
-        errorAlert.textContent = 'Erro de conexão. Tente novamente.';
+        console.error('Erro ao fazer login:', error);
+        console.error('API_URL:', API_URL);
+        console.error('URL completa:', `${API_URL}/auth?action=login`);
+        
+        let errorMessage = 'Erro de conexão. Tente novamente.';
+        
+        // More specific error messages
+        if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+            errorMessage = `Erro de conexão. Verifique se a API está acessível em: ${API_URL}\n\n` +
+                          `Teste acessando: ${API_URL}/test.php no navegador para verificar se a API está funcionando.`;
+        } else if (error.message && error.message.includes('CORS')) {
+            errorMessage = 'Erro de CORS. Verifique a configuração do servidor.';
+        } else if (error.message) {
+            errorMessage = 'Erro: ' + error.message;
+        }
+        
+        errorAlert.textContent = errorMessage;
         errorAlert.classList.remove('d-none');
     } finally {
         submitBtn.disabled = false;
@@ -99,6 +141,17 @@ async function handleLogin(e) {
 // Handle register
 async function handleRegister(e) {
     e.preventDefault();
+    
+    // Check if API_URL is defined
+    if (typeof API_URL === 'undefined') {
+        const errorAlert = document.getElementById('registerError');
+        if (errorAlert) {
+            errorAlert.textContent = 'Erro: API_URL não está definido. Verifique se config.js está carregado.';
+            errorAlert.classList.remove('d-none');
+        }
+        console.error('API_URL is not defined');
+        return;
+    }
     
     // Get form elements
     const nameInput = document.getElementById('name');
@@ -216,14 +269,18 @@ async function handleRegister(e) {
         
     } catch (error) {
         console.error('Erro ao criar conta:', error);
+        console.error('API_URL:', API_URL);
+        console.error('URL completa:', `${API_URL}/auth?action=register`);
+        
         let errorMessage = 'Erro de conexão. Verifique se a API está rodando e tente novamente.';
         
         // More specific error messages
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
-        } else if (error.message.includes('CORS')) {
+        if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+            errorMessage = `Erro de conexão. Verifique se a API está acessível em: ${API_URL}\n\n` +
+                          `Teste acessando: ${API_URL}/test.php no navegador para verificar se a API está funcionando.`;
+        } else if (error.message && error.message.includes('CORS')) {
             errorMessage = 'Erro de CORS. Verifique a configuração do servidor.';
-        } else {
+        } else if (error.message) {
             errorMessage = 'Erro: ' + error.message;
         }
         

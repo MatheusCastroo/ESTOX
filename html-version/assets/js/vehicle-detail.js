@@ -1,12 +1,16 @@
-// Vehicle Detail JavaScript (Public)
+// Vehicle Detail Landing Page JavaScript
+// REQ-FR-LP-VEICULO-001: Landing Page de Detalhes do Veículo
 
-const API_URL = 'http://localhost/ESTOX/api';
+let currentImageIndex = 0;
+let images = [];
+let vehicleData = null;
+let storeData = null;
+let whatsappUrl = '#';
 
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
-    // REQ-FR-020: Usar store_slug (com fallback para slug por compatibilidade)
     const storeSlug = urlParams.get('store_slug') || urlParams.get('slug') || null;
-    const vehicleId = urlParams.get('vehicle_id') || urlParams.get('id');
+    const vehicleId = urlParams.get('vehicle_id') || urlParams.get('id') || null;
     
     if (!storeSlug) {
         showError('Parâmetro store_slug é obrigatório na URL.');
@@ -19,17 +23,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     loadVehicleDetail(storeSlug, vehicleId);
+    
+    // Mostrar/esconder botão sticky baseado no scroll
+    window.addEventListener('scroll', function() {
+        const ctaMobile = document.getElementById('ctaButtonMobile');
+        if (window.innerWidth <= 768) {
+            if (window.scrollY > 200) {
+                ctaMobile.style.display = 'block';
+            } else {
+                ctaMobile.style.display = 'none';
+            }
+        }
+    });
 });
 
 async function loadVehicleDetail(storeSlug, vehicleId) {
-    const content = document.getElementById('vehicleContent');
-    
     try {
         const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&vehicle_id=${vehicleId}`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicle && data.data.store) {
-            displayVehicleDetail(data.data.vehicle, data.data.store, storeSlug);
+            vehicleData = data.data.vehicle;
+            storeData = data.data.store;
+            displayVehicleDetail();
         } else {
             showError('Veículo não encontrado ou não está mais disponível.');
         }
@@ -40,220 +56,408 @@ async function loadVehicleDetail(storeSlug, vehicleId) {
 }
 
 function showError(message) {
-    const content = document.getElementById('vehicleContent');
-    content.innerHTML = `
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-5 text-center">
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    loadingSpinner.innerHTML = `
+        <div class="text-center py-5">
                     <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
                     <h2 class="h4 fw-bold mt-4 mb-2">Erro</h2>
                     <p class="text-muted mb-4">${message}</p>
                     <a href="loja.html?store_slug=${new URLSearchParams(window.location.search).get('store_slug') || ''}" class="btn btn-primary">
                         <i class="bi bi-arrow-left me-2"></i>Voltar ao catálogo
                     </a>
-                </div>
-            </div>
         </div>
     `;
 }
 
-function displayVehicleDetail(vehicle, store, storeSlug) {
-    const content = document.getElementById('vehicleContent');
-    
-    // Parse JSON fields if they are strings
-    let images = [];
-    if (vehicle.images) {
-        if (typeof vehicle.images === 'string') {
+function displayVehicleDetail() {
+    // Parse JSON fields
+    if (vehicleData.images) {
+        if (typeof vehicleData.images === 'string') {
             try {
-                images = JSON.parse(vehicle.images || '[]');
+                images = JSON.parse(vehicleData.images || '[]');
             } catch (e) {
                 images = [];
             }
-        } else if (Array.isArray(vehicle.images)) {
-            images = vehicle.images;
+        } else if (Array.isArray(vehicleData.images)) {
+            images = vehicleData.images;
         }
     }
     
-    let features = [];
-    if (vehicle.features) {
-        if (typeof vehicle.features === 'string') {
-            try {
-                features = JSON.parse(vehicle.features || '[]');
-            } catch (e) {
-                features = [];
-            }
-        } else if (Array.isArray(vehicle.features)) {
-            features = vehicle.features;
-        }
+    // Se não houver imagens, usar placeholder
+    if (images.length === 0) {
+        images = ['data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27800%27 height=%27500%27%3E%3Crect fill=%27%23f5f5f5%27 width=%27800%27 height=%27500%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2724%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem disponível%3C/text%3E%3C/svg%3E'];
     }
     
-    // REQ-FR-020: Status (disponível / vendido)
-    const statusInfo = {
-        'available': { text: 'Disponível', class: 'bg-success' },
-        'sold': { text: 'Vendido', class: 'bg-danger' },
-        'reserved': { text: 'Reservado', class: 'bg-warning' }
-    };
-    const status = statusInfo[vehicle.status] || statusInfo['available'];
+    // Setup WhatsApp URL
+    setupWhatsApp();
     
-    // REQ-FR-021: Botão WhatsApp com nome do veículo e link da página
-    let whatsappUrl = '#';
-    if (store.whatsapp) {
-        let phone = store.whatsapp.replace(/\D/g, '');
+    // Display header
+    displayHeader();
+    
+    // Display gallery
+    displayGallery();
+    
+    // Display main info
+    displayMainInfo();
+    
+    // Display basic info
+    displayBasicInfo();
+    
+    // Display equipment
+    displayEquipment();
+    
+    // Display specs accordion
+    displaySpecsAccordion();
+    
+    // Show content
+    document.getElementById('loadingSpinner').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+}
+
+function setupWhatsApp() {
+    if (storeData.whatsapp) {
+        let phone = storeData.whatsapp.replace(/\D/g, '');
         if (!phone.startsWith('55')) {
             phone = '55' + phone;
         }
-        // REQ-FR-021: Mensagem deve conter nome do veículo e link da página
-        const vehiclePageUrl = window.location.href;
-        const vehicleName = `${vehicle.brand} ${vehicle.model} ${vehicle.year}`;
-        const whatsappMessage = encodeURIComponent(
-            `Olá ${store.name}! Tenho interesse no veículo:\n\n${vehicleName}\n${formatPrice(vehicle.price)}\n\nLink: ${vehiclePageUrl}\n\nPoderia me dar mais informações?`
-        );
-        whatsappUrl = `https://wa.me/${phone}?text=${whatsappMessage}`;
-    }
-    
-    // REQ-FR-021: Fotos (primeira imagem ou placeholder)
-    const mainImage = images.length > 0 ? images[0] : 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27400%27%3E%3Crect fill=%27%23ddd%27 width=%27400%27 height=%27400%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
-    
-    // REQ-FR-021: Setup WhatsApp float button
-    const whatsappFloat = document.getElementById('whatsappFloat');
-    if (whatsappFloat && store.whatsapp) {
-        whatsappFloat.href = whatsappUrl;
-        whatsappFloat.classList.remove('d-none');
-    }
-    
-    content.innerHTML = `
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="position-relative">
-                    <img src="${mainImage}" 
-                         alt="${vehicle.brand} ${vehicle.model}" 
-                         class="card-img-top" 
-                         style="height: 400px; object-fit: cover;"
-                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27400%27%3E%3Crect fill=%27%23ddd%27 width=%27400%27 height=%27400%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
-                    ${status.text !== 'Disponível' ? `<span class="badge ${status.class} position-absolute top-0 end-0 m-2">${status.text}</span>` : ''}
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <p class="text-primary fw-medium mb-1">${vehicle.brand}</p>
-                            <h1 class="h3 fw-bold mb-0">${vehicle.model}</h1>
-                        </div>
-                        <span class="badge ${status.class}">${status.text}</span>
-                    </div>
-                    
-                    <h2 class="text-primary fw-bold mb-4">${formatPrice(vehicle.price)}</h2>
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-6 col-md-4">
-                            <div class="bg-light rounded p-3 text-center">
-                                <i class="bi bi-calendar text-primary fs-4 mb-2"></i>
-                                <p class="small text-muted mb-0">Ano</p>
-                                <p class="fw-bold mb-0">${vehicle.year}</p>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="bg-light rounded p-3 text-center">
-                                <i class="bi bi-speedometer2 text-primary fs-4 mb-2"></i>
-                                <p class="small text-muted mb-0">Quilometragem</p>
-                                <p class="fw-bold mb-0">${vehicle.mileage.toLocaleString('pt-BR')} km</p>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="bg-light rounded p-3 text-center">
-                                <i class="bi bi-fuel-pump text-primary fs-4 mb-2"></i>
-                                <p class="small text-muted mb-0">Combustível</p>
-                                <p class="fw-bold mb-0">${vehicle.fuel || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="bg-light rounded p-3 text-center">
-                                <i class="bi bi-gear text-primary fs-4 mb-2"></i>
-                                <p class="small text-muted mb-0">Câmbio</p>
-                                <p class="fw-bold mb-0">${vehicle.transmission || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="bg-light rounded p-3 text-center">
-                                <i class="bi bi-palette text-primary fs-4 mb-2"></i>
-                                <p class="small text-muted mb-0">Cor</p>
-                                <p class="fw-bold mb-0">${vehicle.color || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${vehicle.description ? `
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-2">Descrição</h5>
-                            <p class="text-muted">${vehicle.description}</p>
-                        </div>
-                    ` : ''}
-                    
-                    ${features && features.length > 0 ? `
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3">Opcionais</h5>
-                            <div class="d-flex flex-wrap gap-2">
-                                ${features.map(feature => `
-                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-                                        <i class="bi bi-check-circle me-1"></i>${feature}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${images.length > 1 ? `
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-3">Galeria de Fotos</h5>
-                            <div class="row g-2">
-                                ${images.slice(0, 6).map((img, idx) => `
-                                    <div class="col-4 col-md-3">
-                                        <img src="${img}" alt="${vehicle.brand} ${vehicle.model} - Foto ${idx + 1}" 
-                                             class="img-fluid rounded cursor-pointer" 
-                                             style="height: 100px; object-fit: cover; cursor: pointer;"
-                                             onclick="document.querySelector('.card-img-top').src = this.src"
-                                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23ddd%27 width=%27100%27 height=%27100%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2710%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        </div>
         
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
-                <div class="card-header bg-white">
-                    <h5 class="fw-bold mb-0">Fale com a Loja</h5>
-                </div>
-                <div class="card-body">
-                    <h6 class="fw-bold mb-1">${store.name}</h6>
-                    <p class="text-muted small mb-3">
-                        <i class="bi bi-geo-alt me-1"></i>
-                        ${store.address || ''}${store.city ? `, ${store.city}` : ''}${store.state ? ` - ${store.state}` : ''}
-                    </p>
-                    
-                    ${store.whatsapp ? `
-                        <a href="${whatsappUrl}" target="_blank" class="btn btn-success w-100 mb-2 btn-lg">
-                            <i class="bi bi-whatsapp me-2"></i>Falar com a revenda no WhatsApp
-                        </a>
-                    ` : ''}
-                    
-                    ${store.phone ? `
-                        <a href="tel:${store.phone}" class="btn btn-outline-primary w-100 mb-2">
-                            <i class="bi bi-telephone me-2"></i>${store.phone}
-                        </a>
-                    ` : ''}
-                    
-                    ${store.email ? `
-                        <a href="mailto:${store.email}" class="btn btn-outline-primary w-100 mb-2">
-                            <i class="bi bi-envelope me-2"></i>Enviar E-mail
-                        </a>
-                    ` : ''}
-                    
-                    <a href="loja.html?store_slug=${storeSlug}" class="btn btn-link w-100 text-decoration-none">
-                        <i class="bi bi-arrow-left me-1"></i>Ver todos os veículos
-                    </a>
+        const vehicleName = `${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}`;
+        const vehiclePrice = formatPrice(vehicleData.price);
+        const vehiclePageUrl = window.location.href;
+        
+        const message = encodeURIComponent(
+            `Olá ${storeData.name}! Tenho interesse no veículo:\n\n` +
+            `${vehicleName}\n` +
+            `Preço: ${vehiclePrice}\n` +
+            `Link: ${vehiclePageUrl}\n\n` +
+            `Poderia me dar mais informações?`
+        );
+        
+        whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    }
+}
+
+function openWhatsApp() {
+    if (whatsappUrl !== '#') {
+        window.open(whatsappUrl, '_blank');
+    } else {
+        alert('WhatsApp não configurado para esta loja.');
+    }
+}
+
+function displayHeader() {
+    // Store logo
+    const storeLogo = document.getElementById('storeLogo');
+    if (storeData.logo_url) {
+        storeLogo.src = storeData.logo_url;
+        storeLogo.alt = storeData.name;
+        storeLogo.classList.remove('d-none');
+        storeLogo.onerror = function() {
+            this.classList.add('d-none');
+        };
+    }
+    
+    // Store name
+    document.getElementById('storeName').textContent = storeData.name || 'Loja';
+    
+    // Store location
+    const locationParts = [];
+    if (storeData.city) locationParts.push(storeData.city);
+    if (storeData.state) locationParts.push(storeData.state);
+    document.getElementById('storeLocation').textContent = locationParts.join(', ') || '';
+    
+    // Back to catalog link
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeSlug = urlParams.get('store_slug') || urlParams.get('slug') || '';
+    document.getElementById('backToCatalog').href = `loja.html?store_slug=${storeSlug}`;
+}
+
+function displayGallery() {
+    currentImageIndex = 0;
+    updateMainImage();
+    updateThumbnails();
+    updateImageCounter();
+}
+
+function changeImage(direction) {
+    currentImageIndex += direction;
+    
+    if (currentImageIndex < 0) {
+        currentImageIndex = images.length - 1;
+    } else if (currentImageIndex >= images.length) {
+        currentImageIndex = 0;
+    }
+    
+    updateMainImage();
+    updateThumbnails();
+    updateImageCounter();
+}
+
+function updateMainImage() {
+    const mainImage = document.getElementById('mainImage');
+    mainImage.src = images[currentImageIndex];
+    mainImage.alt = `${vehicleData.brand} ${vehicleData.model} - Foto ${currentImageIndex + 1}`;
+    
+    // Show/hide navigation buttons
+    document.getElementById('prevImage').style.display = images.length > 1 ? 'flex' : 'none';
+    document.getElementById('nextImage').style.display = images.length > 1 ? 'flex' : 'none';
+}
+
+function updateThumbnails() {
+    const container = document.getElementById('thumbnailContainer');
+    container.innerHTML = images.map((img, index) => `
+        <img src="${img}" 
+             alt="Miniatura ${index + 1}" 
+             class="thumbnail ${index === currentImageIndex ? 'active' : ''}"
+             onclick="selectImage(${index})"
+             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2760%27%3E%3Crect fill=%27%23ddd%27 width=%2780%27 height=%2760%27/%3E%3C/svg%3E'">
+    `).join('');
+}
+
+function selectImage(index) {
+    currentImageIndex = index;
+    updateMainImage();
+    updateThumbnails();
+    updateImageCounter();
+}
+
+function updateImageCounter() {
+    document.getElementById('imageCounter').textContent = `${currentImageIndex + 1}/${images.length}`;
+}
+
+function displayMainInfo() {
+    // Vehicle title
+    const title = `${vehicleData.brand} ${vehicleData.model} ${vehicleData.year}`;
+    document.getElementById('vehicleTitle').textContent = title;
+    
+    // Vehicle subtitle (mileage)
+    document.getElementById('vehicleSubtitle').textContent = `${formatMileage(vehicleData.mileage)} km`;
+    
+    // Store city/state
+    const locationParts = [];
+    if (storeData.city) locationParts.push(storeData.city);
+    if (storeData.state) locationParts.push(storeData.state);
+    document.getElementById('storeCityState').textContent = locationParts.join(', ') || 'Não informado';
+    
+    // Price
+    document.getElementById('vehiclePrice').textContent = formatPrice(vehicleData.price);
+}
+
+function displayBasicInfo() {
+    // City
+    document.getElementById('infoCity').textContent = storeData.city || '-';
+    
+    // Store
+    document.getElementById('infoStore').textContent = storeData.name || '-';
+    
+    // Code (vehicle ID)
+    document.getElementById('infoCode').textContent = vehicleData.id.substring(0, 8).toUpperCase() || '-';
+    
+    // Location (not in database, show "-")
+    document.getElementById('infoLocation').textContent = '-';
+    
+    // Plate (not in database, show "-")
+    document.getElementById('infoPlate').textContent = '-';
+}
+
+function displayEquipment() {
+    let features = [];
+    if (vehicleData.features) {
+        if (typeof vehicleData.features === 'string') {
+            try {
+                features = JSON.parse(vehicleData.features || '[]');
+            } catch (e) {
+                features = [];
+            }
+        } else if (Array.isArray(vehicleData.features)) {
+            features = vehicleData.features;
+        }
+    }
+    
+    if (features.length === 0) {
+        document.getElementById('equipmentSection').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('equipmentSection').style.display = 'block';
+    
+    // Equipment icons mapping
+    const equipmentIcons = {
+        'ar condicionado': 'bi-snow',
+        'ar-condicionado': 'bi-snow',
+        'direção elétrica': 'bi-steering-wheel',
+        'direção hidráulica': 'bi-steering-wheel',
+        'freios abs': 'bi-shield-check',
+        'airbag': 'bi-shield',
+        'airbags': 'bi-shield',
+        'câmbio automático': 'bi-gear',
+        'câmbio manual': 'bi-gear',
+        'multimídia': 'bi-display',
+        'som': 'bi-music-note',
+        'teto solar': 'bi-sun',
+        'couro': 'bi-circle',
+        'alarme': 'bi-bell',
+        'travas elétricas': 'bi-lock',
+        'vidros elétricos': 'bi-window',
+        'piloto automático': 'bi-speedometer',
+        'sensor': 'bi-radar',
+        'câmera': 'bi-camera',
+        'reversa': 'bi-arrow-counterclockwise'
+    };
+    
+    const equipmentGrid = document.getElementById('equipmentGrid');
+    equipmentGrid.innerHTML = features.map(feature => {
+        const featureLower = feature.toLowerCase();
+        let icon = 'bi-check-circle';
+        
+        // Find matching icon
+        for (const [key, value] of Object.entries(equipmentIcons)) {
+            if (featureLower.includes(key)) {
+                icon = value;
+                break;
+            }
+        }
+        
+        return `
+            <div class="equipment-card">
+                <i class="bi ${icon}"></i>
+                <p class="mb-0 fw-semibold">${feature}</p>
+            </div>
+        `;
+    }).join('');
+}
+
+function displaySpecsAccordion() {
+    const accordion = document.getElementById('specsAccordion');
+    const specs = buildSpecsObject();
+    
+    const accordionItems = [];
+    
+    // Geral
+    if (specs.geral.length > 0) {
+        accordionItems.push(createAccordionItem('geral', 'Geral', 'bi-info-circle', specs.geral));
+    }
+    
+    // Exterior
+    if (specs.exterior.length > 0) {
+        accordionItems.push(createAccordionItem('exterior', 'Exterior', 'bi-car-front', specs.exterior));
+    }
+    
+    // Equipamentos e Conforto
+    if (specs.equipamentos.length > 0) {
+        accordionItems.push(createAccordionItem('equipamentos', 'Equipamentos e Conforto', 'bi-star', specs.equipamentos));
+    }
+    
+    // Segurança
+    if (specs.seguranca.length > 0) {
+        accordionItems.push(createAccordionItem('seguranca', 'Segurança', 'bi-shield-check', specs.seguranca));
+    }
+    
+    // Interior
+    if (specs.interior.length > 0) {
+        accordionItems.push(createAccordionItem('interior', 'Interior', 'bi-door-open', specs.interior));
+    }
+    
+    // Multimídia
+    if (specs.multimidia.length > 0) {
+        accordionItems.push(createAccordionItem('multimidia', 'Multimídia', 'bi-display', specs.multimidia));
+    }
+    
+    accordion.innerHTML = accordionItems.join('');
+}
+
+function buildSpecsObject() {
+    const specs = {
+        geral: [],
+        exterior: [],
+        equipamentos: [],
+        seguranca: [],
+        interior: [],
+        multimidia: []
+    };
+    
+    // Geral
+    if (vehicleData.brand) specs.geral.push(`Marca: ${vehicleData.brand}`);
+    if (vehicleData.model) specs.geral.push(`Modelo: ${vehicleData.model}`);
+    if (vehicleData.year) specs.geral.push(`Ano: ${vehicleData.year}`);
+    if (vehicleData.mileage) specs.geral.push(`Quilometragem: ${formatMileage(vehicleData.mileage)} km`);
+    if (vehicleData.fuel) specs.geral.push(`Combustível: ${vehicleData.fuel}`);
+    if (vehicleData.transmission) specs.geral.push(`Câmbio: ${vehicleData.transmission}`);
+    if (vehicleData.color) specs.geral.push(`Cor: ${vehicleData.color}`);
+    
+    // Parse features
+    let features = [];
+    if (vehicleData.features) {
+        if (typeof vehicleData.features === 'string') {
+            try {
+                features = JSON.parse(vehicleData.features || '[]');
+            } catch (e) {
+                features = [];
+            }
+        } else if (Array.isArray(vehicleData.features)) {
+            features = vehicleData.features;
+        }
+    }
+    
+    // Categorize features
+    features.forEach(feature => {
+        const featureLower = feature.toLowerCase();
+        
+        // Segurança
+        if (featureLower.includes('abs') || featureLower.includes('airbag') || 
+            featureLower.includes('segurança') || featureLower.includes('alarme') ||
+            featureLower.includes('sensor') || featureLower.includes('câmera')) {
+            specs.seguranca.push(feature);
+        }
+        // Exterior
+        else if (featureLower.includes('teto') || featureLower.includes('farol') ||
+                 featureLower.includes('roda') || featureLower.includes('pneu') ||
+                 featureLower.includes('retrovisor') || featureLower.includes('para-choque')) {
+            specs.exterior.push(feature);
+        }
+        // Interior
+        else if (featureLower.includes('couro') || featureLower.includes('banco') ||
+                 featureLower.includes('volante') || featureLower.includes('painel') ||
+                 featureLower.includes('console')) {
+            specs.interior.push(feature);
+        }
+        // Multimídia
+        else if (featureLower.includes('som') || featureLower.includes('multimídia') ||
+                 featureLower.includes('display') || featureLower.includes('bluetooth') ||
+                 featureLower.includes('usb') || featureLower.includes('cd') ||
+                 featureLower.includes('radio') || featureLower.includes('navegação')) {
+            specs.multimidia.push(feature);
+        }
+        // Equipamentos e Conforto
+        else {
+            specs.equipamentos.push(feature);
+        }
+    });
+    
+    return specs;
+}
+
+function createAccordionItem(id, title, icon, items) {
+    const itemId = `spec-${id}`;
+    return `
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-${itemId}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse-${itemId}" aria-expanded="false" aria-controls="collapse-${itemId}">
+                    <i class="bi ${icon} me-2"></i>${title}
+                </button>
+            </h2>
+            <div id="collapse-${itemId}" class="accordion-collapse collapse" 
+                 aria-labelledby="heading-${itemId}" data-bs-parent="#specsAccordion">
+                <div class="accordion-body">
+                    <ul class="spec-list">
+                        ${items.map(item => `
+                            <li>
+                                <i class="bi bi-check-circle"></i>
+                                <span>${item}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
                 </div>
             </div>
         </div>
@@ -267,5 +471,6 @@ function formatPrice(price) {
     }).format(price);
 }
 
-
-
+function formatMileage(mileage) {
+    return new Intl.NumberFormat('pt-BR').format(mileage);
+}

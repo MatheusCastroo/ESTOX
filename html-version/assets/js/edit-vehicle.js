@@ -1,17 +1,31 @@
-// New Vehicle JavaScript
+// Edit Vehicle JavaScript
 // API_URL is defined in config.js
 
 let features = [];
 let images = [];
+let vehicleId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAuth()) return;
+    
+    // Get vehicle ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    vehicleId = urlParams.get('id');
+    
+    if (!vehicleId) {
+        Toast.error('ID do veículo não fornecido');
+        window.location.href = 'veiculos.html';
+        return;
+    }
+    
+    // Load vehicle data
+    loadVehicle();
     
     // Image preview
     document.getElementById('imagesInput').addEventListener('change', handleImageUpload);
     
     // Form submission
-    document.getElementById('newVehicleForm').addEventListener('submit', saveVehicle);
+    document.getElementById('editVehicleForm').addEventListener('submit', updateVehicle);
     
     // Add feature on Enter
     document.getElementById('newFeature').addEventListener('keypress', function(e) {
@@ -24,6 +38,87 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function getAuthToken() {
     return localStorage.getItem('token');
+}
+
+async function loadVehicle() {
+    try {
+        const response = await fetch(`${API_URL}/vehicles?id=${vehicleId}`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao carregar veículo');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.vehicle) {
+            populateForm(data.data.vehicle);
+        } else {
+            Toast.error('Veículo não encontrado');
+            window.location.href = 'veiculos.html';
+        }
+    } catch (error) {
+        console.error('Error loading vehicle:', error);
+        Toast.error('Erro ao carregar veículo');
+        window.location.href = 'veiculos.html';
+    }
+}
+
+function populateForm(vehicle) {
+    // Basic info
+    document.getElementById('brand').value = vehicle.brand || '';
+    document.getElementById('model').value = vehicle.model || '';
+    document.getElementById('year').value = vehicle.year || '';
+    document.getElementById('mileage').value = vehicle.mileage || '';
+    document.getElementById('price').value = vehicle.price || '';
+    document.getElementById('fuel').value = vehicle.fuel || '';
+    document.getElementById('transmission').value = vehicle.transmission || '';
+    document.getElementById('color').value = vehicle.color || '';
+    document.getElementById('description').value = vehicle.description || '';
+    document.getElementById('status').value = vehicle.status || 'available';
+    
+    // Parse features
+    if (vehicle.features) {
+        if (typeof vehicle.features === 'string') {
+            try {
+                features = JSON.parse(vehicle.features);
+            } catch (e) {
+                features = [];
+            }
+        } else if (Array.isArray(vehicle.features)) {
+            features = vehicle.features;
+        } else {
+            features = [];
+        }
+    } else {
+        features = [];
+    }
+    updateFeaturesList();
+    
+    // Parse images
+    if (vehicle.images) {
+        if (typeof vehicle.images === 'string') {
+            try {
+                images = JSON.parse(vehicle.images);
+            } catch (e) {
+                images = [];
+            }
+        } else if (Array.isArray(vehicle.images)) {
+            images = vehicle.images;
+        } else {
+            images = [];
+        }
+    } else {
+        images = [];
+    }
+    updateImagesPreview();
+    
+    // Hide loading, show form
+    document.getElementById('loadingSpinner').style.display = 'none';
+    document.getElementById('editVehicleForm').style.display = 'block';
 }
 
 function addFeature() {
@@ -71,9 +166,15 @@ function handleImageUpload(e) {
     e.target.value = '';
 }
 
+function removeImage(index) {
+    images.splice(index, 1);
+    updateImagesPreview();
+}
+
 function updateImagesPreview() {
     const preview = document.getElementById('imagesPreview');
     preview.innerHTML = '';
+    
     images.forEach((img, index) => {
         const div = document.createElement('div');
         div.className = 'col-6';
@@ -87,24 +188,7 @@ function updateImagesPreview() {
     });
 }
 
-function removeImage(index) {
-    images.splice(index, 1);
-    const preview = document.getElementById('imagesPreview');
-    preview.innerHTML = '';
-    images.forEach((img, idx) => {
-        const div = document.createElement('div');
-        div.className = 'col-6';
-        div.innerHTML = `
-            <div class="position-relative">
-                <img src="${img}" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;">
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-1 bg-white" onclick="removeImage(${idx})"></button>
-            </div>
-        `;
-        preview.appendChild(div);
-    });
-}
-
-async function saveVehicle(e) {
+async function updateVehicle(e) {
     e.preventDefault();
     
     // Get submit button and disable it
@@ -126,7 +210,7 @@ async function saveVehicle(e) {
             Toast.error('Por favor, preencha todos os campos obrigatórios');
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Alterações';
             }
             return;
         }
@@ -148,8 +232,8 @@ async function saveVehicle(e) {
         
         console.log('Enviando dados do veículo:', vehicleData);
         
-        const response = await fetch(`${API_URL}/vehicles`, {
-            method: 'POST',
+        const response = await fetch(`${API_URL}/vehicles?id=${vehicleId}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getAuthToken()}`
@@ -175,7 +259,7 @@ async function saveVehicle(e) {
             Toast.error(errorMessage);
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Alterações';
             }
             return;
         }
@@ -184,21 +268,21 @@ async function saveVehicle(e) {
         console.log('Dados recebidos:', data);
         
         if (data.success) {
-            Toast.success('Veículo salvo com sucesso!');
+            Toast.success('Veículo atualizado com sucesso!');
             setTimeout(() => {
                 window.location.href = 'veiculos.html';
             }, 1500);
         } else {
-            const errorMsg = data.error || 'Erro ao criar veículo';
+            const errorMsg = data.error || 'Erro ao atualizar veículo';
             Toast.error(errorMsg);
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Alterações';
             }
         }
     } catch (error) {
-        console.error('Erro ao salvar veículo:', error);
-        let errorMessage = 'Erro ao criar veículo. Tente novamente.';
+        console.error('Erro ao atualizar veículo:', error);
+        let errorMessage = 'Erro ao atualizar veículo. Tente novamente.';
         
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
             errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
@@ -211,10 +295,8 @@ async function saveVehicle(e) {
         Toast.error(errorMessage);
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
+            submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Alterações';
         }
     }
 }
-
-
 
