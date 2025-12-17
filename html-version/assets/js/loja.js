@@ -117,29 +117,73 @@ function displayStoreInfo(store) {
 
 // Setup WhatsApp button
 function setupWhatsAppButton(store) {
-    if (!store.whatsapp) return;
+    if (!store.whatsapp) {
+        // Hide buttons if no WhatsApp
+        const whatsappBtn = document.getElementById('whatsappHeaderBtn');
+        const whatsappFloatBtn = document.getElementById('whatsappFloatBtn');
+        if (whatsappBtn) whatsappBtn.classList.add('d-none');
+        if (whatsappFloatBtn) whatsappFloatBtn.classList.add('d-none');
+        return;
+    }
     
     let phone = store.whatsapp.replace(/\D/g, '');
     if (!phone.startsWith('55')) {
         phone = '55' + phone;
     }
     
-    const message = encodeURIComponent(`Olá ${store.name}! Gostaria de mais informações sobre os veículos.`);
-    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    // Default message for general contact
+    const defaultMessage = encodeURIComponent(`Olá ${store.name}! 👋\n\nGostaria de mais informações sobre os veículos.`);
+    const defaultWhatsappUrl = `https://wa.me/${phone}?text=${defaultMessage}`;
     
     // Setup header WhatsApp button
     const whatsappBtn = document.getElementById('whatsappHeaderBtn');
     if (whatsappBtn) {
-        whatsappBtn.href = whatsappUrl;
+        whatsappBtn.href = defaultWhatsappUrl;
         whatsappBtn.classList.remove('d-none');
     }
     
     // Setup floating WhatsApp button
     const whatsappFloatBtn = document.getElementById('whatsappFloatBtn');
     if (whatsappFloatBtn) {
-        whatsappFloatBtn.href = whatsappUrl;
+        whatsappFloatBtn.href = defaultWhatsappUrl;
         whatsappFloatBtn.classList.remove('d-none');
+        
+        // Add click handler to ensure it works
+        whatsappFloatBtn.onclick = function(e) {
+            e.preventDefault();
+            window.open(defaultWhatsappUrl, '_blank', 'noopener,noreferrer');
+        };
     }
+}
+
+// Generate WhatsApp message for specific vehicle
+function getVehicleWhatsAppMessage(brand, model, year) {
+    const message = `Olá! 👋
+
+Tenho interesse no veículo ${brand} ${model} ${year} anunciado no site.
+
+Poderia me passar mais informações, por favor?
+
+Obrigado!`;
+    return encodeURIComponent(message);
+}
+
+// Open WhatsApp for specific vehicle
+function openVehicleWhatsApp(vehicleId, brand, model, year) {
+    if (!storeData || !storeData.whatsapp) {
+        alert('WhatsApp da loja não está configurado.');
+        return;
+    }
+    
+    let phone = storeData.whatsapp.replace(/\D/g, '');
+    if (!phone.startsWith('55')) {
+        phone = '55' + phone;
+    }
+    
+    const message = getVehicleWhatsAppMessage(brand, model, year);
+    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 }
 
 // Load all vehicles
@@ -331,6 +375,9 @@ function createVehicleCard(vehicle) {
                     <i class="bi bi-geo-alt"></i>
                     ${storeData ? (storeData.city || '') + (storeData.state ? ` - ${storeData.state}` : '') : ''}
                 </div>
+                <button class="btn btn-success w-100 mt-3" onclick="event.stopPropagation(); openVehicleWhatsApp('${vehicle.id}', '${vehicle.brand}', '${vehicle.model}', ${vehicle.year})">
+                    <i class="bi bi-whatsapp me-2"></i>Tenho Interesse
+                </button>
             </div>
         </div>
     `;
