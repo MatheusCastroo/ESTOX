@@ -62,39 +62,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load store information
 async function loadStoreInfo() {
     try {
-        const response = await fetch(`${API_URL}/stores?public=true&slug=${storeSlug}`);
+        const response = await fetch(`${API_URL}/public?store_slug=${storeSlug}&action=store`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.store) {
             storeData = data.data.store;
             displayStoreInfo(storeData);
         } else {
-            // Try alternative endpoint (from vehicles)
-            const altResponse = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
-            const altData = await altResponse.json();
-            
-            if (altData.success && altData.data && altData.data.store) {
-                storeData = altData.data.store;
-                displayStoreInfo(storeData);
-            } else {
-                showStoreNotFound();
-            }
+            showStoreNotFound();
         }
     } catch (error) {
         console.error('Error loading store info:', error);
-        try {
-            const altResponse = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
-            const altData = await altResponse.json();
-            
-            if (altData.success && altData.data && altData.data.store) {
-                storeData = altData.data.store;
-                displayStoreInfo(storeData);
-            } else {
-                showStoreNotFound();
-            }
-        } catch (altError) {
-            showStoreNotFound();
-        }
+        showStoreNotFound();
     }
 }
 
@@ -149,31 +128,13 @@ function setupWhatsAppButton(store) {
 // Load all vehicles
 async function loadAllVehicles() {
     try {
-        const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&status=available`);
+        const response = await fetch(`${API_URL}/public?store_slug=${storeSlug}&action=vehicles`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicles) {
             allVehicles = data.data.vehicles.filter(v => v.status === 'available');
             
-            // Parse JSON fields
-            allVehicles = allVehicles.map(vehicle => {
-                if (vehicle.images && typeof vehicle.images === 'string') {
-                    try {
-                        vehicle.images = JSON.parse(vehicle.images || '[]');
-                    } catch (e) {
-                        vehicle.images = [];
-                    }
-                }
-                if (vehicle.features && typeof vehicle.features === 'string') {
-                    try {
-                        vehicle.features = JSON.parse(vehicle.features || '[]');
-                    } catch (e) {
-                        vehicle.features = [];
-                    }
-                }
-                return vehicle;
-            });
-            
+            // JSON fields are already parsed by the API
             filteredVehicles = [...allVehicles];
             
             // Update brand filters

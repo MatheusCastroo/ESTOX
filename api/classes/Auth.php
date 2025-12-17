@@ -47,7 +47,16 @@ class Auth {
             throw new Exception('Email ou senha inválidos');
         }
 
+        // Get user's store_id
+        $store = $this->db->fetchOne(
+            "SELECT id FROM stores WHERE user_id = :user_id LIMIT 1",
+            ['user_id' => $user['id']]
+        );
+
         unset($user['password']);
+        if ($store) {
+            $user['store_id'] = $store['id'];
+        }
         return $user;
     }
 
@@ -71,7 +80,21 @@ class Auth {
         }
     }
 
-    public function generateToken($userId) {
+    public function verifyTokenWithStore($token) {
+        $config = require __DIR__ . '/../config/config.php';
+        
+        try {
+            $decoded = JWT::decode($token, $config['jwt_secret'], ['HS256']);
+            return [
+                'userId' => $decoded->userId,
+                'storeId' => $decoded->storeId ?? null
+            ];
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    public function generateToken($userId, $storeId = null) {
         $config = require __DIR__ . '/../config/config.php';
         
         $payload = [
@@ -79,6 +102,11 @@ class Auth {
             'iat' => time(),
             'exp' => time() + $config['jwt_expiration']
         ];
+
+        // Include store_id if provided
+        if ($storeId) {
+            $payload['storeId'] = $storeId;
+        }
 
         return JWT::encode($payload, $config['jwt_secret'], 'HS256');
     }

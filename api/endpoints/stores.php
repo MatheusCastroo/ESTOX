@@ -134,7 +134,15 @@ switch ($method) {
             'updated_at' => date('Y-m-d H:i:s')
         ]);
         
-        Response::success(['store' => $store], 'Loja criada com sucesso');
+        // Generate new token with store_id
+        require_once __DIR__ . '/../classes/Auth.php';
+        $auth = new Auth();
+        $newToken = $auth->generateToken($userId, $store['id']);
+        
+        Response::success([
+            'store' => $store,
+            'token' => $newToken
+        ], 'Loja criada com sucesso');
         break;
         
     case 'PUT':
@@ -158,7 +166,12 @@ switch ($method) {
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {
-                $updateData[$field] = $data[$field];
+                // Allow null for logo_url to remove logo
+                if ($field === 'logo_url' && $data[$field] === null) {
+                    $updateData[$field] = null;
+                } elseif ($data[$field] !== null && $data[$field] !== '') {
+                    $updateData[$field] = $data[$field];
+                }
             }
         }
         

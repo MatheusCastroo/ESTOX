@@ -1,0 +1,28 @@
+# ESTOX - Multi-tenant Routing
+# Redirects /{store_slug} to landing page
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /ESTOX/
+    
+    # Don't rewrite if file or directory exists
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Don't rewrite API calls
+    RewriteCond %{REQUEST_URI} !^/ESTOX/api/
+    
+    # Don't rewrite existing HTML files
+    RewriteCond %{REQUEST_URI} !\.html$
+    
+    # Don't rewrite assets
+    RewriteCond %{REQUEST_URI} !^/ESTOX/(html-version|app|components|lib|public|api|scripts|styles)/
+    
+    # Rewrite /{store_slug} to landing page
+    # Matches: /ESTOX/nome-da-loja
+    RewriteRule ^([a-z0-9-]+)/?$ html-version/loja.html?store_slug=$1 [L,QSA]
+    
+    # Rewrite /{store_slug}/veiculo/{id} to vehicle detail page
+    RewriteRule ^([a-z0-9-]+)/veiculo/([a-z0-9-]+)/?$ html-version/veiculo-detalhe.html?store_slug=$1&vehicle_id=$2 [L,QSA]
+</IfModule>
+

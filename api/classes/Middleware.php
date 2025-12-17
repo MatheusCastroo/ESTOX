@@ -69,6 +69,66 @@ class Middleware {
         return $userId;
     }
 
+    /**
+     * Require authentication and return both userId and storeId
+     * Validates that user has a store
+     */
+    public static function requireAuthWithStore() {
+        $auth = new Auth();
+        
+        $headers = getallheaders();
+        $token = null;
+
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+            if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                $token = $matches[1];
+            }
+        }
+
+        if (!$token) {
+            Response::unauthorized('Token de autenticação não fornecido');
+        }
+
+        $tokenData = $auth->verifyTokenWithStore($token);
+        
+        if (!$tokenData) {
+            Response::unauthorized('Token inválido ou expirado');
+        }
+
+        $userId = $tokenData['userId'];
+        $storeId = $tokenData['storeId'];
+
+        // If store_id not in token, get from database
+        if (!$storeId) {
+            $db = Database::getInstance();
+            $store = $db->fetchOne(
+                "SELECT id FROM stores WHERE user_id = :user_id LIMIT 1",
+                ['user_id' => $userId]
+            );
+            
+            if (!$store) {
+                Response::error('Usuário não possui loja cadastrada. Por favor, complete o cadastro da loja.', 404);
+            }
+            
+            $storeId = $store['id'];
+        }
+
+        return [
+            'userId' => $userId,
+            'storeId' => $storeId
+        ];
+    }
+
+    /**
+     * Validate that a resource belongs to the user's store
+     */
+    public static function validateStoreOwnership($resourceStoreId, $userStoreId) {
+        if ($resourceStoreId !== $userStoreId) {
+            Response::error('Acesso negado: recurso não pertence à sua loja', 403);
+        }
+    }
+
     public static function getJsonInput() {
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);

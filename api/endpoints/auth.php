@@ -27,7 +27,8 @@ switch ($method) {
                     $data['name'] ?? null
                 );
                 
-                $token = $auth->generateToken($user['id']);
+                // New users don't have a store yet, token without store_id
+                $token = $auth->generateToken($user['id'], null);
                 
                 Response::success([
                     'user' => $user,
@@ -46,7 +47,7 @@ switch ($method) {
             
             try {
                 $user = $auth->login($data['email'], $data['password']);
-                $token = $auth->generateToken($user['id']);
+                $token = $auth->generateToken($user['id'], $user['store_id'] ?? null);
                 
                 Response::success([
                     'user' => $user,

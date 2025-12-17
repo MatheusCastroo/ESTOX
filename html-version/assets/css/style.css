@@ -221,5 +221,33 @@ html {
         right: 15px;
         font-size: 28px;
     }
-    
+}
+
+/* Logo Upload Styles */
+.logo-preview-container {
+    position: relative;
+}
+
+.logo-preview {
+    transition: opacity 0.3s ease;
+}
+
+.logo-preview:hover {
+    opacity: 0.8;
+}
+
+.logo-placeholder {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.logo-placeholder:hover {
+    border-color: var(--primary-color);
+    background-color: #f0f4ff;
+}
+
+#logoUpload:focus + button,
+#logoUpload:focus ~ button {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }

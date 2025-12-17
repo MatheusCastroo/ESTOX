@@ -88,6 +88,36 @@
                             <small class="text-muted">Dados que aparecem no seu catálogo público</small>
                         </div>
                         <div class="card-body">
+                            <!-- Logo Upload -->
+                            <div class="mb-4">
+                                <label class="form-label">Logo da Loja</label>
+                                <div class="d-flex align-items-start gap-4">
+                                    <div class="logo-preview-container">
+                                        <img id="logoPreview" src="" alt="Logo da loja" class="logo-preview d-none" style="max-width: 200px; max-height: 100px; object-fit: contain; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px; background: #f8f9fa;">
+                                        <div id="logoPlaceholder" class="logo-placeholder" style="width: 200px; height: 100px; border: 2px dashed #dee2e6; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; color: #6c757d;">
+                                            <div class="text-center">
+                                                <i class="bi bi-image fs-1 d-block mb-2"></i>
+                                                <small>Sem logo</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <input type="file" class="form-control" id="logoUpload" accept="image/*" style="display: none;">
+                                        <button type="button" class="btn btn-outline-primary mb-2" onclick="document.getElementById('logoUpload').click()">
+                                            <i class="bi bi-upload me-2"></i>Escolher Logo
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger d-none" id="removeLogoBtn" onclick="removeLogo()">
+                                            <i class="bi bi-trash me-2"></i>Remover Logo
+                                        </button>
+                                        <p class="text-muted small mb-0 mt-2">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Formatos aceitos: JPG, PNG, GIF. Tamanho recomendado: 200x100px
+                                        </p>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="logoUrl" value="">
+                            </div>
+                            
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="storeName" class="form-label">Nome da Loja</label>
@@ -97,12 +127,16 @@
                                     <label for="slug" class="form-label">URL do Catálogo</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">autostock.com.br/</span>
-                                        <input type="text" class="form-control" id="slug" required>
+                                        <input type="text" class="form-control" id="slug" required readonly>
                                     </div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-lock me-1"></i>
+                                        A URL não pode ser alterada após a criação da loja
+                                    </small>
                                 </div>
                                 <div class="col-12">
                                     <label for="description" class="form-label">Descrição</label>
-                                    <textarea class="form-control" id="description" rows="3"></textarea>
+                                    <textarea class="form-control" id="description" rows="3" placeholder="Descreva sua loja de veículos..."></textarea>
                                 </div>
                             </div>
                         </div>

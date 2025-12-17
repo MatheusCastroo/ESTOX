@@ -88,6 +88,10 @@ switch ($endpoint) {
         require_once __DIR__ . '/endpoints/notifications.php';
         break;
         
+    case 'public':
+        require_once __DIR__ . '/endpoints/public.php';
+        break;
+        
     default:
         http_response_code(404);
         header('Content-Type: application/json');
