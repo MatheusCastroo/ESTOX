@@ -135,13 +135,6 @@ function setupWhatsAppButton(store) {
     const defaultMessage = encodeURIComponent(`Olá ${store.name}! 👋\n\nGostaria de mais informações sobre os veículos.`);
     const defaultWhatsappUrl = `https://wa.me/${phone}?text=${defaultMessage}`;
     
-    // Setup header WhatsApp button
-    const whatsappBtn = document.getElementById('whatsappHeaderBtn');
-    if (whatsappBtn) {
-        whatsappBtn.href = defaultWhatsappUrl;
-        whatsappBtn.classList.remove('d-none');
-    }
-    
     // Setup floating WhatsApp button
     const whatsappFloatBtn = document.getElementById('whatsappFloatBtn');
     if (whatsappFloatBtn) {
