@@ -90,13 +90,22 @@ function displayStoreInfo(store) {
     if (storeName) storeName.textContent = store.name || 'Loja';
     
     const storeLogo = document.getElementById('storeLogo');
-    if (store.logo_url) {
-        storeLogo.src = store.logo_url;
-        storeLogo.alt = store.name;
-        storeLogo.classList.remove('d-none');
-        storeLogo.onerror = function() {
-            this.classList.add('d-none');
+    if (store.logo_url && store.logo_url.trim() !== '') {
+        // Validate logo before displaying
+        const img = new Image();
+        img.onload = function() {
+            storeLogo.src = store.logo_url;
+            storeLogo.alt = store.name;
+            storeLogo.classList.remove('d-none');
         };
+        img.onerror = function() {
+            // Logo failed to load - hide it
+            console.warn('Logo da loja não pôde ser carregada:', store.logo_url);
+            storeLogo.classList.add('d-none');
+        };
+        img.src = store.logo_url;
+    } else {
+        storeLogo.classList.add('d-none');
     }
     
     // WhatsApp button
@@ -118,10 +127,18 @@ function setupWhatsAppButton(store) {
     const message = encodeURIComponent(`Olá ${store.name}! Gostaria de mais informações sobre os veículos.`);
     const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
     
+    // Setup header WhatsApp button
     const whatsappBtn = document.getElementById('whatsappHeaderBtn');
     if (whatsappBtn) {
         whatsappBtn.href = whatsappUrl;
         whatsappBtn.classList.remove('d-none');
+    }
+    
+    // Setup floating WhatsApp button
+    const whatsappFloatBtn = document.getElementById('whatsappFloatBtn');
+    if (whatsappFloatBtn) {
+        whatsappFloatBtn.href = whatsappUrl;
+        whatsappFloatBtn.classList.remove('d-none');
     }
 }
 

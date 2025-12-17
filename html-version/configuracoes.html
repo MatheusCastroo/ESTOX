@@ -120,19 +120,36 @@
                             
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="storeName" class="form-label">Nome da Loja</label>
-                                    <input type="text" class="form-control" id="storeName" required>
+                                    <label for="storeName" class="form-label">
+                                        Nome da Loja
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="storeName" required placeholder="Ex: Auto Prime Veículos">
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Este nome aparecerá no seu catálogo público
+                                    </small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="slug" class="form-label">URL do Catálogo</label>
+                                    <label for="slug" class="form-label">
+                                        URL do Catálogo
+                                        <span class="text-danger">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light">autostock.com.br/</span>
-                                        <input type="text" class="form-control" id="slug" required readonly>
+                                        <input type="text" class="form-control" id="slug" required placeholder="minha-loja" pattern="[a-z0-9-]+" title="Apenas letras minúsculas, números e hífens">
+                                        <button type="button" class="btn btn-outline-primary" id="viewCatalogBtn" onclick="viewPublicCatalog()" title="Abrir catálogo público em nova aba" style="display: none;">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </button>
                                     </div>
-                                    <small class="text-muted">
-                                        <i class="bi bi-lock me-1"></i>
-                                        A URL não pode ser alterada após a criação da loja
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        <span id="slugHelpText">Esta será a URL do seu catálogo público. Exemplo: autostock.com.br/minha-loja</span>
                                     </small>
+                                    <div id="slugWarning" class="alert alert-warning mt-2 d-none">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>Atenção:</strong> A URL do catálogo é obrigatória. Após salvar, ela não poderá ser alterada.
+                                    </div>
                                 </div>
                                 <div class="col-12">
                                     <label for="description" class="form-label">Descrição</label>

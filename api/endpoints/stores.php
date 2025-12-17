@@ -149,15 +149,38 @@ switch ($method) {
         $data = Middleware::getJsonInput();
         $store = getUserStore($db, $userId);
         
-        // If updating slug, check if it's available
-        if (isset($data['slug']) && $data['slug'] !== $store['slug']) {
-            $slugCheck = $db->fetchOne(
-                "SELECT id, user_id FROM stores WHERE slug = :slug",
-                ['slug' => $data['slug']]
-            );
+        // If updating slug, validate and check if it's available
+        if (isset($data['slug'])) {
+            $newSlug = trim($data['slug']);
             
-            if ($slugCheck && $slugCheck['user_id'] !== $userId) {
-                Response::error('Este slug já está em uso. Escolha outro.', 400);
+            // If store already has a slug, don't allow changes
+            if ($store['slug'] && $store['slug'] !== $newSlug) {
+                Response::error('A URL do catálogo não pode ser alterada após a criação da loja. Se você precisa alterar, entre em contato com o suporte.', 400);
+            }
+            
+            // Validate slug format
+            if (!preg_match('/^[a-z0-9-]+$/', $newSlug)) {
+                Response::error('A URL do catálogo deve conter apenas letras minúsculas, números e hífens. Exemplo: minha-loja', 400);
+            }
+            
+            if (strlen($newSlug) < 3) {
+                Response::error('A URL do catálogo deve ter pelo menos 3 caracteres.', 400);
+            }
+            
+            if (strlen($newSlug) > 50) {
+                Response::error('A URL do catálogo deve ter no máximo 50 caracteres.', 400);
+            }
+            
+            // Check if slug is available (only if it's different from current)
+            if (!$store['slug'] || $store['slug'] !== $newSlug) {
+                $slugCheck = $db->fetchOne(
+                    "SELECT id, user_id FROM stores WHERE slug = :slug",
+                    ['slug' => $newSlug]
+                );
+                
+                if ($slugCheck && $slugCheck['user_id'] !== $userId) {
+                    Response::error('Esta URL já está em uso por outra loja. Por favor, escolha uma URL diferente. Exemplo: minha-loja-2', 400);
+                }
             }
         }
         
