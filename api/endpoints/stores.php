@@ -8,28 +8,6 @@ Middleware::cors();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
-
-// Check if this is a public endpoint (no auth required)
-$isPublic = isset($_GET['public']) && $_GET['public'] === 'true';
-$slugParam = $_GET['slug'] ?? null;
-
-if ($isPublic && $slugParam && $method === 'GET') {
-    // Public endpoint to get store by slug
-    $store = $db->fetchOne(
-        "SELECT id, name, slug, logo_url, phone, whatsapp, email, address, city, state, description, is_active 
-         FROM stores WHERE slug = :slug",
-        ['slug' => $slugParam]
-    );
-    
-    if (!$store) {
-        Response::error('Loja não encontrada', 404);
-    }
-    
-    Response::success(['store' => $store]);
-    exit;
-}
-
-// Protected endpoints require auth
 $userId = Middleware::requireAuth();
 
 // Helper function to get user's store
@@ -134,53 +112,22 @@ switch ($method) {
             'updated_at' => date('Y-m-d H:i:s')
         ]);
         
-        // Generate new token with store_id
-        require_once __DIR__ . '/../classes/Auth.php';
-        $auth = new Auth();
-        $newToken = $auth->generateToken($userId, $store['id']);
-        
-        Response::success([
-            'store' => $store,
-            'token' => $newToken
-        ], 'Loja criada com sucesso');
+        Response::success(['store' => $store], 'Loja criada com sucesso');
         break;
         
     case 'PUT':
         $data = Middleware::getJsonInput();
         $store = getUserStore($db, $userId);
         
-        // If updating slug, validate and check if it's available
-        if (isset($data['slug'])) {
-            $newSlug = trim($data['slug']);
+        // If updating slug, check if it's available
+        if (isset($data['slug']) && $data['slug'] !== $store['slug']) {
+            $slugCheck = $db->fetchOne(
+                "SELECT id, user_id FROM stores WHERE slug = :slug",
+                ['slug' => $data['slug']]
+            );
             
-            // If store already has a slug, don't allow changes
-            if ($store['slug'] && $store['slug'] !== $newSlug) {
-                Response::error('A URL do catálogo não pode ser alterada após a criação da loja. Se você precisa alterar, entre em contato com o suporte.', 400);
-            }
-            
-            // Validate slug format
-            if (!preg_match('/^[a-z0-9-]+$/', $newSlug)) {
-                Response::error('A URL do catálogo deve conter apenas letras minúsculas, números e hífens. Exemplo: minha-loja', 400);
-            }
-            
-            if (strlen($newSlug) < 3) {
-                Response::error('A URL do catálogo deve ter pelo menos 3 caracteres.', 400);
-            }
-            
-            if (strlen($newSlug) > 50) {
-                Response::error('A URL do catálogo deve ter no máximo 50 caracteres.', 400);
-            }
-            
-            // Check if slug is available (only if it's different from current)
-            if (!$store['slug'] || $store['slug'] !== $newSlug) {
-                $slugCheck = $db->fetchOne(
-                    "SELECT id, user_id FROM stores WHERE slug = :slug",
-                    ['slug' => $newSlug]
-                );
-                
-                if ($slugCheck && $slugCheck['user_id'] !== $userId) {
-                    Response::error('Esta URL já está em uso por outra loja. Por favor, escolha uma URL diferente. Exemplo: minha-loja-2', 400);
-                }
+            if ($slugCheck && $slugCheck['user_id'] !== $userId) {
+                Response::error('Este slug já está em uso. Escolha outro.', 400);
             }
         }
         
@@ -189,12 +136,7 @@ switch ($method) {
         
         foreach ($allowedFields as $field) {
             if (isset($data[$field])) {
-                // Allow null for logo_url to remove logo
-                if ($field === 'logo_url' && $data[$field] === null) {
-                    $updateData[$field] = null;
-                } elseif ($data[$field] !== null && $data[$field] !== '') {
-                    $updateData[$field] = $data[$field];
-                }
+                $updateData[$field] = $data[$field];
             }
         }
         
