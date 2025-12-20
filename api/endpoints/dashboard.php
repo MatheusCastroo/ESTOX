@@ -10,17 +10,9 @@ $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
 $userId = Middleware::requireAuth();
 
-// Get user's store
-$userStore = $db->fetchOne(
-    "SELECT id FROM stores WHERE user_id = :user_id",
-    ['user_id' => $userId]
-);
-
-if (!$userStore) {
-    Response::error('Loja não encontrada', 404);
-}
-
-$storeId = $userStore['id'];
+// REQ-FR-031: Get user's store_id to ensure data isolation
+// Dashboard only shows data from the authenticated user's store
+$storeId = Middleware::getUserStoreId($db, $userId);
 $action = $_GET['action'] ?? 'stats';
 
 switch ($method) {

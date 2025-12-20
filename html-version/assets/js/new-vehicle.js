@@ -163,14 +163,21 @@ async function saveVehicle(e) {
         if (!response.ok) {
             let errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
             try {
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorMessage;
-            } catch (e) {
-                // If response is not JSON, use status text
-                const text = await response.text();
-                if (text) {
-                    errorMessage = text;
+                // Check content type before reading
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } else {
+                    // If not JSON, read as text
+                    const text = await response.text();
+                    if (text) {
+                        errorMessage = text;
+                    }
                 }
+            } catch (e) {
+                // If reading fails, use the default error message
+                console.error('Erro ao ler resposta:', e);
             }
             Toast.error(errorMessage);
             if (submitBtn) {

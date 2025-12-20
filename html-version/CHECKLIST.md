@@ -15,7 +15,7 @@
 - [x] `cadastro.html` - Cadastro de usuário
 - [x] `cadastro-sucesso.html` - Confirmação de cadastro
 - [x] `esqueci-senha.html` - Recuperação de senha
-- [x] `catalogo.html` - Catálogo público com filtros
+- [x] `loja.html` - Landing page pública da loja com filtros
 - [x] `veiculo-detalhe.html` - Detalhes do veículo (público)
 
 ### Dashboard (Autenticadas)

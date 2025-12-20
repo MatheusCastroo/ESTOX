@@ -118,20 +118,13 @@ if ($isPublic && $storeSlug) {
         Response::success(['store' => $store, 'vehicles' => $vehicles]);
     }
 } else {
-    // Protected endpoints (require auth)
+    // REQ-FR-031: Protected endpoints (require auth)
+    // These endpoints validate user-store relationship for data isolation
     $userId = Middleware::requireAuth();
     
-    // Get user's store
-    $userStore = $db->fetchOne(
-        "SELECT id FROM stores WHERE user_id = :user_id",
-        ['user_id' => $userId]
-    );
-    
-    if (!$userStore) {
-        Response::error('Loja não encontrada. Por favor, configure sua loja primeiro no onboarding.', 404);
-    }
-    
-    $storeId = $userStore['id'];
+    // REQ-FR-031: Get user's store_id to ensure data isolation
+    // Users can only access data from their own store
+    $storeId = Middleware::getUserStoreId($db, $userId);
     $vehicleId = $_GET['id'] ?? null;
     
     switch ($method) {
@@ -236,15 +229,8 @@ if ($isPublic && $storeSlug) {
             
             $data = Middleware::getJsonInput();
             
-            // Verify vehicle belongs to user's store
-            $vehicle = $db->fetchOne(
-                "SELECT id FROM vehicles WHERE id = :id AND store_id = :store_id",
-                ['id' => $vehicleId, 'store_id' => $storeId]
-            );
-            
-            if (!$vehicle) {
-                Response::error('Veículo não encontrado', 404);
-            }
+            // REQ-FR-031: Verify vehicle belongs to user's store (security validation)
+            Middleware::validateResourceOwnership($db, $storeId, 'vehicles', $vehicleId);
             
             $updateData = [];
             $allowedFields = ['brand', 'model', 'year', 'mileage', 'price', 'fuel', 'transmission', 'color', 'description', 'status'];
@@ -281,15 +267,8 @@ if ($isPublic && $storeSlug) {
                 Response::error('ID do veículo é obrigatório', 400);
             }
             
-            // Verify vehicle belongs to user's store
-            $vehicle = $db->fetchOne(
-                "SELECT id FROM vehicles WHERE id = :id AND store_id = :store_id",
-                ['id' => $vehicleId, 'store_id' => $storeId]
-            );
-            
-            if (!$vehicle) {
-                Response::error('Veículo não encontrado', 404);
-            }
+            // REQ-FR-031: Verify vehicle belongs to user's store (security validation)
+            Middleware::validateResourceOwnership($db, $storeId, 'vehicles', $vehicleId);
             
             $db->delete('vehicles', 'id = :id', ['id' => $vehicleId]);
             

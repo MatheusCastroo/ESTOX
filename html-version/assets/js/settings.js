@@ -9,10 +9,22 @@ document.addEventListener('DOMContentLoaded', function() {
     loadNotificationSettings();
     
     document.getElementById('settingsForm').addEventListener('submit', saveSettings);
+    
+    // Update catalog link when slug changes
+    document.getElementById('slug').addEventListener('input', function() {
+        updateCatalogLink(this.value);
+    });
 });
 
 function getAuthToken() {
     return localStorage.getItem('token');
+}
+
+function updateCatalogLink(slug) {
+    const catalogLink = document.getElementById('viewCatalogLink');
+    if (catalogLink && slug) {
+        catalogLink.href = `loja.html?store_slug=${encodeURIComponent(slug)}`;
+    }
 }
 
 async function loadStoreSettings() {
@@ -36,6 +48,9 @@ async function loadStoreSettings() {
             document.getElementById('address').value = store.address || '';
             document.getElementById('city').value = store.city || '';
             document.getElementById('state').value = store.state || '';
+            
+            // Update catalog link
+            updateCatalogLink(store.slug);
         }
     } catch (error) {
         console.error('Error loading store settings:', error);
@@ -102,6 +117,9 @@ async function saveSettings(e) {
         });
         
         if (storeResponse.ok && notificationResponse.ok) {
+            // Update catalog link with new slug
+            const slug = document.getElementById('slug').value;
+            updateCatalogLink(slug);
             alert('Configurações salvas com sucesso!');
         } else {
             alert('Erro ao salvar configurações');

@@ -10,7 +10,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
 $userId = Middleware::requireAuth();
 
-// Helper function to get user's store
+// REQ-FR-031: Helper function to get user's store
+// This function ensures data isolation - users can only access their own store
 function getUserStore($db, $userId) {
     $store = $db->fetchOne(
         "SELECT * FROM stores WHERE user_id = :user_id",
@@ -47,13 +48,21 @@ switch ($method) {
     case 'POST':
         $data = Middleware::getJsonInput();
         
-        // Check if user already has a store
-        $existing = $db->fetchOne(
-            "SELECT id FROM stores WHERE user_id = :user_id",
+        // Ensure user_id is trimmed and valid
+        $userId = trim($userId);
+        if (empty($userId)) {
+            Response::error('ID do usuário inválido', 400);
+        }
+        
+        // Check if user already has a store using COUNT for more reliable check
+        $countResult = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM stores WHERE user_id = :user_id",
             ['user_id' => $userId]
         );
         
-        if ($existing) {
+        // Check if store exists (count should be 0 for new users)
+        $storeCount = isset($countResult['count']) ? (int)$countResult['count'] : 0;
+        if ($storeCount > 0) {
             Response::error('Usuário já possui uma loja cadastrada', 400);
         }
         

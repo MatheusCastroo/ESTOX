@@ -48,20 +48,11 @@ if ($isPublic && $method === 'POST') {
     
     Response::success(['lead' => $lead], 'Lead criado com sucesso');
 } else {
-    // Protected endpoints (require auth)
+    // REQ-FR-031: Protected endpoints (require auth)
     $userId = Middleware::requireAuth();
     
-    // Get user's store
-    $userStore = $db->fetchOne(
-        "SELECT id FROM stores WHERE user_id = :user_id",
-        ['user_id' => $userId]
-    );
-    
-    if (!$userStore) {
-        Response::error('Loja não encontrada', 404);
-    }
-    
-    $storeId = $userStore['id'];
+    // REQ-FR-031: Get user's store_id to ensure data isolation
+    $storeId = Middleware::getUserStoreId($db, $userId);
     $leadId = $_GET['id'] ?? null;
     
     switch ($method) {
@@ -159,15 +150,8 @@ if ($isPublic && $method === 'POST') {
                 Response::error('Status é obrigatório', 400);
             }
             
-            // Verify lead belongs to user's store
-            $lead = $db->fetchOne(
-                "SELECT id FROM leads WHERE id = :id AND store_id = :store_id",
-                ['id' => $leadId, 'store_id' => $storeId]
-            );
-            
-            if (!$lead) {
-                Response::error('Lead não encontrado', 404);
-            }
+            // REQ-FR-031: Verify lead belongs to user's store (security validation)
+            Middleware::validateResourceOwnership($db, $storeId, 'leads', $leadId);
             
             $updatedLead = $db->update('leads', 
                 ['status' => $data['status'], 'updated_at' => date('Y-m-d H:i:s')],
@@ -183,15 +167,8 @@ if ($isPublic && $method === 'POST') {
                 Response::error('ID do lead é obrigatório', 400);
             }
             
-            // Verify lead belongs to user's store
-            $lead = $db->fetchOne(
-                "SELECT id FROM leads WHERE id = :id AND store_id = :store_id",
-                ['id' => $leadId, 'store_id' => $storeId]
-            );
-            
-            if (!$lead) {
-                Response::error('Lead não encontrado', 404);
-            }
+            // REQ-FR-031: Verify lead belongs to user's store (security validation)
+            Middleware::validateResourceOwnership($db, $storeId, 'leads', $leadId);
             
             $db->delete('leads', 'id = :id', ['id' => $leadId]);
             

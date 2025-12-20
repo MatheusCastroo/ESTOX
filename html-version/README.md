@@ -10,7 +10,7 @@ Esta é a versão **principal** do frontend do projeto AutoStock, desenvolvida c
 - ✅ `cadastro.html` - Página de cadastro
 - ✅ `cadastro-sucesso.html` - Confirmação de cadastro
 - ✅ `esqueci-senha.html` - Recuperação de senha
-- ✅ `catalogo.html` - Catálogo público de veículos
+- ✅ `loja.html` - Landing page pública da loja (catálogo de veículos)
 - ✅ `veiculo-detalhe.html` - Detalhes do veículo (público)
 
 ### Dashboard (Autenticadas)
@@ -36,7 +36,7 @@ html-version/
 ├── veiculos.html           # Lista de veículos
 ├── veiculos-novo.html      # Novo veículo
 ├── veiculo-detalhe.html    # Detalhes (público)
-├── catalogo.html           # Catálogo público
+├── loja.html               # Landing page pública da loja
 ├── leads.html              # Leads
 ├── relatorios.html         # Relatórios
 ├── configuracoes.html      # Configurações
@@ -50,7 +50,7 @@ html-version/
 │   │   ├── vehicles.js     # Veículos
 │   │   ├── new-vehicle.js  # Novo veículo
 │   │   ├── vehicle-detail.js # Detalhes do veículo
-│   │   ├── catalog.js      # Catálogo
+│   │   ├── loja.js         # Landing page pública da loja
 │   │   ├── leads.js        # Leads
 │   │   ├── reports.js      # Relatórios
 │   │   └── settings.js     # Configurações

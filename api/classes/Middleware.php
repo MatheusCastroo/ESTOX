@@ -58,6 +58,59 @@ class Middleware {
         
         return $data;
     }
+    
+    /**
+     * REQ-FR-031: Get user's store ID
+     * Validates that the authenticated user has a store and returns the store_id
+     * This ensures data isolation per client (multi-tenant security)
+     * 
+     * @param Database $db Database instance
+     * @param string $userId Authenticated user ID
+     * @return string Store ID
+     * @throws Response::error if store not found
+     */
+    public static function getUserStoreId($db, $userId) {
+        $store = $db->fetchOne(
+            "SELECT id FROM stores WHERE user_id = :user_id",
+            ['user_id' => $userId]
+        );
+        
+        if (!$store) {
+            Response::error('Loja não encontrada. Por favor, configure sua loja primeiro.', 404);
+        }
+        
+        return $store['id'];
+    }
+    
+    /**
+     * REQ-FR-031: Validate that a resource belongs to the user's store
+     * This is a security measure to prevent users from accessing other stores' data
+     * 
+     * @param Database $db Database instance
+     * @param string $storeId User's store ID
+     * @param string $resourceTable Table name (e.g., 'vehicles', 'leads')
+     * @param string $resourceId Resource ID to validate
+     * @return bool True if resource belongs to store
+     * @throws Response::error if resource not found or doesn't belong to store
+     */
+    public static function validateResourceOwnership($db, $storeId, $resourceTable, $resourceId) {
+        // Validate table name to prevent SQL injection
+        $allowedTables = ['vehicles', 'leads', 'notification_settings'];
+        if (!in_array($resourceTable, $allowedTables)) {
+            Response::error('Tabela inválida', 400);
+        }
+        
+        $resource = $db->fetchOne(
+            "SELECT id FROM $resourceTable WHERE id = :id AND store_id = :store_id",
+            ['id' => $resourceId, 'store_id' => $storeId]
+        );
+        
+        if (!$resource) {
+            Response::error('Recurso não encontrado ou você não tem permissão para acessá-lo', 404);
+        }
+        
+        return true;
+    }
 }
 
 
