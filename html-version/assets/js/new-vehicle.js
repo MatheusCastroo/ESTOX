@@ -121,8 +121,9 @@ async function saveVehicle(e) {
         const year = document.getElementById('year').value;
         const mileage = document.getElementById('mileage').value;
         const price = document.getElementById('price').value;
+        const bodyType = document.getElementById('bodyType').value;
         
-        if (!brand || !model || !year || !mileage || !price) {
+        if (!brand || !model || !year || !mileage || !price || !bodyType) {
             Toast.error('Por favor, preencha todos os campos obrigatórios');
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -140,6 +141,7 @@ async function saveVehicle(e) {
             fuel: document.getElementById('fuel').value,
             transmission: document.getElementById('transmission').value,
             color: document.getElementById('color').value,
+            body_type: document.getElementById('bodyType').value,
             description: document.getElementById('description').value,
             features: features,
             images: images,

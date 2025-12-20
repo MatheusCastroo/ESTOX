@@ -106,6 +106,11 @@ if ($isPublic && $storeSlug) {
             $query .= " AND transmission = :transmission";
             $params['transmission'] = $filters['transmission'];
         }
+        // Only filter by body_type if it's not empty
+        if (isset($filters['body_type']) && !empty($filters['body_type'])) {
+            $query .= " AND body_type = :body_type";
+            $params['body_type'] = $filters['body_type'];
+        }
         if (isset($filters['search'])) {
             $query .= " AND (LOWER(brand) LIKE LOWER(:search) OR LOWER(model) LIKE LOWER(:search))";
             $params['search'] = '%' . $filters['search'] . '%';
@@ -113,9 +118,70 @@ if ($isPublic && $storeSlug) {
         
         $query .= " ORDER BY created_at DESC";
         
-        $vehicles = $db->fetchAll($query, $params);
-        
-        Response::success(['store' => $store, 'vehicles' => $vehicles]);
+        try {
+            $vehicles = $db->fetchAll($query, $params);
+            Response::success(['store' => $store, 'vehicles' => $vehicles]);
+        } catch (Exception $e) {
+            error_log('Erro ao buscar veículos: ' . $e->getMessage());
+            // Se o erro for relacionado ao campo body_type não existir, remover o filtro e tentar novamente
+            if (strpos($e->getMessage(), 'body_type') !== false && isset($filters['body_type']) && !empty($filters['body_type'])) {
+                // Reconstruir a query sem o filtro body_type
+                $retryQuery = "SELECT * FROM vehicles WHERE store_id = :store_id";
+                $retryParams = ['store_id' => $store['id']];
+                
+                // Reaplicar todos os filtros exceto body_type
+                if (isset($filters['status']) && $filters['status'] !== 'all') {
+                    $retryQuery .= " AND status = :status";
+                    $retryParams['status'] = $filters['status'];
+                } else {
+                    $retryQuery .= " AND status = 'available'";
+                }
+                
+                if (isset($filters['brand'])) {
+                    $retryQuery .= " AND brand = :brand";
+                    $retryParams['brand'] = $filters['brand'];
+                }
+                if (isset($filters['min_price'])) {
+                    $retryQuery .= " AND price >= :min_price";
+                    $retryParams['min_price'] = $filters['min_price'];
+                }
+                if (isset($filters['max_price'])) {
+                    $retryQuery .= " AND price <= :max_price";
+                    $retryParams['max_price'] = $filters['max_price'];
+                }
+                if (isset($filters['min_year'])) {
+                    $retryQuery .= " AND year >= :min_year";
+                    $retryParams['min_year'] = $filters['min_year'];
+                }
+                if (isset($filters['max_year'])) {
+                    $retryQuery .= " AND year <= :max_year";
+                    $retryParams['max_year'] = $filters['max_year'];
+                }
+                if (isset($filters['max_mileage'])) {
+                    $retryQuery .= " AND mileage <= :max_mileage";
+                    $retryParams['max_mileage'] = $filters['max_mileage'];
+                }
+                if (isset($filters['transmission'])) {
+                    $retryQuery .= " AND transmission = :transmission";
+                    $retryParams['transmission'] = $filters['transmission'];
+                }
+                if (isset($filters['search'])) {
+                    $retryQuery .= " AND (LOWER(brand) LIKE LOWER(:search) OR LOWER(model) LIKE LOWER(:search))";
+                    $retryParams['search'] = '%' . $filters['search'] . '%';
+                }
+                
+                $retryQuery .= " ORDER BY created_at DESC";
+                
+                try {
+                    $vehicles = $db->fetchAll($retryQuery, $retryParams);
+                    Response::success(['store' => $store, 'vehicles' => $vehicles]);
+                } catch (Exception $e2) {
+                    Response::error('Erro ao buscar veículos: ' . $e2->getMessage(), 500);
+                }
+            } else {
+                Response::error('Erro ao buscar veículos: ' . $e->getMessage(), 500);
+            }
+        }
     }
 } else {
     // REQ-FR-031: Protected endpoints (require auth)
@@ -190,6 +256,9 @@ if ($isPublic && $storeSlug) {
                 if (empty($data['price']) || $data['price'] < 0) {
                     Response::error('Preço inválido', 400);
                 }
+                if (empty($data['body_type'])) {
+                    Response::error('Tipo de carro é obrigatório', 400);
+                }
                 
                 $vehicleData = [
                     'id' => $db->generateUuid(),
@@ -211,7 +280,23 @@ if ($isPublic && $storeSlug) {
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 
-                $vehicle = $db->insert('vehicles', $vehicleData);
+                // Add body_type (validated as required above)
+                $vehicleData['body_type'] = trim($data['body_type']);
+                
+                // Try to insert - if it fails due to body_type column not existing, retry without it
+                try {
+                    $vehicle = $db->insert('vehicles', $vehicleData);
+                } catch (Exception $e) {
+                    // If error is about body_type column not found, retry without it
+                    if (strpos($e->getMessage(), 'body_type') !== false && array_key_exists('body_type', $vehicleData)) {
+                        error_log('Warning: body_type column does not exist, creating vehicle without it');
+                        unset($vehicleData['body_type']);
+                        $vehicle = $db->insert('vehicles', $vehicleData);
+                    } else {
+                        // Re-throw if it's a different error
+                        throw $e;
+                    }
+                }
                 $vehicle['features'] = json_decode($vehicle['features'], true);
                 $vehicle['images'] = json_decode($vehicle['images'], true);
                 
@@ -232,12 +317,22 @@ if ($isPublic && $storeSlug) {
             // REQ-FR-031: Verify vehicle belongs to user's store (security validation)
             Middleware::validateResourceOwnership($db, $storeId, 'vehicles', $vehicleId);
             
+            // Validate required fields if they are being updated
+            if (array_key_exists('body_type', $data) && empty(trim($data['body_type'] ?? ''))) {
+                Response::error('Tipo de carro é obrigatório', 400);
+            }
+            
             $updateData = [];
-            $allowedFields = ['brand', 'model', 'year', 'mileage', 'price', 'fuel', 'transmission', 'color', 'description', 'status'];
+            $allowedFields = ['brand', 'model', 'year', 'mileage', 'price', 'fuel', 'transmission', 'color', 'description', 'status', 'body_type'];
             
             foreach ($allowedFields as $field) {
-                if (isset($data[$field])) {
-                    $updateData[$field] = $data[$field];
+                if (array_key_exists($field, $data)) {
+                    // For body_type, trim the value (already validated as required above)
+                    if ($field === 'body_type') {
+                        $updateData[$field] = trim($data[$field]);
+                    } else {
+                        $updateData[$field] = $data[$field];
+                    }
                 }
             }
             
@@ -255,7 +350,21 @@ if ($isPublic && $storeSlug) {
             
             $updateData['updated_at'] = date('Y-m-d H:i:s');
             
-            $updatedVehicle = $db->update('vehicles', $updateData, 'id = :id', ['id' => $vehicleId]);
+            // Try to update - if it fails due to body_type column not existing, retry without it
+            try {
+                $updatedVehicle = $db->update('vehicles', $updateData, 'id = :id', ['id' => $vehicleId]);
+            } catch (Exception $e) {
+                // If error is about body_type column not found, retry without it
+                if (strpos($e->getMessage(), 'body_type') !== false && isset($updateData['body_type'])) {
+                    error_log('Warning: body_type column does not exist, updating vehicle without it');
+                    unset($updateData['body_type']);
+                    $updatedVehicle = $db->update('vehicles', $updateData, 'id = :id', ['id' => $vehicleId]);
+                } else {
+                    // Re-throw if it's a different error
+                    throw $e;
+                }
+            }
+            
             $updatedVehicle['features'] = json_decode($updatedVehicle['features'], true);
             $updatedVehicle['images'] = json_decode($updatedVehicle['images'], true);
             

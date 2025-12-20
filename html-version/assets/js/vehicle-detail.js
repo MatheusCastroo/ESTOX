@@ -253,6 +253,9 @@ function displayBasicInfo() {
     // Code (vehicle ID)
     document.getElementById('infoCode').textContent = vehicleData.id.substring(0, 8).toUpperCase() || '-';
     
+    // Body Type
+    document.getElementById('infoBodyType').textContent = vehicleData.body_type || '-';
+    
     // Location (not in database, show "-")
     document.getElementById('infoLocation').textContent = '-';
     
@@ -384,6 +387,7 @@ function buildSpecsObject() {
     if (vehicleData.fuel) specs.geral.push(`Combustível: ${vehicleData.fuel}`);
     if (vehicleData.transmission) specs.geral.push(`Câmbio: ${vehicleData.transmission}`);
     if (vehicleData.color) specs.geral.push(`Cor: ${vehicleData.color}`);
+    if (vehicleData.body_type) specs.geral.push(`Tipo: ${vehicleData.body_type}`);
     
     // Parse features
     let features = [];
