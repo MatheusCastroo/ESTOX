@@ -1,136 +1,185 @@
-# 📚 Documentação do Projeto ESTOX
+# ESTOX - Gestão de Estoque de Veículos
 
-Bem-vindo à documentação completa do projeto ESTOX. Esta pasta contém todos os guias, tutoriais e documentações técnicas do sistema.
+Plataforma completa para gestão de estoque de veículos, desenvolvida com **HTML/CSS/JavaScript** como front-end principal e **PHP** como backend.
 
-## 📋 Índice de Documentações
+## 🚀 Stack Tecnológica
 
-### 🧪 Testes e Qualidade
+### Frontend (Principal)
+- **HTML5** - Estrutura semântica
+- **CSS3** - Estilização e layout responsivo
+- **Bootstrap 5.3.2** - Framework CSS responsivo
+- **JavaScript (Vanilla)** - Interatividade e integração com API
+- **Bootstrap Icons** - Ícones
 
-- **[TESTES_USUARIO_FINAL.md](./TESTES_USUARIO_FINAL.md)** - Guia completo de testes do usuário final
-  - Testes de cadastro e autenticação
-  - Testes de configuração de loja
-  - Testes de gerenciamento de veículos
-  - Testes de catálogo público
-  - Testes de leads
-  - Testes de dashboard e relatórios
-  - Testes de responsividade
+### Backend
+- **PHP 7.4+** - Linguagem backend
+- **PostgreSQL** - Banco de dados
+- **JWT** - Autenticação e autorização
+- **REST API** - Arquitetura de API
 
-### 🔧 Resolução de Problemas
+## 📁 Estrutura do Projeto
 
-- **[DIAGNOSTICO_RAPIDO.md](./DIAGNOSTICO_RAPIDO.md)** - Diagnóstico rápido de erros (5 minutos)
-  - Checklist rápido
-  - Testes básicos
-  - Soluções imediatas
+```
+ESTOX/
+├── html-version/          # Frontend principal (HTML/CSS/JS)
+│   ├── index.html         # Landing page
+│   ├── login.html         # Login
+│   ├── cadastro.html      # Cadastro
+│   ├── dashboard.html     # Dashboard
+│   ├── assets/            # Assets (CSS, JS, imagens)
+│   └── ...
+├── api/                   # Backend PHP
+│   ├── endpoints/         # Endpoints da API
+│   ├── classes/           # Classes PHP
+│   ├── config/            # Configurações
+│   └── ...
+└── public/                # Imagens e recursos públicos
+```
 
-- **[RESOLVER_ERRO_API.md](./RESOLVER_ERRO_API.md)** - Resolver erros de conexão com a API
-  - Checklist completo de verificação
-  - Passos para resolver
-  - Problemas comuns e soluções
+## 🎯 Funcionalidades
 
-- **[RESOLVER_ERRO_CADASTRO.md](./RESOLVER_ERRO_CADASTRO.md)** - Resolver erro ao cadastrar cliente
-  - Soluções aplicadas
-  - Verificações necessárias
-  - Problemas comuns
+### Públicas
+- ✅ Landing page completa com hero, features e pricing
+- ✅ Catálogo público de veículos
+- ✅ Detalhes do veículo
+- ✅ Login e cadastro
+- ✅ Recuperação de senha
 
-- **[DIAGNOSTICO_404.md](./DIAGNOSTICO_404.md)** - Diagnóstico de erro 404 na API
-  - Verificação de URLs
-  - Configuração do Apache
-  - Soluções passo a passo
+### Dashboard (Autenticadas)
+- ✅ Dashboard com estatísticas
+- ✅ Gestão de veículos (CRUD completo)
+- ✅ Gestão de leads
+- ✅ Relatórios e estatísticas
+- ✅ Configurações da loja
+- ✅ Onboarding inicial
 
-- **[DIAGNOSTICO_SALVAR_VEICULO.md](./DIAGNOSTICO_SALVAR_VEICULO.md)** - Diagnóstico: Veículos não estão sendo salvos
-  - Melhorias implementadas
-  - Como diagnosticar
-  - Erros comuns e soluções
+## 🛠️ Instalação e Configuração
 
-### ⚙️ Configuração
+### Pré-requisitos
 
-- **[CONFIGURAR_VIRTUAL_HOST.md](./CONFIGURAR_VIRTUAL_HOST.md)** - Configurar Virtual Host no Apache
-  - Por que configurar
-  - Passo a passo
-  - Problemas comuns
+- PHP 7.4 ou superior
+- PostgreSQL 12 ou superior
+- Servidor web (Apache/Nginx) ou PHP built-in server
+- Node.js (opcional, apenas se quiser usar a versão Next.js)
 
-- **[SOLUCAO_VARIAVEIS_ENV.md](./SOLUCAO_VARIAVEIS_ENV.md)** - Solução: Variáveis de ambiente não configuradas
-  - Problema identificado
-  - Solução aplicada
-  - Verificação
+### 1. Backend (API PHP)
 
-### 📊 Resumos e Soluções
+1. Navegue até a pasta `api/`:
+   ```bash
+   cd api
+   ```
 
-- **[RESUMO_SOLUCOES.md](./RESUMO_SOLUCOES.md)** - Resumo das soluções aplicadas
-  - Problema 1: URL sem /ESTOX
-  - Problema 2: Erro ao cadastrar cliente
-  - Status final
+2. Instale as dependências do Composer:
+   ```bash
+   composer install
+   ```
 
-## 🚀 Como Usar Esta Documentação
+3. Configure as variáveis de ambiente criando um arquivo `.env` na raiz do projeto:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=estox
+   DB_USER=postgres
+   DB_PASSWORD=sua_senha
+   
+   JWT_SECRET=seu-secret-key-muito-seguro-aqui
+   CORS_ORIGINS=http://localhost:8080
+   ```
 
-### Para Testes
+4. Execute os scripts SQL para criar o banco de dados:
+   ```bash
+   psql -U postgres -d estox -f ../scripts/001-create-tables.sql
+   psql -U postgres -d estox -f ../scripts/002-seed-plans.sql
+   psql -U postgres -d estox -f ../scripts/003-rls-policies.sql
+   psql -U postgres -d estox -f ../scripts/004-create-users-table.sql
+   ```
 
-1. Comece com **[TESTES_USUARIO_FINAL.md](./TESTES_USUARIO_FINAL.md)**
-2. Siga os testes na ordem apresentada
-3. Use o checklist ao final de cada seção
+5. Configure o servidor web para apontar para a pasta `api/`.
 
-### Para Resolver Problemas
+### 2. Frontend (HTML)
 
-1. Se o problema é urgente, comece com **[DIAGNOSTICO_RAPIDO.md](./DIAGNOSTICO_RAPIDO.md)**
-2. Para problemas específicos, consulte:
-   - Erro de conexão → **[RESOLVER_ERRO_API.md](./RESOLVER_ERRO_API.md)**
-   - Erro 404 → **[DIAGNOSTICO_404.md](./DIAGNOSTICO_404.md)**
-   - Erro ao cadastrar → **[RESOLVER_ERRO_CADASTRO.md](./RESOLVER_ERRO_CADASTRO.md)**
-   - Veículos não salvam → **[DIAGNOSTICO_SALVAR_VEICULO.md](./DIAGNOSTICO_SALVAR_VEICULO.md)**
+1. Navegue até a pasta `html-version/`:
+   ```bash
+   cd html-version
+   ```
 
-### Para Configuração
+2. Configure a URL da API nos arquivos JavaScript em `assets/js/`:
+   ```javascript
+   const API_URL = 'http://localhost/api'; // Ajuste conforme necessário
+   ```
 
-1. Configurar Virtual Host → **[CONFIGURAR_VIRTUAL_HOST.md](./CONFIGURAR_VIRTUAL_HOST.md)**
-2. Variáveis de ambiente → **[SOLUCAO_VARIAVEIS_ENV.md](./SOLUCAO_VARIAVEIS_ENV.md)**
+3. Servir os arquivos estáticos:
 
-## 📝 Estrutura das Documentações
+   **Opção 1: PHP Built-in Server**
+   ```bash
+   php -S localhost:8080
+   ```
 
-Todas as documentações seguem um padrão:
+   **Opção 2: Servidor Web**
+   Configure Apache/Nginx para servir os arquivos da pasta `html-version/`
 
-- **Título claro** do problema/solução
-- **Checklist** quando aplicável
-- **Passo a passo** detalhado
-- **Resultado esperado** para cada ação
-- **Problemas comuns** e soluções
-- **Próximos passos**
+4. Acesse no navegador:
+   ```
+   http://localhost:8080
+   ```
 
-## 🔍 Busca Rápida
+## 🔧 Configuração da API
 
-### Por Problema
+### CORS
 
-- **API não responde** → `RESOLVER_ERRO_API.md`
-- **Erro 404** → `DIAGNOSTICO_404.md`
-- **Erro ao cadastrar** → `RESOLVER_ERRO_CADASTRO.md`
-- **Veículos não salvam** → `DIAGNOSTICO_SALVAR_VEICULO.md`
-- **Variáveis não configuradas** → `SOLUCAO_VARIAVEIS_ENV.md`
+Certifique-se de configurar o CORS na API para permitir requisições do frontend. Edite `api/config/config.php`:
 
-### Por Ação
+```php
+header('Access-Control-Allow-Origin: http://localhost:8080');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+```
 
-- **Testar o sistema** → `TESTES_USUARIO_FINAL.md`
-- **Configurar Apache** → `CONFIGURAR_VIRTUAL_HOST.md`
-- **Diagnóstico rápido** → `DIAGNOSTICO_RAPIDO.md`
-- **Ver resumo de soluções** → `RESUMO_SOLUCOES.md`
+### Autenticação
 
-## 📞 Suporte
+A autenticação é feita via JWT. Após o login bem-sucedido, o token é armazenado no `localStorage` do navegador e enviado em todas as requisições subsequentes.
 
-Se após consultar a documentação o problema persistir:
+## 📖 Documentação
 
-1. Verifique o Console do navegador (F12)
-2. Verifique os logs do Apache: `C:\xampp\apache\logs\error.log`
-3. Anote a mensagem de erro completa
-4. Consulte a documentação específica do problema
+- [Documentação da API](./api/README.md)
+- [Documentação do Frontend HTML](./html-version/README.md)
+- [Guia de Integração](./api/FRONTEND_INTEGRATION.md)
 
-## 📅 Última Atualização
+## 🎨 Design
 
-**Data:** 2024-12-05
+O frontend foi desenvolvido com Bootstrap 5, seguindo um design moderno e responsivo. As cores principais são:
+- **Primária**: #0D47A1 (Azul escuro)
+- **Secundária**: #1A73E8 (Azul claro)
+- **Texto**: #424242 (Cinza escuro)
 
-**Versão:** 1.0
+## 📝 Notas
+
+- O projeto original Next.js ainda está disponível, mas a versão HTML é a principal
+- Todas as páginas estão disponíveis em HTML puro
+- A integração com a API PHP é completa via JavaScript (fetch API)
+- O projeto é 100% responsivo e funciona em todos os dispositivos
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+
+## 🆘 Suporte
+
+Para dúvidas ou problemas:
+- Consulte a documentação da API: `api/README.md`
+- Consulte a documentação do Frontend: `html-version/README.md`
 
 ---
 
-**Nota:** Esta documentação é atualizada constantemente. Sempre consulte a versão mais recente.
-
-
+**Desenvolvido com ❤️ para revendedores de veículos**
 
 
 

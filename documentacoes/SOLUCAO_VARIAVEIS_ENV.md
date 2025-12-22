@@ -86,3 +86,10 @@ Para verificar se tudo está funcionando:
 3. Verifique as credenciais no arquivo `.env`
 
 
+
+
+
+
+
+
+

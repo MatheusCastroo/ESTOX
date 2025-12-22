@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - AutoStock</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* REQ-FR-LP-001: Design moderno e clean */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* Header Clean - REQ-FR-LP-001 4.1 */
+        .main-header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        .header-logo {
+            max-height: 50px;
+            max-width: 200px;
+        }
+
+        .header-nav {
+            gap: 2rem;
+        }
+
+        .header-nav a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .header-nav a:hover {
+            color: #1A73E8;
+        }
+
+        .header-whatsapp-btn {
+            background: #25d366;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .header-whatsapp-btn:hover {
+            background: #20ba5a;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Barra de Busca - REQ-FR-LP-001 4.2 */
+        .search-bar-container {
+            background: white;
+            padding: 2rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-input-large {
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+
+        .search-input-large:focus {
+            border-color: #1A73E8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        /* Filtros Laterais - REQ-FR-LP-001 4.3 */
+        .filters-sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-accordion {
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 0;
+        }
+
+        .filter-accordion:last-child {
+            border-bottom: none;
+        }
+
+        .filter-accordion-button {
+            background: transparent;
+            border: none;
+            padding: 1rem 0;
+            font-weight: 600;
+            color: #333;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .filter-accordion-button:hover {
+            color: #1A73E8;
+        }
+
+        .filter-accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .filter-accordion-content.active {
+            max-height: 500px;
+            padding-bottom: 1rem;
+        }
+
+        .filter-input-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-input-group input,
+        .filter-input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Área de Resultados - REQ-FR-LP-001 4.4 */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .results-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sort-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Card do Veículo - REQ-FR-LP-001 4.5 */
+        .vehicle-card-modern {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .vehicle-card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .vehicle-card-image {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .vehicle-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .vehicle-card-modern:hover .vehicle-card-image img {
+            transform: scale(1.05);
+        }
+
+        .vehicle-card-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(26, 115, 232, 0.95);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .vehicle-card-favorite {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 2;
+        }
+
+        .vehicle-card-favorite:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .vehicle-card-favorite.active {
+            color: #ff4444;
+        }
+
+        .vehicle-card-body {
+            padding: 1.5rem;
+        }
+
+        .vehicle-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .vehicle-card-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .vehicle-card-price {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1A73E8;
+            margin-bottom: 0.5rem;
+        }
+
+        .vehicle-card-location {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        /* WhatsApp Float Button */
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filters-sidebar {
+                margin-bottom: 1rem;
+            }
+
+            .vehicle-card-image {
+                height: 200px;
+            }
+
+            .header-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Clean - REQ-FR-LP-001 4.1 -->
+    <header class="main-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <img id="storeLogoHeader" src="" alt="Logo" class="header-logo d-none">
+                    <div>
+                        <h1 class="h4 mb-0 fw-bold" id="storeNameHeader">Carregando...</h1>
+                        <small class="text-muted" id="storeCityStateHeader"></small>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-4 header-nav">
+                    <a href="#veiculos">Comprar carros</a>
+                    <a href="#sobre">Sobre a loja</a>
+                    <a href="#contato">Contato</a>
+                    <a href="#" class="header-whatsapp-btn d-none" id="headerWhatsAppBtn" target="_blank">
+                        <i class="bi bi-whatsapp me-2"></i>WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Barra de Busca - REQ-FR-LP-001 4.2 -->
+    <div class="search-bar-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <input type="text" 
+                           class="form-control search-input-large" 
+                           id="searchInput" 
+                           placeholder="Busque por marca, modelo ou ano">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="container my-5" id="veiculos">
+        <div class="row">
+            <!-- Filtros Laterais - REQ-FR-LP-001 4.3 -->
+            <aside class="col-lg-3">
+                <div class="filters-sidebar">
+                    <h5 class="fw-bold mb-3">Filtros</h5>
+                    
+                    <!-- Preço -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-currency-dollar me-2"></i>Preço</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content active">
+                            <div class="filter-input-group">
+                                <label class="small text-muted">Mínimo</label>
+                                <input type="number" class="form-control" id="minPrice" placeholder="R$ 0">
+                            </div>
+                            <div class="filter-input-group">
+                                <label class="small text-muted">Máximo</label>
+                                <input type="number" class="form-control" id="maxPrice" placeholder="R$ 500.000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Marca -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-tag me-2"></i>Marca</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content active">
+                            <select class="form-select" id="brandFilter">
+                                <option value="">Todas as marcas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Modelo -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-car-front me-2"></i>Modelo</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <select class="form-select" id="modelFilter">
+                                <option value="">Todos os modelos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ano -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-calendar me-2"></i>Ano</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <div class="filter-input-group">
+                                <label class="small text-muted">Mínimo</label>
+                                <input type="number" class="form-control" id="minYear" placeholder="2000">
+                            </div>
+                            <div class="filter-input-group">
+                                <label class="small text-muted">Máximo</label>
+                                <input type="number" class="form-control" id="maxYear" placeholder="2024">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quilometragem -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-speedometer2 me-2"></i>Quilometragem</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <div class="filter-input-group">
+                                <label class="small text-muted">Máximo</label>
+                                <input type="number" class="form-control" id="maxMileage" placeholder="100.000 km">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Carro -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-car-front me-2"></i>Tipo de carro</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <select class="form-select" id="bodyTypeFilter">
+                                <option value="">Todos</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Hatch">Hatch</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Pickup">Pickup</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Câmbio -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-gear me-2"></i>Câmbio</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <select class="form-select" id="transmissionFilter">
+                                <option value="">Todos</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automático">Automático</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Cor -->
+                    <div class="filter-accordion">
+                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                            <span><i class="bi bi-palette me-2"></i>Cor</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="filter-accordion-content">
+                            <select class="form-select" id="colorFilter">
+                                <option value="">Todas</option>
+                                <option value="Branco">Branco</option>
+                                <option value="Preto">Preto</option>
+                                <option value="Prata">Prata</option>
+                                <option value="Vermelho">Vermelho</option>
+                                <option value="Azul">Azul</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Área de Resultados - REQ-FR-LP-001 4.4 e 4.5 -->
+            <div class="col-lg-9">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Carregando veículos...</div>
+                    <select class="sort-select" id="sortSelect">
+                        <option value="relevance">Relevância</option>
+                        <option value="price_low">Menor preço</option>
+                        <option value="price_high">Maior preço</option>
+                        <option value="year_new">Mais novos</option>
+                    </select>
+                </div>
+
+                <div id="vehiclesGrid" class="row g-3">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Seção Sobre - REQ-FR-LP-001 -->
+    <section class="py-5 bg-white mt-5" id="sobre">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="h3 fw-bold mb-4 text-center">Sobre a Loja</h2>
+                    <p class="text-muted text-center" id="storeAbout">Carregando informações...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer - REQ-FR-LP-001 -->
+    <footer class="bg-dark text-white py-5 mt-5" id="contato">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3" id="footerStoreName">Nome da Loja</h5>
+                    <p class="text-muted small mb-2" id="footerAddress">Endereço</p>
+                    <p class="text-muted small mb-2" id="footerPhone">Telefone</p>
+                    <p class="text-muted small mb-2" id="footerCityState">Cidade, Estado</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">Links Rápidos</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#veiculos" class="text-muted text-decoration-none">Comprar carros</a></li>
+                        <li><a href="#sobre" class="text-muted text-decoration-none">Sobre a loja</a></li>
+                        <li><a href="#contato" class="text-muted text-decoration-none">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">Contato</h5>
+                    <a href="#" class="btn btn-success btn-sm d-inline-block d-none" id="footerWhatsAppBtn" target="_blank">
+                        <i class="bi bi-whatsapp me-2"></i>Falar no WhatsApp
+                    </a>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-muted small mb-0">&copy; 2024 <span id="footerCopyright">Nome da Loja</span>. Todos os direitos reservados.</p>
+                    <p class="text-muted small mb-0 mt-2">Powered by <strong>ESTOX</strong></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/loja.js"></script>
+
+    <script>
+        // Toggle accordion - REQ-FR-LP-001 4.3
+        function toggleAccordion(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.bi-chevron-down');
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('active');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Smooth scroll para âncoras
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -6,14 +6,22 @@
 
 function loadEnv($path) {
     if (!file_exists($path)) {
-        return;
+        return false;
+    }
+    
+    if (!is_readable($path)) {
+        error_log("Warning: .env file exists but is not readable: $path");
+        return false;
     }
     
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $loaded = false;
     
-    foreach ($lines as $line) {
-        // Skip comments
-        if (strpos(trim($line), '#') === 0) {
+    foreach ($lines as $lineNum => $line) {
+        $line = trim($line);
+        
+        // Skip empty lines and comments
+        if (empty($line) || strpos($line, '#') === 0) {
             continue;
         }
         
@@ -30,24 +38,39 @@ function loadEnv($path) {
                 $value = $matches[1];
             }
             
+            // Always set in $_ENV (more reliable than putenv)
+            $_ENV[$key] = $value;
+            
+            // Also try putenv (for getenv compatibility)
             if (!getenv($key)) {
                 putenv("$key=$value");
-                $_ENV[$key] = $value;
             }
+            
+            $loaded = true;
         }
+    }
+    
+    return $loaded;
+}
+
+// Try multiple possible locations for .env file
+$envPaths = [
+    __DIR__ . '/../.env',           // api/.env
+    __DIR__ . '/../../.env',        // root/.env
+    dirname(__DIR__) . '/.env',     // Alternative path
+];
+
+$envLoaded = false;
+foreach ($envPaths as $envPath) {
+    if (loadEnv($envPath)) {
+        $envLoaded = true;
+        // Don't break, try to load from all locations (last one wins)
     }
 }
 
-// Load .env file from project root
-$envPath = __DIR__ . '/../../.env';
-if (file_exists($envPath)) {
-    loadEnv($envPath);
-}
-
-// Also try loading from api directory
-$envPathApi = __DIR__ . '/../.env';
-if (file_exists($envPathApi)) {
-    loadEnv($envPathApi);
+// If no .env found, log warning (only in development)
+if (!$envLoaded && (getenv('APP_ENV') !== 'production')) {
+    error_log("Warning: No .env file found. Tried: " . implode(', ', $envPaths));
 }
 
 

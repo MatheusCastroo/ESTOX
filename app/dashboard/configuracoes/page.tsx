@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,9 +8,47 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Save, Upload } from "lucide-react"
+import { Save, Upload, MessageCircle } from "lucide-react"
+import { getUserStore } from "@/lib/actions/stores"
 
 export default function SettingsPage() {
+  const [store, setStore] = useState<any>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    async function loadStore() {
+      try {
+        const storeData = await getUserStore()
+        if (storeData) {
+          setStore(storeData)
+          if (storeData.logo_url) {
+            setLogoPreview(storeData.logo_url)
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar loja:", error)
+      }
+    }
+    loadStore()
+  }, [])
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
   return (
     <>
       <DashboardHeader title="Configurações" description="Gerencie as configurações da sua loja" />
@@ -25,7 +64,7 @@ export default function SettingsPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="storeName">Nome da Loja</Label>
-                <Input id="storeName" defaultValue="Auto Prime Veículos" />
+                <Input id="storeName" defaultValue={store?.name || "Auto Prime Veículos"} />
               </div>
               <div>
                 <Label htmlFor="slug">URL do Catálogo</Label>
@@ -33,7 +72,7 @@ export default function SettingsPage() {
                   <span className="inline-flex items-center px-3 bg-[#F5F5F5] border border-r-0 rounded-l-md text-sm text-[#424242]/70">
                     autostock.com.br/
                   </span>
-                  <Input id="slug" defaultValue="auto-prime" className="rounded-l-none" />
+                  <Input id="slug" defaultValue={store?.slug || "auto-prime"} className="rounded-l-none" />
                 </div>
               </div>
             </div>
@@ -42,17 +81,47 @@ export default function SettingsPage() {
               <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
-                defaultValue="Há mais de 10 anos no mercado, oferecendo os melhores veículos seminovos com garantia e procedência."
+                defaultValue={store?.description || "Há mais de 10 anos no mercado, oferecendo os melhores veículos seminovos com garantia e procedência."}
               />
             </div>
 
             <div>
               <Label>Logo da Loja</Label>
               <div className="mt-2 flex items-center gap-4">
-                <div className="h-20 w-20 bg-[#F5F5F5] rounded-lg flex items-center justify-center">
-                  <Upload className="h-8 w-8 text-[#424242]/50" />
+                <div className="h-20 w-20 bg-[#F5F5F5] rounded-lg flex items-center justify-center overflow-hidden relative">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <Upload className="h-8 w-8 text-[#424242]/50" />
+                  )}
                 </div>
-                <Button variant="outline">Alterar Logo</Button>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleLogoChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button variant="outline" type="button" onClick={handleUploadClick}>
+                    {logoPreview ? "Alterar Logo" : "Enviar Logo"}
+                  </Button>
+                  {logoPreview && (
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        setLogoPreview(null)
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = ""
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Remover Logo
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -68,32 +137,35 @@ export default function SettingsPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" defaultValue="(11) 99999-9999" />
+                <Input id="phone" defaultValue={store?.phone || "(11) 99999-9999"} />
               </div>
               <div>
-                <Label htmlFor="whatsapp">WhatsApp</Label>
-                <Input id="whatsapp" defaultValue="5511999999999" />
+                <Label htmlFor="whatsapp" className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-green-600" />
+                  WhatsApp
+                </Label>
+                <Input id="whatsapp" defaultValue={store?.whatsapp || "5511999999999"} />
               </div>
             </div>
 
             <div>
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" defaultValue="contato@autoprime.com.br" />
+              <Input id="email" type="email" defaultValue={store?.email || "contato@autoprime.com.br"} />
             </div>
 
             <div>
               <Label htmlFor="address">Endereço</Label>
-              <Input id="address" defaultValue="Av. Principal, 1234" />
+              <Input id="address" defaultValue={store?.address || "Av. Principal, 1234"} />
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city">Cidade</Label>
-                <Input id="city" defaultValue="São Paulo" />
+                <Input id="city" defaultValue={store?.city || "São Paulo"} />
               </div>
               <div>
                 <Label htmlFor="state">Estado</Label>
-                <Input id="state" defaultValue="SP" />
+                <Input id="state" defaultValue={store?.state || "SP"} />
               </div>
             </div>
           </CardContent>

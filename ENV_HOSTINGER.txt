@@ -1,0 +1,13 @@
+# Configuração para Produção - Hostinger
+# Copie este conteúdo para um arquivo chamado .env na pasta api/ ou na raiz
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=u507824066_estox
+DB_USER=u507824066_estox_user
+DB_PASSWORD=Estox7204.
+
+JWT_SECRET=change-this-to-a-very-secure-random-string-in-production
+
+CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
+

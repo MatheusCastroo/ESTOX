@@ -24,8 +24,10 @@ $test = [
         'JWT_SECRET' => (getenv('JWT_SECRET') || isset($_ENV['JWT_SECRET'])) ? 'configurado' : 'não configurado',
         'CORS_ORIGINS' => getenv('CORS_ORIGINS') ?: ($_ENV['CORS_ORIGINS'] ?? 'não configurado'),
     ],
-    'env_file_exists' => file_exists(__DIR__ . '/../.env'),
-    'env_file_path' => __DIR__ . '/../.env',
+    'env_file_locations' => [
+        'api/.env' => file_exists(__DIR__ . '/.env') ? 'existe' : 'não existe',
+        'root/.env' => file_exists(__DIR__ . '/../.env') ? 'existe' : 'não existe',
+    ],
     'extensions' => [
         'pdo' => extension_loaded('pdo') ? 'instalado' : 'NÃO instalado',
         'pdo_mysql' => extension_loaded('pdo_mysql') ? 'instalado' : 'NÃO instalado',

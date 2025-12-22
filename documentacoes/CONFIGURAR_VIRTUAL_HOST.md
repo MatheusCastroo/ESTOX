@@ -123,3 +123,10 @@ const API_URL = 'http://localhost/api';
 3. Verifique se todas as requisições estão funcionando
 
 
+
+
+
+
+
+
+
