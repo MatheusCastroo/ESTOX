@@ -40,3 +40,4 @@ $test = [
 ];
 
 echo json_encode($test, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+

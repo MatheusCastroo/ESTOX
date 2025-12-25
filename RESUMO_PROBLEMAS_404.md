@@ -159,3 +159,4 @@ Ao acessar `cadastro.html`, abra F12 → Console:
 4. **Entre em contato com suporte Hostinger**
    - Se `.htaccess` não está funcionando
    - Se PHP não está sendo processado na pasta `api/`
+

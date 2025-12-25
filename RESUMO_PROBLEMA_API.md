@@ -85,3 +85,4 @@ Acessar arquivos PHP diretamente retorna "This Page Does Not Exist":
 **Consulte também:**
 - `VERIFICAR_ARQUIVOS_API.md` - Guia completo de verificação
 - `DIAGNOSTICO_PHP_API.md` - Diagnóstico detalhado
+

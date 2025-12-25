@@ -171,3 +171,32 @@ html {
 .text-white-50:hover {
     color: rgba(255, 255, 255, 0.75) !important;
 }
+
+/* Logo Standardization */
+.logo {
+    max-width: 220px;
+    height: auto;
+    object-fit: contain;
+}
+
+.logo-preview {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+#logoPreview {
+    background: transparent !important;
+    border: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .logo {
+        max-width: 150px;
+    }
+    
+    #logoPreview {
+        width: 150px !important;
+        height: 45px !important;
+    }
+}

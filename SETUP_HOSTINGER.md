@@ -192,3 +192,4 @@ Se tiver problemas:
 3. Teste a API diretamente no navegador
 4. Verifique se todas as dependências estão instaladas
 
+

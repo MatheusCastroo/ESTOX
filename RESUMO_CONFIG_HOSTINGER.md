@@ -95,3 +95,4 @@ public_html/
 O sistema está configurado e pronto para funcionar na Hostinger!
 A detecção automática de ambiente fará tudo funcionar sem alterações adicionais.
 
+

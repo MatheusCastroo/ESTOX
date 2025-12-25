@@ -241,7 +241,8 @@ async function handleRegister(e) {
                         .replace(/[\u0300-\u036f]/g, '')
                         .replace(/[^a-z0-9]+/g, '-')
                         .replace(/^-+|-+$/g, ''),
-                    phone: phoneInput ? phoneInput.value.trim() : null,
+                    phone: phoneInput ? phoneInput.value.trim().replace(/\D/g, '') : null,
+                    whatsapp: phoneInput ? phoneInput.value.trim().replace(/\D/g, '') : null,
                     city: cityInput ? cityInput.value.trim() : null,
                     state: stateInput ? stateInput.value : null,
                     plan_slug: planInput ? planInput.value : null
@@ -256,16 +257,28 @@ async function handleRegister(e) {
                     body: JSON.stringify(storeData)
                 });
                 
-                // Even if store creation fails, redirect to onboarding
-                // The user can complete store setup there
+                const storeResult = await storeResponse.json();
+                
+                if (!storeResult.success) {
+                    errorAlert.textContent = storeResult.error || 'Erro ao criar loja';
+                    errorAlert.classList.remove('d-none');
+                    return;
+                }
+                
+                // Store created successfully, redirect to dashboard
+                window.location.href = 'dashboard.html';
+                return;
             } catch (storeError) {
                 console.error('Erro ao criar loja:', storeError);
-                // Continue to redirect anyway
+                errorAlert.textContent = 'Erro ao criar loja. Tente novamente.';
+                errorAlert.classList.remove('d-none');
+                return;
             }
         }
         
-        // Redirect to onboarding
-        window.location.href = 'onboarding.html';
+        // If no store name provided, redirect to dashboard anyway
+        // (user can configure store later)
+        window.location.href = 'dashboard.html';
         
     } catch (error) {
         console.error('Erro ao criar conta:', error);

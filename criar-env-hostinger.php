@@ -25,46 +25,72 @@ JWT_SECRET=change-this-to-a-very-secure-random-string-in-production
 CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
 ENV;
 
-// Caminhos possíveis para o arquivo .env
+// Caminhos possíveis para o arquivo .env (na ordem que load-env.php procura)
 $paths = [
-    __DIR__ . '/.env',
-    __DIR__ . '/api/.env',
+    __DIR__ . '/api/.env',           // Prioridade 1: api/.env
+    __DIR__ . '/.env',                // Prioridade 2: root/.env
 ];
 
 $created = false;
+$overwritten = false;
 $messages = [];
+
+// Verificar se deve sobrescrever (via GET parameter ?force=1)
+$forceOverwrite = isset($_GET['force']) && $_GET['force'] == '1';
 
 foreach ($paths as $path) {
     $dir = dirname($path);
     
     // Criar diretório se não existir
     if (!is_dir($dir)) {
-        if (mkdir($dir, 0755, true)) {
-            $messages[] = "Diretório criado: $dir";
+        if (@mkdir($dir, 0755, true)) {
+            $messages[] = "✅ Diretório criado: $dir";
         } else {
-            $messages[] = "Erro ao criar diretório: $dir";
-            continue;
+            $messages[] = "⚠️ Não foi possível criar diretório: $dir (pode já existir)";
         }
     }
     
     // Verificar se arquivo já existe
     if (file_exists($path)) {
-        $messages[] = "Arquivo já existe: $path (não foi sobrescrito)";
-        continue;
-    }
-    
-    // Criar arquivo .env
-    if (file_put_contents($path, $envContent)) {
-        $messages[] = "✅ Arquivo criado com sucesso: $path";
-        
-        // Tentar definir permissões (pode não funcionar em alguns servidores)
-        if (@chmod($path, 0644)) {
-            $messages[] = "Permissões configuradas: 644";
+        if ($forceOverwrite) {
+            // Sobrescrever arquivo existente
+            if (file_put_contents($path, $envContent)) {
+                $messages[] = "✅ Arquivo sobrescrito com sucesso: $path";
+                $overwritten = true;
+                
+                // Tentar definir permissões
+                if (@chmod($path, 0644)) {
+                    $messages[] = "   Permissões configuradas: 644";
+                }
+                $created = true;
+            } else {
+                $messages[] = "❌ Erro ao sobrescrever arquivo: $path";
+            }
+        } else {
+            $messages[] = "ℹ️ Arquivo já existe: $path";
+            $messages[] = "   Para sobrescrever, acesse: criar-env-hostinger.php?force=1";
+            // Não continua, mantém o arquivo existente
+            continue;
         }
-        
-        $created = true;
     } else {
-        $messages[] = "❌ Erro ao criar arquivo: $path";
+        // Criar novo arquivo .env
+        if (file_put_contents($path, $envContent)) {
+            $messages[] = "✅ Arquivo criado com sucesso: $path";
+            
+            // Tentar definir permissões (pode não funcionar em alguns servidores)
+            if (@chmod($path, 0644)) {
+                $messages[] = "   Permissões configuradas: 644";
+            } else {
+                $messages[] = "   ⚠️ Não foi possível definir permissões automaticamente";
+                $messages[] = "   Configure manualmente as permissões para 644";
+            }
+            
+            $created = true;
+            break; // Para após criar no primeiro local disponível
+        } else {
+            $messages[] = "❌ Erro ao criar arquivo: $path";
+            $messages[] = "   Verifique permissões de escrita no diretório";
+        }
     }
 }
 
@@ -151,8 +177,15 @@ if (php_sapi_name() === 'cli') {
                     <strong>⚠️ IMPORTANTE:</strong><br>
                     1. Altere o <code>JWT_SECRET</code> para uma chave segura e única<br>
                     2. Verifique se as credenciais do banco estão corretas<br>
-                    3. Teste a conexão: <a href="api/test.php">api/test.php</a><br>
-                    4. <strong>DELETE este arquivo após usar!</strong>
+                    3. Teste a conexão: <a href="api/test.php" target="_blank">api/test.php</a> ou <a href="api/test-env.php" target="_blank">api/test-env.php</a><br>
+                    4. <strong>DELETE este arquivo (criar-env-hostinger.php) após usar por segurança!</strong>
+                </div>
+            <?php elseif (!$forceOverwrite): ?>
+                <div class="warning">
+                    <strong>ℹ️ Arquivo .env já existe</strong><br>
+                    Se você deseja recriar/sobrescrever o arquivo .env, 
+                    <a href="?force=1" style="font-weight: bold; color: #f44336;">clique aqui para forçar sobrescrita</a><br><br>
+                    <small>⚠️ Isso irá sobrescrever o arquivo existente com os valores padrão.</small>
                 </div>
             <?php endif; ?>
             
@@ -165,4 +198,5 @@ if (php_sapi_name() === 'cli') {
     </html>
     <?php
 }
+
 

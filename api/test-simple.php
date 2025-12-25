@@ -14,3 +14,4 @@ echo "Arquivo atual: " . __FILE__ . "\n";
 echo "Diretório: " . __DIR__ . "\n\n";
 
 echo "Se você vê esta mensagem, PHP está funcionando corretamente na pasta /api/\n";
+

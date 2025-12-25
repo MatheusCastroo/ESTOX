@@ -119,3 +119,4 @@ chmod 755 api/classes/
      -H "Content-Type: application/json" \
      -d '{"email":"teste@test.com","password":"123456","name":"Teste"}'
    ```
+

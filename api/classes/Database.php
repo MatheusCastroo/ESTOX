@@ -1,11 +1,42 @@
 <?php
 
+// Load environment variables before database connection
+require_once __DIR__ . '/../config/load-env.php';
+
 class Database {
     private static $instance = null;
     private $connection;
 
     private function __construct() {
         $config = require __DIR__ . '/../config/database.php';
+        
+        // Check if we're using default values (likely .env not loaded)
+        $usingDefaults = ($config['username'] === 'root' && $config['password'] === '');
+        if ($usingDefaults) {
+            // Check if .env files exist
+            $envPaths = [
+                __DIR__ . '/../.env',
+                __DIR__ . '/../../.env',
+            ];
+            $envExists = false;
+            foreach ($envPaths as $envPath) {
+                if (file_exists($envPath)) {
+                    $envExists = true;
+                    break;
+                }
+            }
+            
+            if (!$envExists) {
+                http_response_code(500);
+                echo json_encode([
+                    'error' => 'Arquivo .env não encontrado. Configure o banco de dados no arquivo .env na pasta api/',
+                    'help' => 'Acesse: https://seudominio.com.br/criar-env-hostinger.php para criar o arquivo .env automaticamente',
+                    'default_config_used' => true,
+                    'checked_paths' => $envPaths
+                ]);
+                exit;
+            }
+        }
         
         try {
             $dsn = sprintf(
@@ -28,7 +59,14 @@ class Database {
             );
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+            $errorMsg = 'Database connection failed: ' . $e->getMessage();
+            
+            // Add helpful message if using default credentials
+            if ($usingDefaults && strpos($e->getMessage(), 'Access denied') !== false) {
+                $errorMsg .= '. Verifique se o arquivo .env está configurado corretamente com as credenciais do banco de dados.';
+            }
+            
+            echo json_encode(['error' => $errorMsg]);
             exit;
         }
     }

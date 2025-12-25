@@ -11,3 +11,4 @@
 // if ($_SERVER['REMOTE_ADDR'] !== 'SEU_IP_AQUI') { die('Access denied'); }
 
 phpinfo();
+

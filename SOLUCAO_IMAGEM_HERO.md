@@ -102,3 +102,4 @@ Para ter a imagem real aparecendo, certifique-se de que:
 1. O arquivo existe no servidor em `public/car-dealership-dashboard-interface-showing-vehicle.jpg`
 2. As permissões estão corretas (644)
 3. O caminho no HTML está correto
+
