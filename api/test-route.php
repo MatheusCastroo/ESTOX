@@ -18,3 +18,4 @@ echo json_encode([
     'next_step' => 'Se este arquivo funcionou, tente: /api/test.php'
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
+

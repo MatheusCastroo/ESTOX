@@ -128,3 +128,4 @@ Se você usa FTP/SFTP para fazer upload:
 - Verifique se todos os arquivos foram transferidos completamente
 - Verifique se não há caracteres especiais nos nomes dos arquivos
 
+

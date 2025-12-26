@@ -100,31 +100,49 @@ function displayStoreInfo(store) {
         return;
     }
     
-    // Header
-    const storeNameHeader = document.getElementById('storeNameHeader');
-    if (storeNameHeader) storeNameHeader.textContent = store.name || 'Loja';
-    
-    // REQ-FR-021: Display city and state in header
-    const storeCityStateHeader = document.getElementById('storeCityStateHeader');
-    if (storeCityStateHeader) {
-        const cityStateParts = [];
-        if (store.city) cityStateParts.push(store.city);
-        if (store.state) cityStateParts.push(store.state);
-        if (cityStateParts.length > 0) {
-            storeCityStateHeader.textContent = cityStateParts.join(', ');
-        } else {
-            storeCityStateHeader.textContent = '';
-        }
-    }
-    
+    // Header - Logo (prioridade) ou Nome (fallback)
     const storeLogoHeader = document.getElementById('storeLogoHeader');
-    if (store.logo_url) {
-        storeLogoHeader.src = store.logo_url;
-        storeLogoHeader.alt = store.name;
+    const storeNameHeaderFallback = document.getElementById('storeNameHeaderFallback');
+    
+    if (store.logo_url && store.logo_url.trim() !== '') {
+        // Garantir que logo_url tenha prefixo data: se for base64
+        let logoUrl = store.logo_url.trim();
+        if (!logoUrl.startsWith('data:') && !logoUrl.startsWith('http://') && !logoUrl.startsWith('https://')) {
+            // Provavelmente base64 sem prefixo, adicionar
+            logoUrl = `data:image/png;base64,${logoUrl}`;
+        }
+        
+        storeLogoHeader.src = logoUrl;
+        storeLogoHeader.alt = store.name || 'Logo da loja';
         storeLogoHeader.classList.remove('d-none');
+        
+        // Esconder fallback quando logo carregar
+        if (storeNameHeaderFallback) {
+            storeNameHeaderFallback.classList.add('d-none');
+        }
+        
+        // Tratamento de erro - mostrar fallback se logo falhar
         storeLogoHeader.onerror = function() {
             this.classList.add('d-none');
+            if (storeNameHeaderFallback) {
+                storeNameHeaderFallback.textContent = store.name || 'Loja';
+                storeNameHeaderFallback.classList.remove('d-none');
+            }
         };
+        
+        // Quando logo carregar com sucesso, garantir que fallback está escondido
+        storeLogoHeader.onload = function() {
+            if (storeNameHeaderFallback) {
+                storeNameHeaderFallback.classList.add('d-none');
+            }
+        };
+    } else {
+        // Sem logo - mostrar nome como fallback
+        storeLogoHeader.classList.add('d-none');
+        if (storeNameHeaderFallback) {
+            storeNameHeaderFallback.textContent = store.name || 'Loja';
+            storeNameHeaderFallback.classList.remove('d-none');
+        }
     }
     
     // Hero Section

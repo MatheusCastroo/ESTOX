@@ -60,9 +60,37 @@ async function loadStoreSettings() {
             document.getElementById('state').value = store.state || '';
             
             // Load logo if exists
-            if (store.logo_url) {
+            if (store.logo_url && store.logo_url.trim() !== '') {
                 logoUrl = store.logo_url;
-                showLogoPreview(store.logo_url);
+                
+                // Garantir que logo_url tenha prefixo data: se for base64
+                let logoUrlToShow = store.logo_url.trim();
+                if (!logoUrlToShow.startsWith('data:') && !logoUrlToShow.startsWith('http://') && !logoUrlToShow.startsWith('https://')) {
+                    // Provavelmente base64 sem prefixo, adicionar
+                    logoUrlToShow = `data:image/png;base64,${logoUrlToShow}`;
+                    logoUrl = logoUrlToShow; // Atualizar também a variável global
+                }
+                
+                // Check if base64 string might be truncated (common issue with TEXT fields)
+                if (logoUrlToShow.startsWith('data:image/')) {
+                    // Check if base64 data is complete (should end with = or == for padding)
+                    const base64Part = logoUrlToShow.split(',')[1];
+                    if (base64Part && base64Part.length > 0) {
+                        // Base64 strings should have length multiple of 4, or end with padding
+                        const padding = base64Part.length % 4;
+                        if (padding !== 0 && !base64Part.endsWith('=') && !base64Part.endsWith('==') && !base64Part.endsWith('===')) {
+                            console.warn('Base64 string may be truncated or incomplete');
+                        }
+                    }
+                }
+                
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    showLogoPreview(logoUrlToShow);
+                }, 100);
+            } else {
+                // Ensure preview is hidden if no logo
+                showLogoPreview(null);
             }
             
             // Update catalog link
@@ -99,16 +127,93 @@ function showLogoPreview(url) {
     const previewImg = document.getElementById('logoPreviewImg');
     const removeBtn = document.getElementById('removeLogoBtn');
     
-    if (url) {
-        previewImg.src = url;
-        previewImg.classList.add('logo-preview');
-        preview.style.display = 'flex';
-        removeBtn.style.display = 'block';
+    if (!preview || !previewImg || !removeBtn) {
+        console.error('Logo preview elements not found');
+        return;
+    }
+    
+    if (url && url.trim() !== '') {
+        // Clean up the URL - remove any whitespace
+        const cleanUrl = url.trim();
+        
+        // Validate if it's a base64 data URL or a regular URL
+        const isBase64 = cleanUrl.startsWith('data:image/');
+        const isHttpUrl = cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
+        
+        if (!isBase64 && !isHttpUrl) {
+            console.warn('Logo URL format may be invalid:', cleanUrl.substring(0, 50) + '...');
+            // Try to treat it as base64 anyway (might be missing data: prefix)
+            if (cleanUrl.length > 100) {
+                // Likely base64, add prefix if missing
+                const fixedUrl = cleanUrl.includes('data:') ? cleanUrl : `data:image/png;base64,${cleanUrl}`;
+                url = fixedUrl;
+            }
+        }
+        
+        // Clear previous error state
+        previewImg.onerror = null;
+        previewImg.onload = null;
+        
+        // Set up error handler
+        previewImg.onerror = function() {
+            console.error('Error loading logo image. URL length:', cleanUrl.length);
+            console.error('Is Base64:', isBase64, 'Is HTTP URL:', isHttpUrl);
+            
+            hideLogoError();
+            
+            // Check if base64 might be truncated
+            if (isBase64) {
+                const base64Part = cleanUrl.split(',')[1];
+                if (base64Part && base64Part.length > 0) {
+                    // Try to fix incomplete base64 by adding padding
+                    const paddingNeeded = (4 - (base64Part.length % 4)) % 4;
+                    if (paddingNeeded > 0 && paddingNeeded < 4) {
+                        const fixedUrl = cleanUrl + '='.repeat(paddingNeeded);
+                        console.log('Attempting to fix base64 padding...');
+                        previewImg.src = fixedUrl;
+                        return; // Don't show error yet, try fixed version
+                    }
+                }
+                
+                // If base64 is very short, it's likely corrupted
+                if (cleanUrl.length < 100) {
+                    showLogoError('Erro ao carregar a imagem da logo. A imagem pode estar corrompida.');
+                } else {
+                    // Long base64 that failed - might be truncated in database
+                    showLogoError('A imagem da logo pode estar incompleta. Tente fazer upload novamente.');
+                }
+            } else if (!isHttpUrl) {
+                showLogoError('Formato de URL da logo inválido.');
+            } else {
+                // HTTP URL failed to load
+                showLogoError('Erro ao carregar a imagem da logo. Verifique se a URL está acessível.');
+            }
+            
+            preview.style.display = 'none';
+            removeBtn.style.display = 'none';
+        };
+        
+        // Set up load handler to ensure image is displayed
+        previewImg.onload = function() {
+            console.log('Logo image loaded successfully');
+            previewImg.classList.add('logo-preview');
+            preview.style.display = 'flex';
+            removeBtn.style.display = 'block';
+            hideLogoError();
+        };
+        
+        // Set the image source (this will trigger onload or onerror)
+        // Use a small timeout to ensure error handlers are set
+        setTimeout(() => {
+            previewImg.src = cleanUrl;
+        }, 10);
     } else {
         preview.style.display = 'none';
         removeBtn.style.display = 'none';
         previewImg.src = '';
         previewImg.classList.remove('logo-preview');
+        previewImg.onerror = null;
+        previewImg.onload = null;
     }
 }
 
@@ -188,30 +293,13 @@ async function saveSettings(e) {
     }
 }
 
-// Logo validation and processing constants
-const LOGO_TARGET_WIDTH = 1000;
-const LOGO_TARGET_HEIGHT = 300;
-const LOGO_MIN_WIDTH = 500;
-const LOGO_MIN_HEIGHT = 150;
-const LOGO_TARGET_RATIO = LOGO_TARGET_WIDTH / LOGO_TARGET_HEIGHT; // ~3.33:1
-const ALLOWED_FORMATS = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/jpg'];
-const ALLOWED_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg'];
+// Logo validation constants
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 /**
- * Validate logo file format
+ * Validate logo file size
  */
-function validateLogoFormat(file) {
-    const extension = '.' + file.name.split('.').pop().toLowerCase();
-    const isValidFormat = ALLOWED_FORMATS.includes(file.type) || ALLOWED_EXTENSIONS.includes(extension);
-    
-    if (!isValidFormat) {
-        return {
-            valid: false,
-            error: 'Formato de arquivo não permitido. Use SVG, PNG ou JPG.'
-        };
-    }
-    
+function validateLogoSize(file) {
     if (file.size > MAX_FILE_SIZE) {
         return {
             valid: false,
@@ -220,83 +308,6 @@ function validateLogoFormat(file) {
     }
     
     return { valid: true };
-}
-
-/**
- * Validate logo dimensions and ratio
- */
-function validateLogoDimensions(width, height, isSvg = false) {
-    // SVG files don't have fixed dimensions, skip dimension validation
-    if (isSvg) {
-        return { valid: true };
-    }
-    
-    // Check minimum resolution
-    if (width < LOGO_MIN_WIDTH || height < LOGO_MIN_HEIGHT) {
-        return {
-            valid: false,
-            error: `A logo deve possuir boa qualidade. Recomendamos imagens com resolução mínima de ${LOGO_MIN_WIDTH} × ${LOGO_MIN_HEIGHT} px e proporção horizontal.`
-        };
-    }
-    
-    // Check if image is too vertical (proportion should be horizontal)
-    const ratio = width / height;
-    if (ratio < 1) {
-        return {
-            valid: false,
-            error: 'A logo deve ter proporção horizontal (largura maior que altura).'
-        };
-    }
-    
-    return { valid: true };
-}
-
-/**
- * Resize image to target dimensions maintaining aspect ratio with transparent padding
- */
-function resizeImageToStandard(image, originalWidth, originalHeight) {
-    return new Promise((resolve, reject) => {
-        try {
-            const canvas = document.createElement('canvas');
-            canvas.width = LOGO_TARGET_WIDTH;
-            canvas.height = LOGO_TARGET_HEIGHT;
-            const ctx = canvas.getContext('2d');
-            
-            // Set transparent background
-            ctx.clearRect(0, 0, LOGO_TARGET_WIDTH, LOGO_TARGET_HEIGHT);
-            
-            // Calculate scaling to fit within target dimensions while maintaining aspect ratio
-            const scale = Math.min(
-                LOGO_TARGET_WIDTH / originalWidth,
-                LOGO_TARGET_HEIGHT / originalHeight
-            );
-            
-            const scaledWidth = originalWidth * scale;
-            const scaledHeight = originalHeight * scale;
-            
-            // Center the image
-            const x = (LOGO_TARGET_WIDTH - scaledWidth) / 2;
-            const y = (LOGO_TARGET_HEIGHT - scaledHeight) / 2;
-            
-            // Draw image with transparency preserved
-            ctx.drawImage(image, x, y, scaledWidth, scaledHeight);
-            
-            // Convert to base64
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    reject(new Error('Erro ao processar imagem'));
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('Erro ao converter imagem'));
-                reader.readAsDataURL(blob);
-            }, 'image/png', 1.0); // PNG with lossless compression
-        } catch (error) {
-            reject(error);
-        }
-    });
 }
 
 /**
@@ -322,74 +333,26 @@ function hideLogoError() {
 }
 
 /**
- * Handle logo upload with validation and processing
+ * Handle logo upload with validation
  */
 async function handleLogoUpload(file, inputElement) {
     hideLogoError();
     
-    // Validate format
-    const formatValidation = validateLogoFormat(file);
-    if (!formatValidation.valid) {
-        showLogoError(formatValidation.error);
+    // Validate file size
+    const sizeValidation = validateLogoSize(file);
+    if (!sizeValidation.valid) {
+        showLogoError(sizeValidation.error);
         inputElement.value = '';
         return;
     }
     
-    // Check if SVG
-    const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
-    
-    if (isSvg) {
-        // For SVG, just validate format and use as is
-        logoFile = file;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            logoUrl = e.target.result;
-            showLogoPreview(logoUrl);
-            hideLogoError();
-        };
-        reader.onerror = function() {
-            showLogoError('Erro ao ler arquivo SVG');
-            inputElement.value = '';
-        };
-        reader.readAsDataURL(file);
-        return;
-    }
-    
-    // For raster images (PNG, JPG), validate dimensions and resize
+    // Use file as is (no resizing or dimension validation)
+    logoFile = file;
     const reader = new FileReader();
-    reader.onload = async function(e) {
-        const img = new Image();
-        img.onload = async function() {
-            // Validate dimensions
-            const dimensionValidation = validateLogoDimensions(img.width, img.height, false);
-            if (!dimensionValidation.valid) {
-                showLogoError(dimensionValidation.error);
-                inputElement.value = '';
-                return;
-            }
-            
-            try {
-                // Resize to standard dimensions
-                const resizedDataUrl = await resizeImageToStandard(img, img.width, img.height);
-                
-                // Convert resized data URL back to File/Blob for upload
-                const response = await fetch(resizedDataUrl);
-                const blob = await response.blob();
-                logoFile = new File([blob], file.name, { type: 'image/png' });
-                logoUrl = resizedDataUrl;
-                showLogoPreview(resizedDataUrl);
-                hideLogoError();
-            } catch (error) {
-                console.error('Error processing image:', error);
-                showLogoError('Erro ao processar imagem. Tente novamente.');
-                inputElement.value = '';
-            }
-        };
-        img.onerror = function() {
-            showLogoError('Erro ao carregar imagem. Verifique se o arquivo está corrompido.');
-            inputElement.value = '';
-        };
-        img.src = e.target.result;
+    reader.onload = function(e) {
+        logoUrl = e.target.result;
+        showLogoPreview(logoUrl);
+        hideLogoError();
     };
     reader.onerror = function() {
         showLogoError('Erro ao ler arquivo de imagem');

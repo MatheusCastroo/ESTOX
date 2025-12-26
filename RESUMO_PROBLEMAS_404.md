@@ -160,3 +160,4 @@ Ao acessar `cadastro.html`, abra F12 → Console:
    - Se `.htaccess` não está funcionando
    - Se PHP não está sendo processado na pasta `api/`
 
+

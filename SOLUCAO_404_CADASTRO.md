@@ -120,3 +120,4 @@ chmod 755 api/classes/
      -d '{"email":"teste@test.com","password":"123456","name":"Teste"}'
    ```
 
+

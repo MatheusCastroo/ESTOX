@@ -92,3 +92,4 @@ API_URL configurada: https://nerdparadise.com.br/api
    - Verifique se há erros na API (404, CORS, etc)
    - Veja a aba Network no console para ver as requisições
 
+

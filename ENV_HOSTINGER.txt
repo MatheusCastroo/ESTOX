@@ -12,3 +12,4 @@ JWT_SECRET=change-this-to-a-very-secure-random-string-in-production
 CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
 
 
+
