@@ -200,10 +200,14 @@
                                     <h5 class="fw-bold mb-0">Fotos</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="border-2 border-dashed rounded p-4 text-center">
+                                    <div class="border-2 border-dashed rounded p-4 text-center image-upload-area">
                                         <i class="bi bi-cloud-upload fs-1 text-muted mb-3"></i>
                                         <p class="text-muted small mb-2">Arraste imagens ou clique para fazer upload</p>
-                                        <input type="file" class="form-control" id="imagesInput" multiple accept="image/*">
+                                        <label for="imagesInput" class="btn btn-primary w-100 mb-2" style="min-height: 44px; cursor: pointer;">
+                                            <i class="bi bi-camera me-2"></i>Selecionar Fotos
+                                        </label>
+                                        <input type="file" class="form-control d-none" id="imagesInput" multiple accept="image/*">
+                                        <small class="text-muted d-block">Máximo 10 imagens</small>
                                     </div>
                                     <div id="imagesPreview" class="row g-2 mt-3"></div>
                                 </div>
@@ -246,6 +250,7 @@
     <script src="assets/js/config.js"></script>
     <script src="assets/js/toast.js"></script>
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/mobile.js"></script>
     <script src="assets/js/edit-vehicle.js"></script>
 </body>
 </html>

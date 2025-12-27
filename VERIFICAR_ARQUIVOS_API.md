@@ -129,3 +129,5 @@ Se você usa FTP/SFTP para fazer upload:
 - Verifique se não há caracteres especiais nos nomes dos arquivos
 
 
+
+

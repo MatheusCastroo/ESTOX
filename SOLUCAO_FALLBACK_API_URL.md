@@ -93,3 +93,5 @@ API_URL configurada: https://nerdparadise.com.br/api
    - Veja a aba Network no console para ver as requisições
 
 
+
+

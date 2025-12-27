@@ -87,27 +87,27 @@ function displayVehicles(vehicles) {
         
         return `
             <tr>
-                <td>
+                <td data-label="Veículo">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="${image}" alt="${vehicle.model}" class="rounded" style="width: 64px; height: 48px; object-fit: cover;">
+                        <img src="${image}" alt="${vehicle.model}" class="rounded" style="width: 64px; height: 48px; object-fit: cover;" loading="lazy">
                         <div>
                             <p class="fw-medium mb-0">${vehicle.model}</p>
                             <p class="text-muted small mb-0">${vehicle.brand}</p>
                         </div>
                     </div>
                 </td>
-                <td>${vehicle.year}</td>
-                <td>${vehicle.mileage.toLocaleString('pt-BR')} km</td>
-                <td class="fw-semibold text-primary">${formatPrice(vehicle.price)}</td>
-                <td>
+                <td data-label="Ano">${vehicle.year}</td>
+                <td data-label="Quilometragem">${vehicle.mileage.toLocaleString('pt-BR')} km</td>
+                <td data-label="Preço" class="fw-semibold text-primary">${formatPrice(vehicle.price)}</td>
+                <td data-label="Status">
                     <span class="badge bg-${statusColors[vehicle.status]}">${statusLabels[vehicle.status]}</span>
                 </td>
-                <td class="text-end">
+                <td data-label="Ações" class="text-end">
                     <div class="btn-group">
-                        <a href="veiculo-editar.html?id=${vehicle.id}" class="btn btn-sm btn-outline-primary">
+                        <a href="veiculo-editar.html?id=${vehicle.id}" class="btn btn-sm btn-outline-primary" style="min-width: 44px; min-height: 44px;">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${vehicle.id}')">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${vehicle.id}')" style="min-width: 44px; min-height: 44px;">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>

@@ -297,6 +297,16 @@
                 flex-direction: column;
                 gap: 1rem;
             }
+            
+            /* Ocultar filtros laterais em mobile */
+            .col-lg-3.filters-sidebar {
+                display: none;
+            }
+            
+            /* Garantir que resultados ocupem toda largura */
+            .col-lg-9 {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -479,12 +489,14 @@
             <div class="col-lg-9">
                 <div class="results-header">
                     <div class="results-count" id="resultsCount">Carregando veículos...</div>
-                    <select class="sort-select" id="sortSelect">
-                        <option value="relevance">Relevância</option>
-                        <option value="price_low">Menor preço</option>
-                        <option value="price_high">Maior preço</option>
-                        <option value="year_new">Mais novos</option>
-                    </select>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select class="sort-select" id="sortSelect">
+                            <option value="relevance">Relevância</option>
+                            <option value="price_low">Menor preço</option>
+                            <option value="price_high">Maior preço</option>
+                            <option value="year_new">Mais novos</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="vehiclesGrid" class="row g-3">
@@ -550,6 +562,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="assets/js/config.js"></script>
+    <script src="assets/js/mobile.js"></script>
     <script src="assets/js/loja.js"></script>
 
     <script>

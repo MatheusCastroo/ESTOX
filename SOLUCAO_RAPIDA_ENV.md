@@ -65,3 +65,5 @@ CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
 4. Verifique se as credenciais estão corretas no painel da Hostinger
 
 
+
+

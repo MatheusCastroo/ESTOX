@@ -87,3 +87,5 @@ Acessar arquivos PHP diretamente retorna "This Page Does Not Exist":
 - `DIAGNOSTICO_PHP_API.md` - Diagnóstico detalhado
 
 
+
+

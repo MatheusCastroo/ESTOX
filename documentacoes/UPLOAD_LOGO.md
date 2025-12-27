@@ -368,3 +368,5 @@ WHERE logo_url IS NOT NULL;
 - [ ] Validação de dimensões
 - [ ] Upload para servidor de arquivos
 
+
+

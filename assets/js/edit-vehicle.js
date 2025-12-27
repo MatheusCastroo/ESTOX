@@ -151,9 +151,23 @@ function updateFeaturesList() {
 function handleImageUpload(e) {
     const files = Array.from(e.target.files);
     const preview = document.getElementById('imagesPreview');
+    const maxImages = 10;
+    
+    // Limitar número de imagens
+    if (images.length + files.length > maxImages) {
+        Toast.error(`Máximo de ${maxImages} imagens permitidas`);
+        const allowedFiles = files.slice(0, maxImages - images.length);
+        files = allowedFiles;
+    }
     
     files.forEach(file => {
         if (file.type.startsWith('image/')) {
+            // Validar tamanho (máximo 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                Toast.error(`Imagem ${file.name} muito grande. Máximo 5MB.`);
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 images.push(e.target.result);
@@ -176,13 +190,20 @@ function updateImagesPreview() {
     const preview = document.getElementById('imagesPreview');
     preview.innerHTML = '';
     
+    if (images.length === 0) {
+        preview.innerHTML = '<div class="col-12"><p class="text-muted small text-center">Nenhuma imagem selecionada</p></div>';
+        return;
+    }
+    
     images.forEach((img, index) => {
         const div = document.createElement('div');
-        div.className = 'col-6';
+        div.className = 'col-6 col-md-4 col-lg-3';
         div.innerHTML = `
-            <div class="position-relative">
-                <img src="${img}" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;">
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-1 bg-white" onclick="removeImage(${index})"></button>
+            <div class="position-relative mb-2">
+                <img src="${img}" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;" loading="lazy">
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeImage(${index})" style="min-width: 32px; min-height: 32px; padding: 0;">
+                    <i class="bi bi-x"></i>
+                </button>
             </div>
         `;
         preview.appendChild(div);

@@ -161,3 +161,5 @@ Ao acessar `cadastro.html`, abra F12 → Console:
    - Se PHP não está sendo processado na pasta `api/`
 
 
+
+
