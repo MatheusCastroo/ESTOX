@@ -449,3 +449,5 @@ A maioria das páginas está bem responsiva, utilizando Bootstrap 5 e algumas me
 **Status**: ✅ Responsivo, com melhorias recomendadas
 
 
+
+

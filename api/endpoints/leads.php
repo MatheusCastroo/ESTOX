@@ -22,12 +22,24 @@ if ($isPublic && $method === 'POST') {
     
     // Get store by slug
     $store = $db->fetchOne(
-        "SELECT id FROM stores WHERE slug = :slug AND is_active = true",
+        "SELECT id, subscription_status, subscription_ends_at FROM stores WHERE slug = :slug AND is_active = true",
         ['slug' => $data['store_slug']]
     );
     
     if (!$store) {
         Response::error('Loja não encontrada', 404);
+    }
+    
+    // Block access if subscription is pending, suspended, or canceled
+    if (in_array($store['subscription_status'], ['pending', 'suspended', 'canceled'])) {
+        Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
+    }
+    
+    // Check if trial expired
+    if ($store['subscription_status'] === 'trial' && 
+        $store['subscription_ends_at'] && 
+        strtotime($store['subscription_ends_at']) < time()) {
+        Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
     }
     
     $leadData = [

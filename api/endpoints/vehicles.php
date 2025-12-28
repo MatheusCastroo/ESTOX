@@ -16,13 +16,26 @@ $storeSlug = $_GET['store_slug'] ?? null;
 if ($isPublic && $storeSlug) {
     // Public catalog endpoints
     $store = $db->fetchOne(
-        "SELECT id, name, slug, logo_url, phone, whatsapp, email, address, city, state, description 
+        "SELECT id, name, slug, logo_url, phone, whatsapp, email, address, city, state, description, 
+                subscription_status, subscription_ends_at
          FROM stores WHERE slug = :slug AND is_active = true",
         ['slug' => $storeSlug]
     );
     
     if (!$store) {
         Response::error('Loja não encontrada', 404);
+    }
+    
+    // Block access if subscription is pending, suspended, or canceled
+    if (in_array($store['subscription_status'], ['pending', 'suspended', 'canceled'])) {
+        Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
+    }
+    
+    // Check if trial expired
+    if ($store['subscription_status'] === 'trial' && 
+        $store['subscription_ends_at'] && 
+        strtotime($store['subscription_ends_at']) < time()) {
+        Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
     }
     
     $vehicleId = $_GET['vehicle_id'] ?? null;

@@ -111,6 +111,35 @@ class Middleware {
         
         return true;
     }
+    
+    /**
+     * Check if user is admin
+     * You can implement your own admin check logic here
+     * For now, checks if user email is in admin list from env
+     */
+    public static function checkAdmin() {
+        require_once __DIR__ . '/Database.php';
+        
+        $adminEmails = getenv('ADMIN_EMAILS') ? explode(',', getenv('ADMIN_EMAILS')) : [];
+        
+        if (empty($adminEmails)) {
+            return false;
+        }
+        
+        $userId = self::requireAuth();
+        $db = Database::getInstance();
+        
+        $user = $db->fetchOne(
+            "SELECT email FROM users WHERE id = :id",
+            ['id' => $userId]
+        );
+        
+        if (!$user) {
+            return false;
+        }
+        
+        return in_array(trim($user['email']), array_map('trim', $adminEmails));
+    }
 }
 
 

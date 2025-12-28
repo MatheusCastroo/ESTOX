@@ -202,7 +202,7 @@
             resultsHeader.parentElement.insertBefore(filtersBtn, resultsHeader);
         }
 
-        // Criar modal de filtros
+        // Criar modal de filtros apenas uma vez
         if (!document.getElementById('filtersModal')) {
             const modal = document.createElement('div');
             modal.id = 'filtersModal';
@@ -219,7 +219,20 @@
             
             const modalBody = document.createElement('div');
             modalBody.className = 'p-3';
-            modalBody.innerHTML = filtersSidebar.innerHTML;
+            
+            // Copiar HTML da sidebar (removendo título)
+            // Como a sidebar original está oculta em mobile via CSS, não há conflito visual
+            // Os event listeners do loja.js funcionam nos elementos originais (ocultos)
+            let filtersHTML = filtersSidebar.innerHTML;
+            
+            // Remover o título "Filtros"
+            filtersHTML = filtersHTML.replace(/<h5[^>]*class="[^"]*fw-bold[^"]*"[^>]*>.*?Filtros.*?<\/h5>/i, '');
+            
+            modalBody.innerHTML = filtersHTML;
+            
+            // Sincronizar eventos: quando mudar no modal, atualizar no original (oculto)
+            // Isso garante que os filtros funcionem corretamente
+            syncFilterValues(modalBody);
             
             modal.appendChild(modalHeader);
             modal.appendChild(modalBody);
@@ -227,6 +240,30 @@
         }
     }
 
+    function syncFilterValues(modalBody) {
+        // Sincronizar valores entre elementos do modal e originais
+        // Quando o usuário interage com o modal, atualizar os elementos originais (ocultos)
+        modalBody.addEventListener('input', function(e) {
+            if (e.target.id) {
+                const original = document.getElementById(e.target.id);
+                if (original && original !== e.target) {
+                    original.value = e.target.value;
+                    original.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+        
+        modalBody.addEventListener('change', function(e) {
+            if (e.target.id) {
+                const original = document.getElementById(e.target.id);
+                if (original && original !== e.target) {
+                    original.value = e.target.value;
+                    original.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+    }
+    
     function toggleFiltersModal() {
         const modal = document.getElementById('filtersModal');
         if (modal) {

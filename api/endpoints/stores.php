@@ -103,7 +103,7 @@ switch ($method) {
             'state' => $data['state'] ?? null,
             'description' => $data['description'] ?? null,
             'subscription_status' => 'trial',
-            'subscription_ends_at' => date('Y-m-d H:i:s', strtotime('+14 days')),
+            'subscription_ends_at' => date('Y-m-d H:i:s', strtotime('+15 days')),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];

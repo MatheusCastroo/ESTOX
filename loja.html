@@ -284,7 +284,7 @@
         /* WhatsApp Float Button */
 
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 991.98px) {
             .filters-sidebar {
                 margin-bottom: 1rem;
             }
@@ -298,14 +298,25 @@
                 gap: 1rem;
             }
             
-            /* Ocultar filtros laterais em mobile */
-            .col-lg-3.filters-sidebar {
-                display: none;
+            /* Ocultar filtros laterais em mobile/tablet */
+            aside.col-lg-3 {
+                display: none !important;
             }
             
             /* Garantir que resultados ocupem toda largura */
             .col-lg-9 {
                 width: 100%;
+            }
+        }
+        
+        @media (min-width: 992px) {
+            /* Em desktop, ocultar o modal de filtros */
+            #filtersModal {
+                display: none !important;
+            }
+            
+            #filtersToggle {
+                display: none !important;
             }
         }
     </style>
