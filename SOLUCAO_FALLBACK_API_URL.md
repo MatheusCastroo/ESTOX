@@ -97,3 +97,5 @@ API_URL configurada: https://nerdparadise.com.br/api
 
 
 
+
+

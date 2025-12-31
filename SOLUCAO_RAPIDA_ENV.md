@@ -69,3 +69,5 @@ CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
 
 
 
+
+

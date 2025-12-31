@@ -82,9 +82,10 @@ switch ($endpoint) {
         require_once __DIR__ . '/endpoints/vehicles.php';
         break;
         
-    case 'leads':
-        require_once __DIR__ . '/endpoints/leads.php';
-        break;
+    // case 'leads':
+    //     require_once __DIR__ . '/endpoints/leads.php';
+    //     break;
+    // Removido temporariamente - será usado futuramente
         
     case 'dashboard':
         require_once __DIR__ . '/endpoints/dashboard.php';
@@ -110,7 +111,7 @@ switch ($endpoint) {
                     'auth' => '/api/auth?action=register ou /api/auth?action=login',
                     'stores' => '/api/stores',
                     'vehicles' => '/api/vehicles',
-                    'leads' => '/api/leads',
+                    // 'leads' => '/api/leads', // Removido temporariamente
                     'dashboard' => '/api/dashboard',
                     'plans' => '/api/plans',
                     'notifications' => '/api/notifications'
@@ -127,7 +128,7 @@ switch ($endpoint) {
             echo json_encode([
                 'error' => 'Endpoint não encontrado',
                 'endpoint' => $endpoint,
-                'available_endpoints' => ['auth', 'stores', 'vehicles', 'leads', 'dashboard', 'plans', 'notifications'],
+                'available_endpoints' => ['auth', 'stores', 'vehicles', 'dashboard', 'plans', 'notifications'],
                 'debug' => [
                     'request_uri' => $_SERVER['REQUEST_URI'] ?? 'não definido',
                     'path_segments' => $pathSegments,

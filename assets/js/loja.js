@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('maxPrice').addEventListener('input', debounce(filterVehicles, 300));
     document.getElementById('maxMileage').addEventListener('input', debounce(filterVehicles, 300));
     document.getElementById('transmissionFilter').addEventListener('change', filterVehicles);
-    document.getElementById('colorFilter').addEventListener('change', filterVehicles);
+    document.getElementById('colorFilter').addEventListener('input', debounce(filterVehicles, 300));
     document.getElementById('bodyTypeFilter').addEventListener('change', filterVehicles);
     
     // REQ-FR-LP-001 4.4: Ordenação de resultados
@@ -440,7 +440,7 @@ function filterVehicles() {
         const matchesPrice = vehicle.price >= minPrice && vehicle.price <= maxPrice;
         const matchesMileage = vehicle.mileage <= maxMileage;
         const matchesTransmission = !transmission || vehicle.transmission === transmission;
-        const matchesColor = !color || (vehicle.color && vehicle.color.toLowerCase() === color.toLowerCase());
+        const matchesColor = !color || (vehicle.color && vehicle.color.toLowerCase().includes(color.toLowerCase()));
         const matchesBodyType = !bodyType || vehicle.body_type === bodyType;
         
         return matchesSearch && matchesBrand && matchesModel && matchesYear && 
