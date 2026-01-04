@@ -11,17 +11,27 @@ $db = Database::getInstance();
 
 // This endpoint is public (no auth required)
 if ($method === 'GET') {
-    // Return only Professional plan
-    $plans = $db->fetchAll(
-        "SELECT * FROM plans WHERE slug = 'profissional' AND is_active = true ORDER BY price ASC"
-    );
-    
-    // Parse JSON fields
-    foreach ($plans as &$plan) {
-        $plan['features'] = json_decode($plan['features'], true);
+    try {
+        // Return Professional plans (Mensal, Trimestral, Anual)
+        $plans = $db->fetchAll(
+            "SELECT * FROM plans WHERE slug IN ('profissional-mensal', 'profissional-trimestral', 'profissional-anual') AND is_active = true ORDER BY price ASC"
+        );
+        
+        // Parse JSON fields
+        foreach ($plans as &$plan) {
+            if (isset($plan['features'])) {
+                $decoded = json_decode($plan['features'], true);
+                $plan['features'] = $decoded !== null ? $decoded : [];
+            } else {
+                $plan['features'] = [];
+            }
+        }
+        
+        Response::success(['plans' => $plans]);
+    } catch (Exception $e) {
+        // If there's an error, return empty array so frontend can use fallback
+        Response::success(['plans' => []]);
     }
-    
-    Response::success(['plans' => $plans]);
 } else {
     Response::error('Método não permitido', 405);
 }
