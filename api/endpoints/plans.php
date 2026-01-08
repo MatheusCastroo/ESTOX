@@ -12,9 +12,9 @@ $db = Database::getInstance();
 // This endpoint is public (no auth required)
 if ($method === 'GET') {
     try {
-        // Return Professional plans (Mensal, Trimestral, Anual)
+        // Return Professional plans (Mensal, Trimestral)
         $plans = $db->fetchAll(
-            "SELECT * FROM plans WHERE slug IN ('profissional-mensal', 'profissional-trimestral', 'profissional-anual') AND is_active = true ORDER BY price ASC"
+            "SELECT * FROM plans WHERE slug IN ('profissional-mensal', 'profissional-trimestral') AND is_active = true ORDER BY price ASC"
         );
         
         // Parse JSON fields

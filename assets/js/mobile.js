@@ -14,25 +14,56 @@
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
 
-        // Reutilizar o navbar-toggler existente para controlar a sidebar em mobile
-        const navbar = document.querySelector('.navbar');
+        // Adicionar classe ao body para indicar que há sidebar (para CSS)
+        document.body.classList.add('has-sidebar');
+
+        // Função para ajustar posição do navbar em mobile
+        function adjustNavbarPosition() {
+            const navbar = document.querySelector('.navbar');
+            if (!navbar) return;
+
+            if (window.innerWidth <= 768) {
+                // Em mobile, fixar navbar no topo se não tiver classe fixed-top
+                if (!navbar.classList.contains('fixed-top')) {
+                    navbar.style.position = 'fixed';
+                    navbar.style.top = '0';
+                    navbar.style.left = '0';
+                    navbar.style.right = '0';
+                    navbar.style.zIndex = '1050';
+                    navbar.style.width = '100%';
+                    // CSS já adiciona padding-top, mas garantir via JS também
+                    if (!document.body.style.paddingTop) {
+                        document.body.style.paddingTop = '56px';
+                    }
+                }
+            } else {
+                // Em desktop, remover estilos inline se não tiver classe fixed-top
+                if (!navbar.classList.contains('fixed-top')) {
+                    navbar.style.position = '';
+                    navbar.style.top = '';
+                    navbar.style.left = '';
+                    navbar.style.right = '';
+                    navbar.style.zIndex = '';
+                    navbar.style.width = '';
+                    document.body.style.paddingTop = '';
+                }
+            }
+        }
+
+        // Ajustar imediatamente ao carregar
+        adjustNavbarPosition();
+
+        // Ajustar quando redimensionar
+        window.addEventListener('resize', adjustNavbarPosition);
+
+        // Em mobile, o navbar-toggler controla o collapse do navbar (não mais a sidebar)
+        // O Bootstrap já gerencia isso automaticamente, então não precisamos interferir
         if (navbar) {
             const navbarToggler = navbar.querySelector('.navbar-toggler');
             if (navbarToggler && !navbarToggler.dataset.sidebarInitialized) {
-                // Marcar como inicializado
-                navbarToggler.dataset.sidebarInitialized = 'true';
-                
-                // Adicionar evento para controlar sidebar em mobile
-                navbarToggler.addEventListener('click', function(e) {
-                    // Em mobile, controlar sidebar; em desktop, comportamento normal do Bootstrap
-                    if (window.innerWidth <= 768) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleSidebar();
-                        return false;
-                    }
-                    // Em desktop, deixa o Bootstrap gerenciar normalmente
-                });
+                // Adicionar atributo data-sidebar-initialized apenas para compatibilidade
+                navbarToggler.setAttribute('data-sidebar-initialized', 'true');
+                // Não precisamos mais interceptar o clique - deixar o Bootstrap gerenciar
             }
         }
 

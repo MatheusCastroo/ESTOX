@@ -1,5 +1,5 @@
 -- AutoStock Database Seed
--- Script 008: Seed Professional plans (Mensal, Trimestral, Anual)
+-- Script 008: Seed Professional plans (Mensal, Trimestral)
 -- MySQL Version
 
 -- Desativar plano antigo 'profissional' se existir (não deletar para não quebrar referências)
@@ -10,7 +10,7 @@ UPDATE plans SET is_active = false WHERE slug = 'profissional' AND is_active = t
 DELETE FROM plans WHERE slug IN ('profissional-mensal', 'profissional-trimestral', 'profissional-anual');
 
 -- Inserir planos Profissional com diferentes periodicidades
--- Preços: Mensal (R$ 139,90/mês), Trimestral (R$ 119,90/mês = R$ 359,70/trimestre), Anual (R$ 109,90/mês = R$ 1.318,80/ano)
+-- Preços: Mensal (R$ 139,90/mês), Trimestral (R$ 119,90/mês = R$ 359,70/trimestre)
 INSERT INTO plans (id, name, slug, price, vehicle_limit, features, is_active) VALUES
 (
   UUID(),
@@ -26,15 +26,6 @@ INSERT INTO plans (id, name, slug, price, vehicle_limit, features, is_active) VA
   'Trimestral',
   'profissional-trimestral',
   359.70,  -- R$ 119,90/mês x 3 = R$ 359,70/trimestre (Economia de R$ 20,00/mês - 14,3% desconto)
-  50,
-  '["Até 50 veículos", "Catálogo com URL personalizada", "Suporte prioritário", "Relatórios avançados", "Integração WhatsApp", "Destaque nos anúncios"]',
-  true
-),
-(
-  UUID(),
-  'Anual',
-  'profissional-anual',
-  1318.80,  -- R$ 109,90/mês x 12 = R$ 1.318,80/ano (Economia de R$ 30,00/mês - 21,4% desconto)
   50,
   '["Até 50 veículos", "Catálogo com URL personalizada", "Suporte prioritário", "Relatórios avançados", "Integração WhatsApp", "Destaque nos anúncios"]',
   true
