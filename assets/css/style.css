@@ -99,71 +99,272 @@ html {
     min-height: 44px;
     display: flex;
     align-items: center;
+    transition: all 0.2s ease;
 }
 
-.sidebar .nav-link:hover,
+.sidebar .nav-link:hover {
+    background-color: rgba(26, 115, 232, 0.1);
+    color: var(--secondary-color);
+    transform: translateX(4px);
+}
+
 .sidebar .nav-link.active {
     background-color: var(--secondary-color);
     color: white;
+    font-weight: 600;
 }
 
-/* Sidebar Mobile */
-@media (max-width: 768px) {
+/* ============================================
+   DESKTOP - Sidebar Lateral Fixa
+   ============================================ */
+@media (min-width: 769px) {
+    /* Sidebar sempre visível em desktop */
     .sidebar {
-        position: fixed;
-        left: -100%;
-        top: 56px;
-        bottom: 0;
-        width: 280px;
-        z-index: 1040;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        overflow-y: auto;
-        transition: left 0.3s ease;
+        display: block !important;
+        position: relative !important;
+        min-height: calc(100vh - 56px);
+        background-color: #f8f9fa;
+        transition: none;
+        left: 0 !important;
+        top: 0 !important;
+        z-index: 1;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
     }
     
-    .sidebar.show {
-        left: 0;
+    /* Garantir que sidebar não sobreponha conteúdo - Bootstrap grid já gerencia isso */
+    .container-fluid > .row {
+        margin-left: 0;
+        margin-right: 0;
     }
     
+    /* Ocultar overlay em desktop */
     .sidebar-overlay {
-        display: none;
+        display: none !important;
+    }
+    
+    /* Ocultar menu do navbar em desktop quando há sidebar */
+    /* Apenas para páginas que têm sidebar (não index.html) */
+    body.has-sidebar .navbar-collapse {
+        display: none !important;
+    }
+    
+    /* Navbar toggler oculto em desktop apenas quando há sidebar */
+    body.has-sidebar .navbar-toggler {
+        display: none !important;
+    }
+    
+    /* Garantir que body não tenha padding em desktop apenas quando há sidebar */
+    body.has-sidebar {
+        padding-top: 0 !important;
+    }
+    
+    /* Navbar não fixo em desktop quando há sidebar */
+    body.has-sidebar .navbar:not(.fixed-top) {
+        position: relative !important;
+    }
+}
+
+/* ============================================
+   MOBILE - Menu Navbar Colapsável
+   (Apenas para páginas com sidebar - classe has-sidebar adicionada via JS)
+   ============================================ */
+@media (max-width: 768px) {
+    /* Fixar navbar no topo em mobile - apenas para páginas com sidebar */
+    body.has-sidebar .navbar:not(.fixed-top) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1050 !important;
+        width: 100% !important;
+    }
+    
+    /* Ajustar padding do body para compensar navbar fixo - apenas para páginas com sidebar */
+    body.has-sidebar {
+        padding-top: 56px !important;
+    }
+    
+    /* Ocultar sidebar em mobile - apenas quando existe */
+    body.has-sidebar .sidebar {
+        display: none !important;
+    }
+    
+    /* Navbar Toggler - estilos específicos para páginas com sidebar */
+    body.has-sidebar .navbar-toggler {
+        display: block !important;
+        position: relative;
+        z-index: 1051;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        padding: 0.375rem 0.75rem;
+        margin-left: auto;
+        border-radius: 0.375rem;
+        transition: all 0.2s ease;
+    }
+    
+    body.has-sidebar .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
+        outline: none;
+    }
+    
+    body.has-sidebar .navbar-toggler:not(.collapsed) {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Garantir que navbar-brand e toggler estejam bem alinhados - apenas para páginas com sidebar */
+    body.has-sidebar .navbar .container-fluid {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    /* Estilizar menu mobile no navbar-collapse - apenas para páginas com sidebar */
+    body.has-sidebar .navbar-collapse {
+        position: fixed !important;
+        top: 56px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background-color: rgba(13, 71, 161, 0.98) !important;
+        backdrop-filter: blur(10px);
+        padding: 1rem 0 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        overflow-y: auto;
+        z-index: 1040;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    body.has-sidebar .navbar-collapse.show,
+    body.has-sidebar .navbar-collapse:not(.collapsing) {
+        transform: translateX(0);
+    }
+    
+    /* Overlay escuro quando menu está aberto - apenas para páginas com sidebar */
+    body.has-sidebar .navbar-collapse.show::before {
+        content: '';
         position: fixed;
         top: 56px;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 1039;
-        transition: opacity 0.3s ease;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+        animation: fadeIn 0.3s ease;
     }
     
-    .sidebar-overlay.show {
-        display: block;
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
     
-    /* Ajustar conteúdo quando sidebar está aberta */
-    body.sidebar-open {
-        overflow: hidden;
-    }
-    
-    /* Garantir que conteúdo principal não fique atrás da sidebar */
-    .container-fluid > .row > main,
-    .container-fluid > .row > .col-md-9,
-    .container-fluid > .row > .col-lg-10 {
+    /* Estilos dos links no menu mobile - apenas para páginas com sidebar */
+    body.has-sidebar .navbar-collapse .navbar-nav {
         width: 100%;
+        padding: 0 1rem;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-item {
+        margin: 0.25rem 0;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link {
+        color: rgba(255, 255, 255, 0.95) !important;
+        padding: 0.875rem 1.25rem !important;
+        display: flex;
+        align-items: center;
+        border-radius: 0.5rem;
+        margin: 0.125rem 0;
+        transition: all 0.2s ease;
+        min-height: 48px;
+        font-weight: 500;
+        position: relative;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 0;
+        background-color: white;
+        border-radius: 0 2px 2px 0;
+        transition: height 0.2s ease;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
+        transform: translateX(6px);
+        padding-left: 1.5rem !important;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link:hover::before {
+        height: 60%;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        color: white !important;
+        font-weight: 600;
+        padding-left: 1.5rem !important;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link.active::before {
+        height: 70%;
+        background-color: white;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link i {
+        width: 24px;
+        text-align: center;
+        font-size: 1.15rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link.text-danger {
+        color: #ff6b6b !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        margin-top: 0.75rem;
+        padding-top: 1.125rem !important;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link.text-danger:hover {
+        background-color: rgba(255, 107, 107, 0.2) !important;
+        color: #ff5252 !important;
+    }
+    
+    body.has-sidebar .navbar-collapse .nav-link.text-danger::before {
+        background-color: #ff6b6b;
+    }
+    
+    /* Bloquear scroll do body quando menu está aberto - apenas para páginas com sidebar */
+    body.has-sidebar.menu-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Ajustar conteúdo principal em mobile - apenas para páginas com sidebar */
+    body.has-sidebar .container-fluid > .row > main,
+    body.has-sidebar .container-fluid > .row > .col-md-9,
+    body.has-sidebar .container-fluid > .row > .col-lg-10 {
+        width: 100% !important;
         margin-left: 0 !important;
-    }
-    
-    /* Em mobile, o navbar-toggler controla a sidebar */
-    /* O collapse do navbar pode ser ocultado se não houver muitos itens */
-    /* Garantir que navbar-toggler seja visível */
-    .navbar-toggler {
-        display: block !important;
-    }
-    
-    /* Se o navbar só tiver um item (Sair), pode exibir diretamente em mobile */
-    .navbar-collapse .navbar-nav:only-child .nav-item:only-child .nav-link {
-        padding: 0.5rem 1rem;
+        margin-top: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 }
 

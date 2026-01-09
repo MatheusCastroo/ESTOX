@@ -14,73 +14,150 @@
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
 
-        // Reutilizar o navbar-toggler existente para controlar a sidebar em mobile
-        const navbar = document.querySelector('.navbar');
-        if (navbar) {
-            const navbarToggler = navbar.querySelector('.navbar-toggler');
-            if (navbarToggler && !navbarToggler.dataset.sidebarInitialized) {
-                // Marcar como inicializado
-                navbarToggler.dataset.sidebarInitialized = 'true';
-                
-                // Adicionar evento para controlar sidebar em mobile
-                navbarToggler.addEventListener('click', function(e) {
-                    // Em mobile, controlar sidebar; em desktop, comportamento normal do Bootstrap
-                    if (window.innerWidth <= 768) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleSidebar();
-                        return false;
+        // Adicionar classe ao body para indicar que há sidebar (para CSS)
+        // Apenas se realmente existir uma sidebar na página
+        if (sidebar && document.querySelector('.sidebar')) {
+            document.body.classList.add('has-sidebar');
+        }
+
+        // Função para ajustar posição do navbar em mobile
+        function adjustNavbarPosition() {
+            const navbar = document.querySelector('.navbar');
+            if (!navbar) return;
+
+            if (window.innerWidth <= 768) {
+                // Em mobile, fixar navbar no topo se não tiver classe fixed-top
+                if (!navbar.classList.contains('fixed-top')) {
+                    navbar.style.position = 'fixed';
+                    navbar.style.top = '0';
+                    navbar.style.left = '0';
+                    navbar.style.right = '0';
+                    navbar.style.zIndex = '1050';
+                    navbar.style.width = '100%';
+                    // CSS já adiciona padding-top, mas garantir via JS também
+                    if (!document.body.style.paddingTop) {
+                        document.body.style.paddingTop = '56px';
                     }
-                    // Em desktop, deixa o Bootstrap gerenciar normalmente
-                });
+                }
+            } else {
+                // Em desktop, remover estilos inline se não tiver classe fixed-top
+                if (!navbar.classList.contains('fixed-top')) {
+                    navbar.style.position = '';
+                    navbar.style.top = '';
+                    navbar.style.left = '';
+                    navbar.style.right = '';
+                    navbar.style.zIndex = '';
+                    navbar.style.width = '';
+                    document.body.style.paddingTop = '';
+                }
             }
         }
 
-        // Criar overlay se não existir
-        if (!document.querySelector('.sidebar-overlay')) {
-            const overlay = document.createElement('div');
-            overlay.className = 'sidebar-overlay';
-            overlay.onclick = closeSidebar;
-            document.body.appendChild(overlay);
-        }
+        // Ajustar imediatamente ao carregar
+        adjustNavbarPosition();
 
-        // Fechar sidebar ao clicar em link
-        const sidebarLinks = sidebar.querySelectorAll('.nav-link');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    closeSidebar();
+        // Ajustar quando redimensionar
+        window.addEventListener('resize', adjustNavbarPosition);
+
+        // Em mobile, controlar o menu do navbar
+        if (navbar) {
+            const navbarToggler = navbar.querySelector('.navbar-toggler');
+            const navbarCollapse = navbar.querySelector('.navbar-collapse');
+            
+            if (navbarToggler && navbarCollapse) {
+                // Função para controlar scroll do body
+                function toggleBodyScroll(isOpen) {
+                    if (window.innerWidth <= 768) {
+                        if (isOpen) {
+                            document.body.classList.add('menu-open');
+                            // Salvar scroll position
+                            const scrollY = window.scrollY;
+                            document.body.style.top = `-${scrollY}px`;
+                        } else {
+                            const scrollY = document.body.style.top;
+                            document.body.classList.remove('menu-open');
+                            document.body.style.top = '';
+                            if (scrollY) {
+                                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+                            }
+                        }
+                    }
                 }
-            });
-        });
-    }
-
-    function toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.querySelector('.sidebar-overlay');
+                
+                // Listener para detectar quando menu abre/fecha (Bootstrap event)
+                navbarCollapse.addEventListener('show.bs.collapse', function() {
+                    toggleBodyScroll(true);
+                });
+                
+                navbarCollapse.addEventListener('hide.bs.collapse', function() {
+                    toggleBodyScroll(false);
+                });
+                
+                // Fechar menu ao clicar fora
+                let clickOutsideHandler = function(e) {
+                    if (window.innerWidth <= 768 && navbarCollapse.classList.contains('show')) {
+                        // Verificar se o clique foi fora do menu e do toggler
+                        const isClickInsideMenu = navbarCollapse.contains(e.target);
+                        const isClickOnToggler = navbarToggler.contains(e.target);
+                        
+                        if (!isClickInsideMenu && !isClickOnToggler) {
+                            // Fechar o menu apenas se não estiver clicando no próprio menu
+                            if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
+                                navbarToggler.click();
+                            }
+                        }
+                    }
+                };
+                
+                // Usar capture phase para garantir que funciona
+                document.addEventListener('click', clickOutsideHandler, true);
+                
+                // Fechar menu ao clicar em um link
+                const navLinks = navbarCollapse.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        // Se não for link de logout (que tem onclick)
+                        if (!link.getAttribute('onclick')) {
+                            if (window.innerWidth <= 768 && navbarCollapse.classList.contains('show')) {
+                                // Pequeno delay para garantir que a navegação funcione
+                                setTimeout(() => {
+                                    if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
+                                        navbarToggler.click();
+                                    }
+                                }, 150);
+                            }
+                        }
+                    });
+                });
+                
+                // Adicionar atributo para compatibilidade
+                if (!navbarToggler.dataset.sidebarInitialized) {
+                    navbarToggler.setAttribute('data-sidebar-initialized', 'true');
+                }
+            }
+        }
         
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-            document.body.classList.toggle('sidebar-open');
+        // Em desktop, garantir que sidebar esteja visível
+        if (window.innerWidth > 768 && sidebar) {
+            sidebar.style.display = '';
         }
     }
 
-    function closeSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.querySelector('.sidebar-overlay');
-        
-        if (sidebar && overlay) {
-            sidebar.classList.remove('show');
-            overlay.classList.remove('show');
-            document.body.classList.remove('sidebar-open');
-        }
-    }
-
-    // Fechar sidebar ao redimensionar para desktop
+    // Fechar menu ao redimensionar para desktop
     window.addEventListener('resize', function() {
+        const navbar = document.querySelector('.navbar');
+        const navbarCollapse = navbar ? navbar.querySelector('.navbar-collapse') : null;
+        
         if (window.innerWidth > 768) {
-            closeSidebar();
+            // Fechar menu mobile se estiver aberto
+            if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                const navbarToggler = navbar.querySelector('.navbar-toggler');
+                if (navbarToggler) {
+                    navbarToggler.click();
+                }
+            }
+            // Remover bloqueio de scroll
+            document.body.classList.remove('menu-open');
         }
     });
 

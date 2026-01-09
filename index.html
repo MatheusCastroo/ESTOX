@@ -402,9 +402,47 @@
             transform: scale(1.03);
         }
 
+        .pricing-card-free {
+            border: 2px solid #10B981 !important;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .pricing-card-free .pricing-price {
+            font-size: 2.5rem;
+            color: #10B981 !important;
+        }
+
         @media (min-width: 992px) {
             .pricing-card.featured {
-                transform: scale(1.05);
+                transform: scale(1.02);
+            }
+            
+            /* Ajustar para 4 planos na mesma linha no index (col-lg-3 = 25% cada) */
+            #plans-container .col-lg-3 {
+                max-width: 25%;
+            }
+            
+            /* Reduzir padding dos cards para melhor adaptação */
+            .pricing-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+        
+        /* Ajuste para telas XL para melhor visualização dos 4 planos */
+        @media (min-width: 1400px) {
+            .pricing-card {
+                padding: 2.5rem 2rem;
+            }
+        }
+        
+        /* Ajustar tamanho dos preços em telas menores */
+        @media (max-width: 1200px) {
+            .pricing-price {
+                font-size: 2rem;
+            }
+            
+            .pricing-card-free .pricing-price {
+                font-size: 2.25rem;
             }
         }
 
@@ -415,14 +453,14 @@
             transform: translateX(-50%);
             background: var(--accent);
             color: white;
-            padding: 0.5rem 1.5rem;
+            padding: 0.5rem 0.5rem;
             border-radius: 25px;
             font-size: 0.875rem;
             font-weight: 600;
         }
 
         .pricing-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             color: var(--secondary);
@@ -434,7 +472,7 @@
         }
 
         .pricing-price {
-            font-size: 3rem;
+            font-size: 2.25rem;
             font-weight: 800;
             color: var(--primary);
             margin-bottom: 0.5rem;
