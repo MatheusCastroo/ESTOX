@@ -7,14 +7,14 @@ RENAME TABLE pagarme_transactions TO payment_transactions;
 
 -- Add gateway column if it doesn't exist
 ALTER TABLE payment_transactions 
-  ADD COLUMN IF NOT EXISTS gateway VARCHAR(50) DEFAULT 'appmax' AFTER store_id,
+  ADD COLUMN IF NOT EXISTS gateway VARCHAR(50) DEFAULT 'stripe' AFTER store_id,
   ADD COLUMN IF NOT EXISTS order_id VARCHAR(255) AFTER transaction_id,
   ADD COLUMN IF NOT EXISTS payload_json JSON DEFAULT ('{}') AFTER postback_data;
 
 -- Update existing records
 UPDATE payment_transactions SET gateway = 'pagarme' WHERE gateway IS NULL OR gateway = '';
 
--- Rename transaction_id to order_id for Appmax compatibility (keep both for now)
+-- Rename transaction_id to order_id for Stripe compatibility (keep both for now)
 -- ALTER TABLE payment_transactions 
 --   CHANGE COLUMN transaction_id order_id VARCHAR(255);
 

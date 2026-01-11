@@ -7,8 +7,8 @@
 require_once __DIR__ . '/../classes/Database.php';
 require_once __DIR__ . '/../classes/Response.php';
 require_once __DIR__ . '/../classes/Middleware.php';
-require_once __DIR__ . '/../classes/Appmax.php';
 require_once __DIR__ . '/../classes/EmailService.php';
+require_once __DIR__ . '/../classes/Stripe.php';
 
 Middleware::cors();
 
@@ -53,8 +53,10 @@ switch ($method) {
         $action = $_GET['action'] ?? '';
         
         if ($action === 'create_checkout') {
-            // Create Appmax checkout
+            // Create Stripe checkout
             $data = Middleware::getJsonInput();
+            
+            // Get store
             $store = $db->fetchOne(
                 "SELECT s.*, u.email as user_email, u.name as user_name 
                  FROM stores s 
@@ -67,55 +69,74 @@ switch ($method) {
                 Response::error('Loja não encontrada', 404);
             }
             
-            // Get plan
+            // RB02: Loja canceled precisa de nova contratação (permitir checkout)
+            // RB02: Validar se plano foi especificado
+            $planSlug = $data['plan_slug'] ?? null;
+            if (!$planSlug) {
+                Response::error('plan_slug é obrigatório', 400);
+            }
+            
+            // Get plan - RB02: Apenas planos ativos
             $plan = $db->fetchOne(
-                "SELECT * FROM plans WHERE id = :id",
-                ['id' => $store['plan_id']]
+                "SELECT * FROM plans WHERE slug = :slug AND is_active = true",
+                ['slug' => $planSlug]
             );
             
             if (!$plan) {
-                Response::error('Plano não encontrado', 404);
+                Response::error('Plano não encontrado ou inativo', 404);
             }
             
-            // Prepare Appmax order
-            $appmax = new Appmax();
+            // Prepare Stripe checkout
+            $stripe = new Stripe();
             $appUrl = getenv('APP_URL') ?: 'http://localhost';
             
-            $orderData = [
-                'product_id' => $plan['id'], // ou um product_id específico da Appmax
-                'price' => (int)($plan['price'] * 100), // em centavos
-                'customer' => [
-                    'name' => $store['user_name'] ?? $store['name'],
-                    'email' => $store['user_email'] ?? $store['email'],
-                    'phone' => $store['whatsapp'] ?? $store['phone'] ?? '',
-                    'document_number' => $data['document_number'] ?? ''
-                ],
-                'callback_url' => $appUrl . '/api/webhooks/appmax',
-                'success_url' => $appUrl . '/renovar-plano?status=success',
+            // Calculate new subscription end date (RB04 - Renovação)
+            $currentEndsAt = $store['subscription_ends_at'] ? strtotime($store['subscription_ends_at']) : null;
+            $now = time();
+            $durationDays = (int)$plan['duration_days'];
+            
+            if ($currentEndsAt && $currentEndsAt > $now && $store['subscription_status'] === 'active') {
+                // If subscription still valid, add days to current end date
+                $newEndsAt = date('Y-m-d H:i:s', $currentEndsAt + ($durationDays * 24 * 60 * 60));
+            } else {
+                // If expired or not active, count from now
+                $newEndsAt = date('Y-m-d H:i:s', $now + ($durationDays * 24 * 60 * 60));
+            }
+            
+            $checkoutData = [
+                'amount' => (float)$plan['price'],
+                'product_name' => "Plano {$plan['name']} - ESTOX",
+                'product_description' => "Assinatura {$plan['name']} do ESTOX - {$durationDays} dias",
+                'success_url' => $appUrl . '/renovar-plano?status=success&session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => $appUrl . '/renovar-plano?status=canceled',
+                'customer_email' => $store['user_email'] ?? $store['email'],
+                'client_reference_id' => $store['id'],
                 'metadata' => [
                     'store_id' => $store['id'],
                     'user_id' => $userId,
                     'plan_id' => $plan['id'],
-                    'plan_slug' => $plan['slug']
+                    'plan_slug' => $plan['slug'],
+                    'duration_days' => $durationDays,
+                    'plan_name' => $plan['name']
                 ]
             ];
             
             try {
-                $order = $appmax->createOrder($orderData);
+                $checkoutSession = $stripe->createCheckoutSession($checkoutData);
                 
-                // Save order to database (payment_transactions)
+                // Save transaction to database
+                $transactionId = $db->generateUuid();
                 $db->insert('payment_transactions', [
-                    'id' => $db->generateUuid(),
+                    'id' => $transactionId,
                     'store_id' => $store['id'],
-                    'order_id' => $order['id'] ?? $order['order_id'] ?? '',
-                    'gateway' => 'appmax',
+                    'order_id' => $checkoutSession['id'], // Stripe session ID
+                    'gateway' => 'stripe',
                     'amount' => $plan['price'],
-                    'status' => $order['status'] ?? 'waiting_payment',
-                    'customer_name' => $orderData['customer']['name'],
-                    'customer_email' => $orderData['customer']['email'],
-                    'metadata' => json_encode($orderData['metadata']),
-                    'payload_json' => json_encode($order),
+                    'status' => 'waiting_payment',
+                    'customer_name' => $store['user_name'] ?? $store['name'],
+                    'customer_email' => $store['user_email'] ?? $store['email'],
+                    'metadata' => json_encode($checkoutData['metadata']),
+                    'payload_json' => json_encode($checkoutSession),
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ]);
@@ -129,21 +150,37 @@ switch ($method) {
                     'new_status' => $store['subscription_status'],
                     'old_ends_at' => $store['subscription_ends_at'],
                     'new_ends_at' => $store['subscription_ends_at'],
-                    'performed_by' => 'system',
-                    'notes' => 'Pedido criado na Appmax. Order ID: ' . ($order['id'] ?? $order['order_id'] ?? 'N/A'),
+                    'performed_by' => $userId,
+                    'notes' => "Checkout criado no Stripe. Plano: {$plan['name']}. Session ID: {$checkoutSession['id']}",
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
                 
+                // Update store plan_id if changed
+                if ($store['plan_id'] !== $plan['id']) {
+                    $db->update('stores', [
+                        'plan_id' => $plan['id'],
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ], 'id = :id', ['id' => $store['id']]);
+                }
+                
                 // Return checkout URL
                 Response::success([
-                    'order_id' => $order['id'] ?? $order['order_id'] ?? '',
-                    'status' => $order['status'] ?? 'waiting_payment',
-                    'checkout_url' => $order['checkout_url'] ?? $order['url'] ?? null,
-                    'message' => 'Pedido criado com sucesso'
+                    'session_id' => $checkoutSession['id'],
+                    'checkout_url' => $checkoutSession['url'],
+                    'status' => 'waiting_payment',
+                    'plan' => [
+                        'id' => $plan['id'],
+                        'name' => $plan['name'],
+                        'slug' => $plan['slug'],
+                        'price' => $plan['price'],
+                        'duration_days' => $durationDays
+                    ],
+                    'message' => 'Checkout criado com sucesso'
                 ]);
                 
             } catch (Exception $e) {
-                Response::error('Erro ao criar pedido: ' . $e->getMessage(), 500);
+                error_log('Erro ao criar checkout Stripe: ' . $e->getMessage());
+                Response::error('Erro ao criar checkout: ' . $e->getMessage(), 500);
             }
         } else {
             Response::error('Ação não especificada', 400);

@@ -53,11 +53,23 @@ class Auth {
 
     public function getUserById($userId) {
         $user = $this->db->fetchOne(
-            "SELECT id, email, name, created_at FROM users WHERE id = :id",
+            "SELECT id, email, name, role, created_at FROM users WHERE id = :id",
             ['id' => $userId]
         );
 
         return $user;
+    }
+    
+    /**
+     * Get user role
+     */
+    public function getUserRole($userId) {
+        $user = $this->db->fetchOne(
+            "SELECT role FROM users WHERE id = :id",
+            ['id' => $userId]
+        );
+        
+        return $user['role'] ?? 'user';
     }
 
     public function verifyToken($token) {
@@ -71,16 +83,39 @@ class Auth {
         }
     }
 
-    public function generateToken($userId) {
+    public function generateToken($userId, $role = null) {
         $config = require __DIR__ . '/../config/config.php';
+        
+        // Get role from database if not provided
+        if ($role === null) {
+            $role = $this->getUserRole($userId);
+        }
         
         $payload = [
             'userId' => $userId,
+            'role' => $role,
             'iat' => time(),
             'exp' => time() + $config['jwt_expiration']
         ];
 
         return JWT::encode($payload, $config['jwt_secret'], 'HS256');
+    }
+    
+    /**
+     * Verify token and return user data with role
+     */
+    public function verifyTokenWithRole($token) {
+        $config = require __DIR__ . '/../config/config.php';
+        
+        try {
+            $decoded = JWT::decode($token, $config['jwt_secret'], ['HS256']);
+            return [
+                'userId' => $decoded->userId,
+                'role' => $decoded->role ?? 'user'
+            ];
+        } catch (Exception $e) {
+            return null;
+        }
     }
 }
 

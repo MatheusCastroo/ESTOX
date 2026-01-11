@@ -253,6 +253,41 @@ if ($isPublic && $storeSlug) {
             try {
                 $data = Middleware::getJsonInput();
                 
+                // REQ-PLN-STRIPE-ASSINATURAS: Section 9 - Controle de Limites
+                // Check subscription status and vehicle limit before creating vehicle
+                $store = $db->fetchOne(
+                    "SELECT s.*, p.vehicle_limit 
+                     FROM stores s 
+                     LEFT JOIN plans p ON s.plan_id = p.id 
+                     WHERE s.id = :store_id",
+                    ['store_id' => $storeId]
+                );
+                
+                if (!$store) {
+                    Response::error('Loja não encontrada', 404);
+                }
+                
+                // Check if subscription is active
+                if ($store['subscription_status'] !== 'active') {
+                    Response::error('Você precisa de uma assinatura ativa para cadastrar veículos. Renove seu plano para continuar.', 403);
+                }
+                
+                // Check vehicle limit
+                $vehicleLimit = isset($store['vehicle_limit']) ? (int)$store['vehicle_limit'] : 0;
+                
+                if ($vehicleLimit !== -1) { // -1 means unlimited
+                    // Get current vehicle count
+                    $vehicleCount = $db->fetchOne(
+                        "SELECT COUNT(*) as count FROM vehicles WHERE store_id = :store_id",
+                        ['store_id' => $storeId]
+                    );
+                    $currentCount = (int)($vehicleCount['count'] ?? 0);
+                    
+                    if ($currentCount >= $vehicleLimit) {
+                        Response::error("Você atingiu o limite de {$vehicleLimit} veículos do seu plano. Faça upgrade para cadastrar mais veículos.", 403);
+                    }
+                }
+                
                 // Validate required fields
                 if (empty($data['brand'])) {
                     Response::error('Marca é obrigatória', 400);

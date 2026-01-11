@@ -15,17 +15,72 @@ Middleware::cors();
 $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
 
-// Check admin authentication (you can implement your own admin check)
-$isAdmin = Middleware::checkAdmin(); // You need to implement this
-
-if (!$isAdmin) {
-    Response::error('Acesso negado. Apenas administradores.', 403);
-}
+// REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Validar role admin do token
+$adminUserId = Middleware::requireAdmin();
 
 switch ($method) {
     case 'GET':
+        // REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Section 6 - Tela de Detalhes da Loja
+        if (isset($_GET['store_id'])) {
+            $storeId = $_GET['store_id'];
+            
+            // Get store details
+            $store = $db->fetchOne(
+                "SELECT s.*, 
+                        u.name as user_name, 
+                        u.email as user_email,
+                        p.id as plan_id,
+                        p.name as plan_name,
+                        p.slug as plan_slug,
+                        p.price as plan_price,
+                        p.vehicle_limit as plan_vehicle_limit,
+                        p.duration_days as plan_duration_days,
+                        (SELECT COUNT(*) FROM vehicles WHERE store_id = s.id) as vehicle_count
+                 FROM stores s
+                 LEFT JOIN users u ON s.user_id = u.id
+                 LEFT JOIN plans p ON s.plan_id = p.id
+                 WHERE s.id = :id",
+                ['id' => $storeId]
+            );
+            
+            if (!$store) {
+                Response::error('Loja não encontrada', 404);
+            }
+            
+            // Get transaction history (Section 6.2 - Financeiro)
+            $transactions = $db->fetchAll(
+                "SELECT * FROM payment_transactions 
+                 WHERE store_id = :store_id 
+                 ORDER BY created_at DESC 
+                 LIMIT 50",
+                ['store_id' => $storeId]
+            );
+            
+            // Get subscription logs (Section 6.3 - Histórico)
+            $logs = $db->fetchAll(
+                "SELECT * FROM subscription_logs 
+                 WHERE store_id = :store_id 
+                 ORDER BY created_at DESC 
+                 LIMIT 100",
+                ['store_id' => $storeId]
+            );
+            
+            Response::success([
+                'store' => $store,
+                'transactions' => $transactions,
+                'logs' => $logs
+            ]);
+            break;
+        }
+        
+        // REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Section 5 - Listagem de Assinaturas
         // List all stores with subscription info
         $status = $_GET['status'] ?? null;
+        $planSlug = $_GET['plan'] ?? null;
+        $expired = $_GET['expired'] ?? null; // 'true' para vencidos
+        $expiring = $_GET['expiring'] ?? null; // 'true' para próximos do vencimento (≤7 dias)
+        $trial = $_GET['trial'] ?? null; // 'true' para trial
+        $search = $_GET['search'] ?? null; // Busca por nome ou email
         $page = (int)($_GET['page'] ?? 1);
         $limit = (int)($_GET['limit'] ?? 50);
         $offset = ($page - 1) * $limit;
@@ -38,26 +93,65 @@ switch ($method) {
             $params['status'] = $status;
         }
         
-        // Get stores
+        if ($planSlug) {
+            $where .= " AND p.slug = :plan_slug";
+            $params['plan_slug'] = $planSlug;
+        }
+        
+        if ($expired === 'true') {
+            $where .= " AND s.subscription_ends_at < NOW() AND s.subscription_status IN ('trial', 'active')";
+        }
+        
+        if ($expiring === 'true') {
+            $where .= " AND s.subscription_ends_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY) AND s.subscription_status IN ('trial', 'active')";
+        }
+        
+        if ($trial === 'true') {
+            $where .= " AND s.subscription_status = 'trial'";
+        }
+        
+        if ($search) {
+            $where .= " AND (s.name LIKE :search OR u.email LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+        
+        // Get stores with ordering (Section 5.2)
+        // Order: pending vencidos, trial próximos do vencimento, active, suspended, canceled
+        $orderBy = "CASE 
+            WHEN s.subscription_status = 'pending' AND s.subscription_ends_at < NOW() THEN 1
+            WHEN s.subscription_status = 'trial' AND s.subscription_ends_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 2
+            WHEN s.subscription_status = 'active' THEN 3
+            WHEN s.subscription_status = 'suspended' THEN 4
+            WHEN s.subscription_status = 'canceled' THEN 5
+            ELSE 6
+        END, s.subscription_ends_at ASC";
+        
         $stores = $db->fetchAll(
             "SELECT s.*, 
                     u.name as user_name, 
                     u.email as user_email,
                     p.name as plan_name,
+                    p.slug as plan_slug,
                     p.price as plan_price,
-                    (SELECT COUNT(*) FROM vehicles WHERE store_id = s.id) as vehicle_count
+                    p.vehicle_limit as plan_vehicle_limit,
+                    (SELECT COUNT(*) FROM vehicles WHERE store_id = s.id) as vehicle_count,
+                    (SELECT pt.created_at FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_payment,
+                    (SELECT pt.gateway FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_gateway
              FROM stores s
              LEFT JOIN users u ON s.user_id = u.id
              LEFT JOIN plans p ON s.plan_id = p.id
              WHERE {$where}
-             ORDER BY s.created_at DESC
+             ORDER BY {$orderBy}
              LIMIT :limit OFFSET :offset",
             array_merge($params, ['limit' => $limit, 'offset' => $offset])
         );
         
         // Get total count
         $total = $db->fetchOne(
-            "SELECT COUNT(*) as total FROM stores s WHERE {$where}",
+            "SELECT COUNT(*) as total FROM stores s 
+             LEFT JOIN users u ON s.user_id = u.id
+             LEFT JOIN plans p ON s.plan_id = p.id
+             WHERE {$where}",
             $params
         )['total'];
         
@@ -95,39 +189,128 @@ switch ($method) {
         $newStatus = null;
         $actionType = null;
         
+        // REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Section 7 - Ações Administrativas
+        $updateData = [
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+        $newEndsAt = null;
+        $notes = null;
+        
         switch ($action) {
-            case 'suspend':
-                $newStatus = 'suspended';
-                $actionType = 'suspended';
-                break;
+            case 'renew':
+                // Section 7.1: Renovar Assinatura (Manual)
+                $newStatus = 'active';
+                $actionType = 'renewed';
                 
-            case 'reactivate':
-                // Reactivate - set to active if was pending/suspended
-                if (in_array($oldStatus, ['pending', 'suspended'])) {
-                    $newStatus = 'active';
-                    // Extend subscription by 30 days
-                    $newEndsAt = date('Y-m-d H:i:s', strtotime('+30 days'));
-                    $actionType = 'reactivated';
+                // Get plan to use duration_days
+                $plan = $db->fetchOne(
+                    "SELECT duration_days FROM plans WHERE id = :plan_id",
+                    ['plan_id' => $store['plan_id']]
+                );
+                
+                if (!$plan) {
+                    Response::error('Plano não encontrado', 404);
+                }
+                
+                $durationDays = (int)$plan['duration_days'];
+                
+                // Calculate new end date (Section 8 - Cálculo de Expiração)
+                $currentEndsAt = $store['subscription_ends_at'] ? strtotime($store['subscription_ends_at']) : null;
+                $now = time();
+                
+                if ($currentEndsAt && $currentEndsAt > $now && $oldStatus === 'active') {
+                    // If subscription still valid, add days to current end date
+                    $newEndsAt = date('Y-m-d H:i:s', $currentEndsAt + ($durationDays * 24 * 60 * 60));
                 } else {
-                    Response::error('Apenas contas pendentes ou suspensas podem ser reativadas', 400);
+                    // If expired or not active, count from now
+                    $newEndsAt = date('Y-m-d H:i:s', $now + ($durationDays * 24 * 60 * 60));
                 }
                 break;
                 
+            case 'suspend':
+                // Section 7.3: Suspender Assinatura
+                $newStatus = 'suspended';
+                $actionType = 'suspended';
+                // Não altera datas
+                break;
+                
+            case 'reactivate':
+                // Section 7.4: Reativar Assinatura
+                if (!in_array($oldStatus, ['pending', 'suspended'])) {
+                    Response::error('Apenas contas pendentes ou suspensas podem ser reativadas', 400);
+                }
+                
+                $newStatus = 'active';
+                $actionType = 'reactivated';
+                
+                // Get plan to use duration_days
+                $plan = $db->fetchOne(
+                    "SELECT duration_days FROM plans WHERE id = :plan_id",
+                    ['plan_id' => $store['plan_id']]
+                );
+                
+                if (!$plan || !$store['plan_id']) {
+                    Response::error('Loja não possui plano válido para reativação', 400);
+                }
+                
+                $durationDays = (int)$plan['duration_days'];
+                
+                // Define nova data de expiração
+                $newEndsAt = date('Y-m-d H:i:s', strtotime("+{$durationDays} days"));
+                break;
+                
             case 'cancel':
+                // Section 7.2: Cancelar Assinatura
                 $newStatus = 'canceled';
                 $actionType = 'canceled';
+                // Ação irreversível (exceto via nova contratação)
+                break;
+                
+            case 'change_plan':
+                // Section 7.5: Alterar Plano
+                $newPlanId = $data['plan_id'] ?? null;
+                if (!$newPlanId) {
+                    Response::error('plan_id é obrigatório para alterar plano', 400);
+                }
+                
+                // Get new plan
+                $newPlan = $db->fetchOne(
+                    "SELECT * FROM plans WHERE id = :id AND is_active = true",
+                    ['id' => $newPlanId]
+                );
+                
+                if (!$newPlan) {
+                    Response::error('Plano não encontrado ou inativo', 404);
+                }
+                
+                $actionType = 'plan_changed';
+                
+                // Log with old and new plan info
+                $oldPlan = $db->fetchOne(
+                    "SELECT name FROM plans WHERE id = :id",
+                    ['id' => $store['plan_id']]
+                );
+                
+                $notes = "Plano alterado de '{$oldPlan['name']}' para '{$newPlan['name']}'. " . ($data['notes'] ?? '');
+                
+                // Update plan_id
+                $updateData['plan_id'] = $newPlanId;
+                
+                // Don't change status or dates
+                $newStatus = $oldStatus;
                 break;
                 
             default:
-                Response::error('Ação inválida. Use: suspend, reactivate ou cancel', 400);
+                Response::error('Ação inválida. Use: renew, suspend, reactivate, cancel ou change_plan', 400);
         }
         
-        $updateData = [
-            'subscription_status' => $newStatus,
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
+        // Add status to update data (except for change_plan which doesn't change status)
+        if ($action !== 'change_plan') {
+            $updateData['subscription_status'] = $newStatus;
+        }
         
-        if (isset($newEndsAt)) {
+        // Add new end date if calculated
+        if ($newEndsAt) {
             $updateData['subscription_ends_at'] = $newEndsAt;
         }
         
@@ -142,8 +325,8 @@ switch ($method) {
             'new_status' => $newStatus,
             'old_ends_at' => $store['subscription_ends_at'],
             'new_ends_at' => $updateData['subscription_ends_at'] ?? $store['subscription_ends_at'],
-            'performed_by' => 'admin', // You can get admin user ID here
-            'notes' => $data['notes'] ?? "Ação executada via painel administrativo",
+            'performed_by' => $adminUserId, // REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Log who performed action
+            'notes' => $notes ?? ($data['notes'] ?? "Ação executada via painel administrativo"),
             'created_at' => date('Y-m-d H:i:s')
         ]);
         
@@ -161,21 +344,6 @@ switch ($method) {
             'store' => $updatedStore,
             'message' => "Status alterado de {$oldStatus} para {$newStatus}"
         ]);
-        break;
-        
-    case 'GET':
-        // Get subscription logs for a store
-        if (isset($_GET['store_id'])) {
-            $logs = $db->fetchAll(
-                "SELECT * FROM subscription_logs 
-                 WHERE store_id = :store_id 
-                 ORDER BY created_at DESC 
-                 LIMIT 50",
-                ['store_id' => $_GET['store_id']]
-            );
-            
-            Response::success(['logs' => $logs]);
-        }
         break;
         
     default:

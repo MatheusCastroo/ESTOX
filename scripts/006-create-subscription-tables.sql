@@ -2,11 +2,11 @@
 -- Script 006: Create subscription, transactions and email logs tables
 -- MySQL Version (for phpMyAdmin)
 
--- Tabela de Transações de Pagamento (genérica para Appmax, Pagar.me, etc)
+-- Tabela de Transações de Pagamento (genérica para Stripe, Pagar.me, etc)
 CREATE TABLE IF NOT EXISTS payment_transactions (
   id CHAR(36) PRIMARY KEY,
   store_id CHAR(36) NOT NULL,
-  gateway VARCHAR(50) NOT NULL DEFAULT 'appmax' COMMENT 'appmax, pagarme, etc',
+  gateway VARCHAR(50) NOT NULL DEFAULT 'stripe' COMMENT 'stripe, pagarme, etc',
   order_id VARCHAR(255) COMMENT 'ID do pedido no gateway',
   transaction_id VARCHAR(255) COMMENT 'ID da transação (compatibilidade)',
   amount DECIMAL(10, 2) NOT NULL,

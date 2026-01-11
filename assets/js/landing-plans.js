@@ -26,10 +26,40 @@
     }
 
     /**
+     * Create free plan object
+     */
+    function createFreePlan() {
+        return {
+            name: 'Grátis',
+            slug: 'gratis',
+            price: 0,
+            features: [
+                'Até 5 veículos',
+                'Catálogo com URL personalizada',
+                'Integração WhatsApp'
+            ],
+            checkout_url: 'cadastro.html?plan=gratis'
+        };
+    }
+
+    /**
+     * Check if we are on planos.html page
+     */
+    function isPlanosPage() {
+        return window.location.pathname.includes('planos.html') || 
+               window.location.href.includes('planos.html') ||
+               document.querySelector('body').classList.contains('planos-page');
+    }
+
+    /**
      * Load plans from API
      */
     async function loadPlans() {
         console.log('🔄 Carregando planos...');
+        
+        // Verificar se estamos na página planos.html
+        const isPlanos = isPlanosPage();
+        console.log('📄 Página planos.html?', isPlanos);
         
         try {
             const response = await fetch(`${API_URL}/plans`);
@@ -51,24 +81,54 @@
             
             if (plans.length === 0) {
                 console.warn('⚠️ Nenhum plano encontrado na API, usando fallback estático');
-                displayFallbackPlans();
+                displayFallbackPlans(isPlanos);
                 return;
             }
             
-            displayPlans(plans);
+            let filteredPlans = plans;
+            
+            if (isPlanos) {
+                // APENAS na página planos.html: remover plano grátis, manter todos os planos pagos (Mensal, Trimestral, Anual)
+                filteredPlans = plans.filter(p => 
+                    p.slug !== 'gratis' && 
+                    p.price !== 0 && 
+                    !p.name.toLowerCase().includes('grátis') && 
+                    !p.name.toLowerCase().includes('gratis')
+                );
+            } else {
+                // Todas as outras páginas (index.html, etc.): manter plano grátis e todos os planos pagos incluindo anual
+                // Verificar se já existe plano grátis na API
+                const existingFreePlan = plans.find(p => p.slug === 'gratis' || p.price === 0 || p.name.toLowerCase().includes('grátis') || p.name.toLowerCase().includes('gratis'));
+                
+                // Se não existir na API, adicionar nosso plano grátis em primeiro lugar
+                const freePlan = existingFreePlan || createFreePlan();
+                const otherPlans = existingFreePlan ? plans.filter(p => p.slug !== 'gratis' && p.price !== 0 && !p.name.toLowerCase().includes('grátis') && !p.name.toLowerCase().includes('gratis')) : plans;
+                filteredPlans = [freePlan, ...otherPlans];
+            }
+            
+            displayPlans(filteredPlans, isPlanos);
             console.log('✅ Planos exibidos com sucesso');
         } catch (error) {
             console.error('❌ Erro ao carregar planos da API:', error);
             // Show fallback plans instead of error message
-            displayFallbackPlans();
+            displayFallbackPlans(isPlanos);
         }
     }
 
     /**
      * Display fallback plans when API is unavailable
      */
-    function displayFallbackPlans() {
-        const fallbackPlans = [
+    function displayFallbackPlans(isPlanosPage = false) {
+        const fallbackPlans = [];
+        
+        // Para todas as páginas EXCETO planos.html: incluir plano grátis
+        if (!isPlanosPage) {
+            const freePlan = createFreePlan();
+            fallbackPlans.push(freePlan);
+        }
+        
+        // Planos pagos (aparecem em todas as páginas)
+        fallbackPlans.push(
             {
                 name: 'Mensal',
                 slug: 'profissional-mensal',
@@ -111,16 +171,17 @@
                 ],
                 checkout_url: 'https://buy.stripe.com/test_ANUAL_LINK_AQUI'
             }
-        ];
+        );
         
-        displayPlans(fallbackPlans);
+        displayPlans(fallbackPlans, isPlanosPage);
     }
 
     /**
      * Display plans in the page
      * @param {Array} plans - Array of plan objects
+     * @param {boolean} isPlanosPage - Whether we are on planos.html page
      */
-    function displayPlans(plans) {
+    function displayPlans(plans, isPlanosPage = false) {
         // Try to find container by ID first, then by class
         const plansContainer = document.querySelector('#plans-container') || 
                                document.querySelector('#planos .container .row');
@@ -133,37 +194,57 @@
         // Clear existing content
         plansContainer.innerHTML = '';
 
-        // Sort plans: Mensal, Trimestral, Anual
-        const sortedPlans = plans.sort((a, b) => {
+        // Separar plano grátis dos outros planos (apenas se não for página planos.html)
+        const freePlan = isPlanosPage ? null : plans.find(p => p.slug === 'gratis' || p.price === 0 || p.name.toLowerCase().includes('grátis') || p.name.toLowerCase().includes('gratis'));
+        const paidPlans = plans.filter(p => 
+            p.slug !== 'gratis' && 
+            p.price !== 0 && 
+            !p.name.toLowerCase().includes('grátis') && 
+            !p.name.toLowerCase().includes('gratis')
+        );
+
+        // Sort paid plans: Mensal, Trimestral, Anual
+        const sortedPaidPlans = paidPlans.sort((a, b) => {
             const order = ['profissional-mensal', 'profissional-trimestral', 'profissional-anual'];
             return order.indexOf(a.slug) - order.indexOf(b.slug);
         });
 
+        // Adicionar plano grátis primeiro se existir e não for página planos.html
+        const sortedPlans = (!isPlanosPage && freePlan) ? [freePlan, ...sortedPaidPlans] : sortedPaidPlans;
+
         sortedPlans.forEach((plan, index) => {
+            // Check if it's the free plan
+            const isFreePlan = plan.slug === 'gratis' || plan.price === 0 || plan.name.toLowerCase().includes('grátis') || plan.name.toLowerCase().includes('gratis');
+            
             // Ensure price is a number
             const planPrice = typeof plan.price === 'string' 
                 ? parseFloat(plan.price) 
                 : Number(plan.price);
             
-            // Validate price
-            if (isNaN(planPrice)) {
+            // Validate price (allow 0 for free plan)
+            if (isNaN(planPrice) && !isFreePlan) {
                 console.warn(`Invalid price for plan ${plan.name}:`, plan.price);
                 return;
             }
 
             // Calculate price per month, period label, and savings
-            // Mensal é a referência (R$ 139,90/mês)
-            const monthlyReferencePrice = 139.90;
             let pricePerMonth, periodLabel, savingsAmount, savingsPercent, showSavings = false;
             const planName = plan.name.toLowerCase();
             
-            if (planName.includes('mensal')) {
+            if (isFreePlan) {
+                // Plano grátis
+                pricePerMonth = 0;
+                periodLabel = '';
+                showSavings = false;
+            } else if (planName.includes('mensal')) {
                 // Mensal: apenas valor cheio, sem desconto
+                const monthlyReferencePrice = 139.90;
                 pricePerMonth = planPrice;
                 periodLabel = '/mês';
                 showSavings = false;
             } else if (planName.includes('trimestral')) {
                 // Trimestral: R$ 119,90/mês (R$ 359,70/trimestre)
+                const monthlyReferencePrice = 139.90;
                 pricePerMonth = planPrice / 3;
                 periodLabel = '/mês';
                 savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 20,00/mês
@@ -171,6 +252,7 @@
                 showSavings = true;
             } else if (planName.includes('anual')) {
                 // Anual: R$ 109,90/mês (R$ 1.318,80/ano)
+                const monthlyReferencePrice = 139.90;
                 pricePerMonth = planPrice / 12;
                 periodLabel = '/mês';
                 savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 30,00/mês
@@ -183,7 +265,7 @@
             }
 
             // Format price per month
-            const formattedPricePerMonth = formatPrice(pricePerMonth);
+            const formattedPricePerMonth = isFreePlan ? 'Grátis' : formatPrice(pricePerMonth);
             const formattedSavings = savingsAmount ? formatPrice(savingsAmount) : '';
             
             // Determine if plan is popular/featured (Trimestral is featured)
@@ -200,7 +282,10 @@
             // Prioridade: checkout_url do plano > links hardcoded > cadastro.html
             let checkoutLink = plan.checkout_url || plan.stripe_link || 'cadastro.html';
             
-            if (!checkoutLink || checkoutLink === 'cadastro.html') {
+            if (isFreePlan) {
+                // Plano grátis sempre vai para cadastro
+                checkoutLink = 'cadastro.html?plan=gratis';
+            } else if (!checkoutLink || checkoutLink === 'cadastro.html') {
                 if (plan.slug === 'profissional-mensal') {
                     checkoutLink = 'https://buy.stripe.com/test_6oUcMY7Xw32X7BgcZa4ko00';
                 } else if (plan.slug === 'profissional-trimestral') {
@@ -215,20 +300,31 @@
             }
             
             // Create plan card HTML
+            // Usar col-lg-3 para index (4 planos: Grátis, Mensal, Trimestral, Anual) ou col-lg-4 para planos.html (3 planos: Mensal, Trimestral, Anual)
+            const colClass = isPlanosPage ? 'col-lg-4' : 'col-lg-3';
             const planCard = `
-                <div class="col-md-6 col-lg-4">
-                    <div class="pricing-card ${isFeatured ? 'featured' : ''}">
-                        ${isFeatured ? `
+                <div class="col-md-6 ${colClass}">
+                    <div class="pricing-card ${isFreePlan ? 'pricing-card-free' : ''} ${isFeatured ? 'featured' : ''}">
+                        ${isFreePlan ? `
+                        <div class="pricing-badge" style="background: #10B981;">
+                            <i class="bi bi-gift-fill me-1"></i>Grátis Para Sempre
+                        </div>
+                        ` : ''}
+                        ${isFeatured && !isFreePlan ? `
                         <div class="pricing-badge">
                             <i class="bi bi-star-fill me-1"></i>Mais Popular
                         </div>
                         ` : ''}
-                        <h3 class="pricing-title">${plan.name || 'Plano'}</h3>
-                        <div class="pricing-price">
-                            R$ ${formattedPricePerMonth}
-                            <span class="fs-4">${periodLabel}</span>
+                        ${!isFreePlan ? `<h3 class="pricing-title">${plan.name || 'Plano'}</h3>` : ''}
+                        <div class="pricing-price" style="${isFreePlan ? 'color: #10B981;' : ''}">
+                            ${isFreePlan ? formattedPricePerMonth : `R$ ${formattedPricePerMonth}`}
+                            ${!isFreePlan ? `<span class="fs-5" style="font-size: 1rem;">${periodLabel}</span>` : ''}
                         </div>
-                        ${showSavings ? `
+                        ${isFreePlan ? `
+                        <p class="pricing-period">
+                            <small class="text-muted">Para sempre, sem compromisso</small>
+                        </p>
+                        ` : showSavings ? `
                         <p class="pricing-period">
                             <span class="text-success fw-semibold d-block mb-1">
                                 <i class="bi bi-check-circle me-1"></i>
@@ -249,8 +345,8 @@
                                 </li>
                             `).join('')}
                         </ul>
-                        <a href="${checkoutLink}" class="btn btn-primary w-100 btn-lg" target="_blank" rel="noopener noreferrer">
-                            Começar Agora
+                        <a href="${checkoutLink}" class="btn ${isFreePlan ? 'btn-success' : 'btn-primary'} w-100 btn-lg" ${isFreePlan ? '' : 'target="_blank" rel="noopener noreferrer"'}>
+                            ${isFreePlan ? 'Começar Grátis' : 'Começar Agora'}
                         </a>
                     </div>
                 </div>

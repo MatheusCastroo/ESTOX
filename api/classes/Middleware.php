@@ -113,32 +113,54 @@ class Middleware {
     }
     
     /**
-     * Check if user is admin
-     * You can implement your own admin check logic here
-     * For now, checks if user email is in admin list from env
+     * Check if user is admin (REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH)
+     * Validates token and checks role from JWT token
+     * 
+     * @return string User ID if admin, throws Response::error if not
+     */
+    public static function requireAdmin() {
+        $auth = new Auth();
+        
+        $headers = getallheaders();
+        $token = null;
+
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+            if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                $token = $matches[1];
+            }
+        }
+
+        if (!$token) {
+            Response::unauthorized('Token de autenticação não fornecido');
+        }
+
+        // Verify token and get role
+        $userData = $auth->verifyTokenWithRole($token);
+        
+        if (!$userData) {
+            Response::unauthorized('Token inválido ou expirado');
+        }
+        
+        // Check if user has admin role
+        if ($userData['role'] !== 'admin') {
+            Response::forbidden('Acesso negado. Apenas administradores.');
+        }
+        
+        return $userData['userId'];
+    }
+    
+    /**
+     * Check if user is admin (legacy method - kept for compatibility)
+     * @deprecated Use requireAdmin() instead
      */
     public static function checkAdmin() {
-        require_once __DIR__ . '/Database.php';
-        
-        $adminEmails = getenv('ADMIN_EMAILS') ? explode(',', getenv('ADMIN_EMAILS')) : [];
-        
-        if (empty($adminEmails)) {
+        try {
+            self::requireAdmin();
+            return true;
+        } catch (Exception $e) {
             return false;
         }
-        
-        $userId = self::requireAuth();
-        $db = Database::getInstance();
-        
-        $user = $db->fetchOne(
-            "SELECT email FROM users WHERE id = :id",
-            ['id' => $userId]
-        );
-        
-        if (!$user) {
-            return false;
-        }
-        
-        return in_array(trim($user['email']), array_map('trim', $adminEmails));
     }
 }
 

@@ -46,6 +46,7 @@ switch ($method) {
             
             try {
                 $user = $auth->login($data['email'], $data['password']);
+                // Generate token with role from database
                 $token = $auth->generateToken($user['id']);
                 
                 Response::success([
