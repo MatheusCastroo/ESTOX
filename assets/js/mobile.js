@@ -15,10 +15,20 @@
         if (!sidebar) return;
 
         // Adicionar classe ao body para indicar que há sidebar (para CSS)
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
         // Apenas se realmente existir uma sidebar na página
         if (sidebar && document.querySelector('.sidebar')) {
             document.body.classList.add('has-sidebar');
         }
+<<<<<<< HEAD
+=======
+=======
+        document.body.classList.add('has-sidebar');
+>>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
+>>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
 
         // Função para ajustar posição do navbar em mobile
         function adjustNavbarPosition() {
@@ -50,12 +60,39 @@
                     navbar.style.width = '';
                     document.body.style.paddingTop = '';
                 }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
+            }
+        }
+
+        // Ajustar imediatamente ao carregar
+        adjustNavbarPosition();
+<<<<<<< HEAD
+
+=======
+
+        // Ajustar quando redimensionar
+        window.addEventListener('resize', adjustNavbarPosition);
+
+        // Em mobile, o navbar-toggler controla o collapse do navbar (não mais a sidebar)
+        // O Bootstrap já gerencia isso automaticamente, então não precisamos interferir
+        if (navbar) {
+            const navbarToggler = navbar.querySelector('.navbar-toggler');
+            if (navbarToggler && !navbarToggler.dataset.sidebarInitialized) {
+                // Adicionar atributo data-sidebar-initialized apenas para compatibilidade
+                navbarToggler.setAttribute('data-sidebar-initialized', 'true');
+                // Não precisamos mais interceptar o clique - deixar o Bootstrap gerenciar
+>>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
             }
         }
 
         // Ajustar imediatamente ao carregar
         adjustNavbarPosition();
 
+>>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
         // Ajustar quando redimensionar
         window.addEventListener('resize', adjustNavbarPosition);
 

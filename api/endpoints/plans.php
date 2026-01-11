@@ -13,12 +13,18 @@ $db = Database::getInstance();
 // REQ-PLN-STRIPE-ASSINATURAS: Section 4.2 - All active plans from database (no hardcode)
 if ($method === 'GET') {
     try {
+<<<<<<< HEAD
         // Return all active plans (Section 4.2 - Source of truth is database)
         $plans = $db->fetchAll(
             "SELECT id, name, slug, price, vehicle_limit, duration_days, features, is_active, created_at, updated_at 
              FROM plans 
              WHERE is_active = true 
              ORDER BY price ASC"
+=======
+        // Return Professional plans (Mensal, Trimestral)
+        $plans = $db->fetchAll(
+            "SELECT * FROM plans WHERE slug IN ('profissional-mensal', 'profissional-trimestral') AND is_active = true ORDER BY price ASC"
+>>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
         );
         
         // Parse JSON fields
