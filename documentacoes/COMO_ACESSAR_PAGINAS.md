@@ -469,28 +469,53 @@ http://localhost:3000/catalogo/auto-carros-ltda
 
 ### Painel Admin de Assinaturas
 
+**⚠️ IMPORTANTE:** A interface web do painel admin ainda não foi criada. Atualmente, o acesso é feito **diretamente via API** (Postman, cURL, etc).
+
+**📚 Documentação Completa:** Veja `documentacoes/COMO_ACESSAR_PAINEL_ADMIN.md` para instruções detalhadas.
+
 **Sistema HTML:**
-- **URL:** `http://localhost/admin-panel.html` (se implementado)
-- **Arquivo:** `admin-panel.html` (a criar)
+- **URL:** `http://localhost/admin-panel.html` (⏳ a criar)
+- **Arquivo:** `admin-panel.html` (⏳ a criar)
 - **Descrição:** Painel administrativo para gerenciar assinaturas
 - **Autenticação:** ✅ Requerida (role = admin)
+
+**Acesso via API (Atual):**
+- **URL:** `http://localhost/api/admin/subscriptions`
+- **Método:** GET (listar) ou PUT (ações)
+- **Headers:** `Authorization: Bearer TOKEN`
+- **Requisitos:** 
+  - Token JWT válido
+  - Role no token = `admin`
+  - Usuário deve ter `role = 'admin'` no banco de dados
 
 **Sistema Next.js:**
 - **URL:** Ainda não implementado
 
-**Funcionalidades:**
-- Lista todas as lojas
-- Visualizar status de assinaturas
+**Funcionalidades (via API):**
+- Lista todas as lojas com filtros
+- Visualizar detalhes de loja (com transações e logs)
 - Renovar assinatura manualmente
 - Suspender/Reativar assinatura
 - Cancelar assinatura
 - Alterar plano
-- Histórico de logs
+- Histórico completo de logs
 
-**Validação:**
-- Token JWT válido
-- Role no token = `admin`
-- Redireciona para login se não for admin
+**Como Configurar Usuário Admin:**
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'seu_email@exemplo.com';
+```
+
+**Como Acessar (Exemplo com cURL):**
+```bash
+# 1. Fazer login
+curl -X POST http://localhost/api/auth?action=login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@exemplo.com","password":"senha"}'
+
+# 2. Usar o token retornado
+curl -X GET "http://localhost/api/admin/subscriptions" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+```
 
 ---
 

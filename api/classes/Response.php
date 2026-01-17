@@ -35,6 +35,33 @@ class Response {
     public static function notFound($message = 'Recurso não encontrado') {
         self::error($message, 404);
     }
+    
+    public static function tooManyRequests($message = 'Muitas requisições. Tente novamente mais tarde.', $resetTime = null) {
+        $response = [
+            'success' => false,
+            'error' => $message,
+            'code' => 'RATE_LIMIT_EXCEEDED'
+        ];
+        
+        if ($resetTime) {
+            $response['retry_after'] = $resetTime - time();
+        }
+        
+        // Set Retry-After header
+        if ($resetTime && !headers_sent()) {
+            header('Retry-After: ' . ($resetTime - time()));
+        }
+        
+        self::json($response, 429);
+    }
+    
+    public static function serviceUnavailable($message = 'Serviço temporariamente indisponível') {
+        $response = [
+            'success' => false,
+            'error' => $message
+        ];
+        self::json($response, 503);
+    }
 }
 
 

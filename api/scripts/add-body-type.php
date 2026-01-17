@@ -1,7 +1,7 @@
 <?php
 /**
  * Script rápido para adicionar coluna body_type
- * Acesse: http://localhost/ESTOX/api/scripts/add-body-type.php
+ * Acesse: http://localhost/ESTOCX/api/scripts/add-body-type.php
  */
 
 // Conectar ao banco

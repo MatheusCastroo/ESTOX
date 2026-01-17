@@ -4,7 +4,7 @@
  * Execute: C:\xampp\php\php.exe testar-cadastro.php
  */
 
-$apiUrl = 'http://localhost/ESTOX/api/auth?action=register';
+$apiUrl = 'http://localhost/ESTOCX/api/auth?action=register';
 
 $testData = [
     'email' => 'teste' . time() . '@example.com',

@@ -118,7 +118,7 @@ function OnboardingForm() {
             <Car className="h-8 w-8 text-[#1A73E8]" />
           </div>
           <CardTitle className="text-2xl text-[#424242]">Configure sua loja</CardTitle>
-          <CardDescription>Preencha as informações da sua loja para começar a usar o AutoStock</CardDescription>
+          <CardDescription>Preencha as informações da sua loja para começar a usar o Estocx</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -136,7 +136,7 @@ function OnboardingForm() {
             <div>
               <Label htmlFor="slug">URL do Catálogo *</Label>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-[#424242]/70">autostock.com.br/</span>
+                <span className="text-sm text-[#424242]/70">estocx.com.br/</span>
                 <div className="flex-1 relative">
                   <Input
                     id="slug"

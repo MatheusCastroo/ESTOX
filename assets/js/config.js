@@ -12,7 +12,7 @@
         window.API_URL = protocol + '//' + hostname + '/api';
     } else {
         // Development (Localhost)
-        window.API_URL = 'http://localhost/ESTOX/api';
+        window.API_URL = 'http://localhost/ESTOCX/api';
     }
 })();
 

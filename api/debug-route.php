@@ -1,7 +1,7 @@
 <?php
 /**
  * Debug Routing - Shows how the API router processes requests
- * Acesse: https://nerdparadise.com.br/api/debug-route?test=1
+ * Acesse: https://estocx.com.br/api/debug-route?test=1
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -60,8 +60,8 @@ $debug['expected_endpoints'] = [
 ];
 
 $debug['suggested_test'] = [
-    'test_auth' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'nerdparadise.com.br') . '/api/auth?action=register',
-    'test_index' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'nerdparadise.com.br') . '/api/',
+    'test_auth' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'estocx.com.br') . '/api/auth?action=register',
+    'test_index' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'estocx.com.br') . '/api/',
 ];
 
 echo json_encode($debug, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

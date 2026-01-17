@@ -31,7 +31,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           <a href="#top" onClick={(e) => handleScroll(e, "top")} className="flex items-center gap-2 cursor-pointer">
             <Car className="h-8 w-8" />
-            <span className="text-xl font-bold">AutoStock</span>
+            <span className="text-xl font-bold">Estocx</span>
           </a>
 
           <nav className="hidden md:flex items-center gap-8">

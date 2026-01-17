@@ -11,7 +11,7 @@ export function CTA() {
             Pronto para digitalizar sua loja de veículos?
           </h2>
           <p className="mt-4 text-lg text-white/80">
-            Junte-se a centenas de lojas que já estão vendendo mais com o AutoStock. Teste grátis por 14 dias, sem
+            Junte-se a centenas de lojas que já estão vendendo mais com o Estocx. Teste grátis por 14 dias, sem
             compromisso.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">

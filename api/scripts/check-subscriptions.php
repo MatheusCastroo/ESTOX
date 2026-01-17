@@ -14,7 +14,7 @@ require_once __DIR__ . '/../classes/EmailService.php';
 $db = Database::getInstance();
 $emailService = new EmailService();
 
-echo "=== AutoStock Subscription Check ===\n";
+echo "=== Estocx Subscription Check ===\n";
 echo "Started at: " . date('Y-m-d H:i:s') . "\n\n";
 
 // Get all stores with active trial or active subscription

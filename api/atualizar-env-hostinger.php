@@ -1,15 +1,16 @@
 <?php
 /**
- * Script para criar arquivo .env para Hostinger
- * Execute este arquivo via navegador ou linha de comando
+ * Script para atualizar arquivo .env na Hostinger com novas credenciais
+ * Execute este arquivo via navegador: https://estocx.com.br/api/atualizar-env-hostinger.php
+ * Ou execute: php atualizar-env-hostinger.php
  * 
- * Acesse: https://estocx.com.br/criar-env-hostinger.php
- * Ou execute: php criar-env-hostinger.php
+ * ⚠️ IMPORTANTE: DELETE este arquivo após usar (segurança)
  */
 
-$envContent = <<<'ENV'
+// Novas credenciais da Hostinger
+$newEnvContent = <<<'ENV'
 # Configuração para Produção - Hostinger
-# Arquivo gerado automaticamente
+# Arquivo atualizado automaticamente
 
 # Database Configuration
 DB_HOST=localhost
@@ -27,12 +28,11 @@ ENV;
 
 // Caminhos possíveis para o arquivo .env (na ordem que load-env.php procura)
 $paths = [
-    __DIR__ . '/api/.env',           // Prioridade 1: api/.env
-    __DIR__ . '/.env',                // Prioridade 2: root/.env
+    __DIR__ . '/.env',           // Prioridade 1: api/.env
+    dirname(__DIR__) . '/.env',  // Prioridade 2: root/.env
 ];
 
-$created = false;
-$overwritten = false;
+$updated = false;
 $messages = [];
 
 // Verificar se deve sobrescrever (via GET parameter ?force=1)
@@ -45,47 +45,64 @@ foreach ($paths as $path) {
     if (!is_dir($dir)) {
         if (@mkdir($dir, 0755, true)) {
             $messages[] = "✅ Diretório criado: $dir";
-        } else {
-            $messages[] = "⚠️ Não foi possível criar diretório: $dir (pode já existir)";
         }
     }
     
     // Verificar se arquivo já existe
     if (file_exists($path)) {
-        if ($forceOverwrite) {
-            // Sobrescrever arquivo existente
-            if (file_put_contents($path, $envContent)) {
-                $messages[] = "✅ Arquivo sobrescrito com sucesso: $path";
-                $overwritten = true;
+        // Ler conteúdo atual
+        $currentContent = file_get_contents($path);
+        
+        // Verificar se já está atualizado
+        if (strpos($currentContent, 'u193499788_estocx') !== false && 
+            strpos($currentContent, 'Estocx1522023!') !== false &&
+            strpos($currentContent, 'u507824066') === false) {
+            $messages[] = "ℹ️ Arquivo já está atualizado: $path";
+            if (!$forceOverwrite) {
+                $updated = true;
+                continue;
+            }
+        }
+        
+        // Se tem credenciais antigas, sempre atualizar
+        $hasOldCredentials = (
+            strpos($currentContent, 'u507824066') !== false ||
+            strpos($currentContent, 'Estox7204') !== false
+        );
+        
+        if ($hasOldCredentials || $forceOverwrite) {
+            // Fazer backup do arquivo antigo
+            $backupPath = $path . '.backup.' . date('Y-m-d_H-i-s');
+            if (copy($path, $backupPath)) {
+                $messages[] = "✅ Backup criado: $backupPath";
+            }
+            
+            // Atualizar arquivo
+            if (file_put_contents($path, $newEnvContent)) {
+                $messages[] = "✅ Arquivo atualizado com sucesso: $path";
                 
                 // Tentar definir permissões
                 if (@chmod($path, 0644)) {
                     $messages[] = "   Permissões configuradas: 644";
                 }
-                $created = true;
+                $updated = true;
+                break; // Para após atualizar no primeiro local disponível
             } else {
-                $messages[] = "❌ Erro ao sobrescrever arquivo: $path";
+                $messages[] = "❌ Erro ao atualizar arquivo: $path";
+                $messages[] = "   Verifique permissões de escrita no diretório";
             }
-        } else {
-            $messages[] = "ℹ️ Arquivo já existe: $path";
-            $messages[] = "   Para sobrescrever, acesse: criar-env-hostinger.php?force=1";
-            // Não continua, mantém o arquivo existente
-            continue;
         }
     } else {
         // Criar novo arquivo .env
-        if (file_put_contents($path, $envContent)) {
+        if (file_put_contents($path, $newEnvContent)) {
             $messages[] = "✅ Arquivo criado com sucesso: $path";
             
-            // Tentar definir permissões (pode não funcionar em alguns servidores)
+            // Tentar definir permissões
             if (@chmod($path, 0644)) {
                 $messages[] = "   Permissões configuradas: 644";
-            } else {
-                $messages[] = "   ⚠️ Não foi possível definir permissões automaticamente";
-                $messages[] = "   Configure manualmente as permissões para 644";
             }
             
-            $created = true;
+            $updated = true;
             break; // Para após criar no primeiro local disponível
         } else {
             $messages[] = "❌ Erro ao criar arquivo: $path";
@@ -96,14 +113,15 @@ foreach ($paths as $path) {
 
 // Se executado via CLI
 if (php_sapi_name() === 'cli') {
-    echo "=== Criando arquivo .env para Hostinger ===\n\n";
+    echo "=== Atualizando arquivo .env para Hostinger ===\n\n";
     foreach ($messages as $msg) {
         echo "$msg\n";
     }
     
-    if ($created) {
+    if ($updated) {
         echo "\n✅ Processo concluído!\n";
         echo "⚠️  IMPORTANTE: Altere o JWT_SECRET para uma chave segura!\n";
+        echo "⚠️  DELETE este arquivo (atualizar-env-hostinger.php) após usar!\n";
     }
 } else {
     // Se executado via navegador
@@ -114,7 +132,7 @@ if (php_sapi_name() === 'cli') {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Criar .env - Hostinger</title>
+        <title>Atualizar .env - Hostinger</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -160,11 +178,29 @@ if (php_sapi_name() === 'cli') {
                 border-radius: 3px;
                 font-family: monospace;
             }
+            .btn {
+                display: inline-block;
+                padding: 10px 20px;
+                background: #0D47A1;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                margin: 10px 5px;
+            }
+            .btn:hover {
+                background: #1565C0;
+            }
+            .btn-danger {
+                background: #dc3545;
+            }
+            .btn-danger:hover {
+                background: #c82333;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>🔧 Criar Arquivo .env para Hostinger</h1>
+            <h1>🔧 Atualizar Arquivo .env para Hostinger</h1>
             
             <?php foreach ($messages as $msg): ?>
                 <div class="message <?php echo (strpos($msg, '✅') !== false ? 'success' : (strpos($msg, '❌') !== false ? 'error' : '')); ?>">
@@ -172,38 +208,30 @@ if (php_sapi_name() === 'cli') {
                 </div>
             <?php endforeach; ?>
             
-            <?php if ($created): ?>
+            <?php if ($updated): ?>
                 <div class="warning">
                     <strong>⚠️ IMPORTANTE:</strong><br>
                     1. Altere o <code>JWT_SECRET</code> para uma chave segura e única<br>
                     2. Verifique se as credenciais do banco estão corretas<br>
-                    3. Teste a conexão: <a href="api/test.php" target="_blank">api/test.php</a> ou <a href="api/test-env.php" target="_blank">api/test-env.php</a><br>
-                    4. <strong>DELETE este arquivo (criar-env-hostinger.php) após usar por segurança!</strong>
+                    3. Teste a conexão: <a href="test-env.php" target="_blank">test-env.php</a> ou <a href="test.php" target="_blank">test.php</a><br>
+                    4. <strong>DELETE este arquivo (atualizar-env-hostinger.php) após usar por segurança!</strong>
                 </div>
             <?php elseif (!$forceOverwrite): ?>
                 <div class="warning">
-                    <strong>ℹ️ Arquivo .env já existe</strong><br>
-                    Se você deseja recriar/sobrescrever o arquivo .env, 
-                    <a href="?force=1" style="font-weight: bold; color: #f44336;">clique aqui para forçar sobrescrita</a><br><br>
-                    <small>⚠️ Isso irá sobrescrever o arquivo existente com os valores padrão.</small>
+                    <strong>ℹ️ Arquivo .env já existe e pode estar desatualizado</strong><br>
+                    Se você deseja forçar a atualização (fazendo backup do arquivo atual), 
+                    <a href="?force=1" style="font-weight: bold; color: #f44336;">clique aqui para forçar atualização</a><br><br>
+                    <small>⚠️ Isso irá criar um backup do arquivo existente antes de atualizar.</small>
                 </div>
             <?php endif; ?>
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <a href="api/test.php">Testar API</a> | 
-                <a href="index.html">Voltar ao Site</a>
+                <a href="test-env.php" class="btn">Testar Conexão</a>
+                <a href="test.php" class="btn">Testar API</a>
+                <a href="../index.html" class="btn">Voltar ao Site</a>
             </div>
         </div>
     </body>
     </html>
     <?php
 }
-
-
-
-
-
-
-
-
-

@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 // <CHANGE> Updated metadata for the vehicle platform
 export const metadata: Metadata = {
-  title: "AutoStock - Plataforma de Gestão de Veículos",
+  title: "Estocx - Plataforma de Gestão de Veículos",
   description:
     "Gerencie seu estoque de veículos e publique seu catálogo online. A solução completa para lojas de veículos.",
   generator: "v0.app",

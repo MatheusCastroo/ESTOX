@@ -55,8 +55,14 @@ class Database {
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
+                    PDO::ATTR_TIMEOUT => 5,              // 5 seconds connection timeout
+                    PDO::ATTR_PERSISTENT => false,       // No persistent connections (prevents connection exhaustion)
                 ]
             );
+            
+            // Set MySQL timeouts
+            $this->connection->exec("SET SESSION wait_timeout = 30");
+            $this->connection->exec("SET SESSION interactive_timeout = 30");
         } catch (PDOException $e) {
             http_response_code(500);
             $errorMsg = 'Database connection failed: ' . $e->getMessage();
@@ -84,11 +90,25 @@ class Database {
 
     public function query($sql, $params = []) {
         try {
+            // Check if connection is still alive
+            if (!$this->connection) {
+                throw new Exception('Database connection lost');
+            }
+            
             $stmt = $this->connection->prepare($sql);
             $stmt->execute($params);
             return $stmt;
         } catch (PDOException $e) {
-            throw new Exception('Database query failed: ' . $e->getMessage());
+            // Log error but don't expose details to client
+            error_log('Database query error: ' . $e->getMessage());
+            
+            // Check for connection timeout or server gone away
+            if (strpos($e->getMessage(), 'server has gone away') !== false || 
+                strpos($e->getMessage(), 'Connection timed out') !== false) {
+                throw new Exception('Database connection timeout. Please try again.');
+            }
+            
+            throw new Exception('Database query failed');
         }
     }
 

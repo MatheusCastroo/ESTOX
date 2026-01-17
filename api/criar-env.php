@@ -4,7 +4,7 @@
  * 
  * ⚠️ IMPORTANTE: DELETE ESTE ARQUIVO APÓS USAR (segurança)
  * 
- * Acesse: https://nerdparadise.com.br/api/criar-env.php
+ * Acesse: https://estocx.com.br/api/criar-env.php
  */
 
 header('Content-Type: text/html; charset=utf-8');
@@ -13,13 +13,13 @@ header('Content-Type: text/html; charset=utf-8');
 $envContent = <<<'ENV'
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=u507824066_estox
-DB_USER=u507824066_estox_user
-DB_PASSWORD=Estox7204.
+DB_NAME=u193499788_estocx
+DB_USER=u193499788_estocx
+DB_PASSWORD=Estocx1522023!
 
 JWT_SECRET=change-this-to-a-very-secure-random-string-in-production-make-it-long-and-random
 
-CORS_ORIGINS=https://nerdparadise.com.br,https://www.nerdparadise.com.br
+CORS_ORIGINS=https://estocx.com.br,https://www.estocx.com.br
 
 ENV;
 

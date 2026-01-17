@@ -4,7 +4,7 @@
 (async function() {
     'use strict';
 
-    const API_URL = window.API_URL || 'http://localhost/ESTOX/api';
+    const API_URL = window.API_URL || 'http://localhost/ESTOCX/api';
 
     /**
      * Format price to Brazilian Real format
@@ -43,10 +43,6 @@
     }
 
     /**
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
      * Check if we are on planos.html page
      */
     function isPlanosPage() {
@@ -56,11 +52,6 @@
     }
 
     /**
-<<<<<<< HEAD
-=======
-=======
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
      * Load plans from API
      */
     async function loadPlans() {
@@ -94,10 +85,6 @@
                 return;
             }
             
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
             let filteredPlans = plans;
             
             if (isPlanos) {
@@ -120,20 +107,6 @@
             }
             
             displayPlans(filteredPlans, isPlanos);
-<<<<<<< HEAD
-=======
-=======
-            // Verificar se já existe plano grátis na API
-            const existingFreePlan = plans.find(p => p.slug === 'gratis' || p.price === 0 || p.name.toLowerCase().includes('grátis') || p.name.toLowerCase().includes('gratis'));
-            
-            // Se não existir na API, adicionar nosso plano grátis em primeiro lugar
-            const freePlan = existingFreePlan || createFreePlan();
-            const otherPlans = existingFreePlan ? plans.filter(p => p.slug !== 'gratis' && p.price !== 0 && !p.name.toLowerCase().includes('grátis') && !p.name.toLowerCase().includes('gratis')) : plans;
-            const allPlans = [freePlan, ...otherPlans];
-            
-            displayPlans(allPlans);
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
             console.log('✅ Planos exibidos com sucesso');
         } catch (error) {
             console.error('❌ Erro ao carregar planos da API:', error);
@@ -145,10 +118,6 @@
     /**
      * Display fallback plans when API is unavailable
      */
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
     function displayFallbackPlans(isPlanosPage = false) {
         const fallbackPlans = [];
         
@@ -160,16 +129,6 @@
         
         // Planos pagos (aparecem em todas as páginas)
         fallbackPlans.push(
-<<<<<<< HEAD
-=======
-=======
-    function displayFallbackPlans() {
-        const freePlan = createFreePlan();
-        
-        const fallbackPlans = [
-            freePlan,
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
             {
                 name: 'Mensal',
                 slug: 'profissional-mensal',
@@ -197,6 +156,20 @@
                     'Destaque nos anúncios'
                 ],
                 checkout_url: 'https://buy.stripe.com/test_TRIMESTRAL_LINK_AQUI'
+            },
+            {
+                name: 'Anual',
+                slug: 'profissional-anual',
+                price: 1318.80,  // R$ 109,90/mês x 12
+                features: [
+                    'Até 50 veículos',
+                    'Catálogo com URL personalizada',
+                    'Suporte prioritário',
+                    'Relatórios avançados',
+                    'Integração WhatsApp',
+                    'Destaque nos anúncios'
+                ],
+                checkout_url: 'https://buy.stripe.com/test_ANUAL_LINK_AQUI'
             }
         );
         
@@ -221,10 +194,6 @@
         // Clear existing content
         plansContainer.innerHTML = '';
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
         // Separar plano grátis dos outros planos (apenas se não for página planos.html)
         const freePlan = isPlanosPage ? null : plans.find(p => p.slug === 'gratis' || p.price === 0 || p.name.toLowerCase().includes('grátis') || p.name.toLowerCase().includes('gratis'));
         const paidPlans = plans.filter(p => 
@@ -242,23 +211,6 @@
 
         // Adicionar plano grátis primeiro se existir e não for página planos.html
         const sortedPlans = (!isPlanosPage && freePlan) ? [freePlan, ...sortedPaidPlans] : sortedPaidPlans;
-<<<<<<< HEAD
-=======
-=======
-        // Separar plano grátis dos outros planos
-        const freePlan = plans.find(p => p.slug === 'gratis' || p.price === 0 || p.name.toLowerCase().includes('grátis') || p.name.toLowerCase().includes('gratis'));
-        const paidPlans = plans.filter(p => p.slug !== 'gratis' && p.price !== 0 && !p.name.toLowerCase().includes('grátis') && !p.name.toLowerCase().includes('gratis'));
-
-        // Sort paid plans: Mensal, Trimestral
-        const sortedPaidPlans = paidPlans.sort((a, b) => {
-            const order = ['profissional-mensal', 'profissional-trimestral'];
-            return order.indexOf(a.slug) - order.indexOf(b.slug);
-        });
-
-        // Adicionar plano grátis primeiro, depois os pagos
-        const sortedPlans = freePlan ? [freePlan, ...sortedPaidPlans] : sortedPaidPlans;
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
 
         sortedPlans.forEach((plan, index) => {
             // Check if it's the free plan
@@ -298,7 +250,6 @@
                 savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 20,00/mês
                 savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 14,3%
                 showSavings = true;
-<<<<<<< HEAD
             } else if (planName.includes('anual')) {
                 // Anual: R$ 109,90/mês (R$ 1.318,80/ano)
                 const monthlyReferencePrice = 139.90;
@@ -307,8 +258,6 @@
                 savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 30,00/mês
                 savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 21,4%
                 showSavings = true;
-=======
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
             } else {
                 pricePerMonth = planPrice;
                 periodLabel = '/mês';
@@ -342,6 +291,9 @@
                 } else if (plan.slug === 'profissional-trimestral') {
                     // Link para trimestral - manter estrutura, substituir depois
                     checkoutLink = 'https://buy.stripe.com/test_TRIMESTRAL_LINK_AQUI';
+                } else if (plan.slug === 'profissional-anual') {
+                    // Link para anual - manter estrutura, substituir depois
+                    checkoutLink = 'https://buy.stripe.com/test_ANUAL_LINK_AQUI';
                 } else {
                     checkoutLink = `cadastro.html${plan.slug ? `?plan=${plan.slug}` : ''}`;
                 }
@@ -351,15 +303,7 @@
             // Usar col-lg-3 para index (4 planos: Grátis, Mensal, Trimestral, Anual) ou col-lg-4 para planos.html (3 planos: Mensal, Trimestral, Anual)
             const colClass = isPlanosPage ? 'col-lg-4' : 'col-lg-3';
             const planCard = `
-<<<<<<< HEAD
                 <div class="col-md-6 ${colClass}">
-=======
-<<<<<<< HEAD
-                <div class="col-md-6 ${colClass}">
-=======
-                <div class="col-md-6 col-lg-4">
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
                     <div class="pricing-card ${isFreePlan ? 'pricing-card-free' : ''} ${isFeatured ? 'featured' : ''}">
                         ${isFreePlan ? `
                         <div class="pricing-badge" style="background: #10B981;">
@@ -371,23 +315,10 @@
                             <i class="bi bi-star-fill me-1"></i>Mais Popular
                         </div>
                         ` : ''}
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
                         ${!isFreePlan ? `<h3 class="pricing-title">${plan.name || 'Plano'}</h3>` : ''}
                         <div class="pricing-price" style="${isFreePlan ? 'color: #10B981;' : ''}">
                             ${isFreePlan ? formattedPricePerMonth : `R$ ${formattedPricePerMonth}`}
                             ${!isFreePlan ? `<span class="fs-5" style="font-size: 1rem;">${periodLabel}</span>` : ''}
-<<<<<<< HEAD
-=======
-=======
-                        <h3 class="pricing-title">${plan.name || 'Plano'}</h3>
-                        <div class="pricing-price" style="${isFreePlan ? 'color: #10B981;' : ''}">
-                            ${isFreePlan ? formattedPricePerMonth : `R$ ${formattedPricePerMonth}`}
-                            ${!isFreePlan ? `<span class="fs-4">${periodLabel}</span>` : ''}
->>>>>>> e34ba1f1ea9dc0e8c60145c68c6ee6773ea5838c
->>>>>>> 1f3c6721c41c04f7ffcd639bb9b7016dd51ff6dc
                         </div>
                         ${isFreePlan ? `
                         <p class="pricing-period">

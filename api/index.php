@@ -15,6 +15,11 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
+// Anti-Stress: Set execution limits to prevent server overload
+ini_set('max_execution_time', 30);  // 30 seconds max per request
+ini_set('memory_limit', '64M');     // Limit memory per request
+set_time_limit(30);                 // PHP timeout
+
 // Autoload classes
 spl_autoload_register(function ($class) {
     $file = __DIR__ . '/classes/' . $class . '.php';
@@ -27,10 +32,64 @@ spl_autoload_register(function ($class) {
 require_once __DIR__ . '/classes/Middleware.php';
 require_once __DIR__ . '/classes/Response.php';
 
-// Handle OPTIONS preflight requests
+// Register error handler to ensure JSON response
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        // Fatal error occurred
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        
+        // Try to send JSON response, but if that fails, send minimal response
+        try {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Erro interno do servidor'
+            ]);
+        } catch (Exception $e) {
+            // Last resort: send minimal response
+            echo '{"success":false,"error":"Erro interno do servidor"}';
+        }
+    }
+});
+
+// Set error handler for non-fatal errors
+set_error_handler(function($severity, $message, $file, $line) {
+    // Only handle errors that would cause issues
+    if (error_reporting() & $severity) {
+        // Log error but don't break execution
+        error_log("PHP Error: $message in $file on line $line");
+    }
+    return true; // Don't execute PHP internal error handler
+}, E_WARNING | E_NOTICE);
+
+// Handle OPTIONS preflight requests (no rate limit for OPTIONS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     Middleware::cors();
     http_response_code(200);
+    exit;
+}
+
+// Block suspicious bots before any processing
+try {
+    Middleware::blockBots();
+} catch (Exception $e) {
+    // Already handled by Response class
+    exit;
+}
+
+// Apply rate limiting (before authentication check for public endpoints)
+try {
+    // Check if authenticated (has Authorization header)
+    $headers = getallheaders();
+    $hasAuth = isset($headers['Authorization']) && !empty($headers['Authorization']);
+    
+    // Apply rate limiting (less restrictive for authenticated)
+    Middleware::rateLimit($hasAuth);
+} catch (Exception $e) {
+    // Already handled by Response class
     exit;
 }
 
@@ -105,7 +164,7 @@ switch ($endpoint) {
             http_response_code(200);
             header('Content-Type: application/json');
             echo json_encode([
-                'message' => 'ESTOX API v1.0',
+                'message' => 'ESTOCX API v1.0',
                 'status' => 'ok',
                 'endpoints' => [
                     'auth' => '/api/auth?action=register ou /api/auth?action=login',

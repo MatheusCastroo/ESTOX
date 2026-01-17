@@ -27,7 +27,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <a href="#top" onClick={(e) => handleScroll(e, "top")} className="flex items-center gap-2 cursor-pointer">
               <Car className="h-8 w-8" />
-              <span className="text-xl font-bold">AutoStock</span>
+              <span className="text-xl font-bold">Estocx</span>
             </a>
             <p className="mt-4 text-white/70">A plataforma completa para gestão de estoque de veículos.</p>
           </div>
@@ -103,7 +103,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-white/20 text-center text-white/70">
-          <p>&copy; {new Date().getFullYear()} AutoStock. Todos os direitos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Estocx. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

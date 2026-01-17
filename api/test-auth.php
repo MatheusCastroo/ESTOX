@@ -29,7 +29,7 @@ $test = [
         'index_exists' => file_exists(__DIR__ . '/index.php'),
         'htaccess_exists' => file_exists(__DIR__ . '/.htaccess'),
     ],
-    'suggested_url' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'nerdparadise.com.br') . '/api/auth?action=register',
+    'suggested_url' => 'https://' . ($_SERVER['SERVER_NAME'] ?? 'estocx.com.br') . '/api/auth?action=register',
     'instructions' => [
         'Para testar registro, faça uma requisição POST para:',
         'URL: /api/auth?action=register',

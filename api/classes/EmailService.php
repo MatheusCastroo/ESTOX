@@ -9,8 +9,8 @@ class EmailService {
     private $fromName;
     
     public function __construct() {
-        $this->fromEmail = getenv('EMAIL_FROM') ?: 'noreply@autostock.com.br';
-        $this->fromName = getenv('EMAIL_FROM_NAME') ?: 'AutoStock';
+        $this->fromEmail = getenv('EMAIL_FROM') ?: 'noreply@estocx.com.br';
+        $this->fromName = getenv('EMAIL_FROM_NAME') ?: 'Estocx';
     }
     
     /**
@@ -64,7 +64,7 @@ class EmailService {
             case 14:
                 return "Último aviso — 14 dias";
             default:
-                return "Lembrete sobre seu plano ESTOX";
+                return "Lembrete sobre seu plano ESTOCX";
         }
     }
     
@@ -82,7 +82,7 @@ class EmailService {
                  "<a href=\"{$checkoutUrl}\" class=\"button\">Renovar Plano</a>\n\n" .
                  "Se precisar de ajuda ou tiver alguma dúvida, estamos à disposição 😊\n\n" .
                  "Abraços,\n" .
-                 "Equipe ESTOX",
+                 "Equipe ESTOCX",
                  
             10 => "Olá!\n\n" .
                   "Passando aqui para lembrar que seu plano está bem perto do vencimento.\n" .
@@ -90,7 +90,7 @@ class EmailService {
                   "<a href=\"{$checkoutUrl}\" class=\"button\">Renovar Plano</a>\n\n" .
                   "Queremos garantir que nada do seu sistema seja interrompido.\n\n" .
                   "Conte com a gente!\n" .
-                  "Equipe ESTOX",
+                  "Equipe ESTOCX",
                   
             14 => "Olá!\n\n" .
                   "Este é o último lembrete sobre a renovação do seu plano.\n" .
@@ -99,7 +99,7 @@ class EmailService {
                   "Fique tranquilo(a): nenhuma informação será apagada — basta renovar para tudo voltar ao normal.\n\n" .
                   "Caso precise de ajuda, fale com a nossa equipe.\n\n" .
                   "Obrigado,\n" .
-                  "Equipe ESTOX",
+                  "Equipe ESTOCX",
                   
             default => "Olá!\n\n" .
                        "Seu plano está próximo do vencimento.\n\n" .
@@ -120,9 +120,9 @@ class EmailService {
             "Olá!\n\n" .
             "Seu pagamento foi confirmado com sucesso!\n\n" .
             "Sua loja <strong>{$store['name']}</strong> está ativa e funcionando normalmente.\n\n" .
-            "Obrigado por confiar no ESTOX!\n\n" .
+            "Obrigado por confiar no ESTOCX!\n\n" .
             "Abraços,\n" .
-            "Equipe ESTOX",
+                 "Equipe ESTOCX",
             $store['name']
         );
     }
@@ -140,7 +140,7 @@ class EmailService {
             "<a href=\"{$checkoutUrl}\" class=\"button\">Tentar Novamente</a>\n\n" .
             "Caso precise de ajuda, fale com a nossa equipe.\n\n" .
             "Obrigado,\n" .
-            "Equipe ESTOX",
+                 "Equipe ESTOCX",
             $store['name']
         );
     }
@@ -222,14 +222,14 @@ class EmailService {
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>ESTOX</h1>
+            <h1>ESTOCX</h1>
         </div>
         <div class='content'>
             {$formattedMessage}
         </div>
         <div class='footer'>
-            <p>Este é um e-mail automático do ESTOX. Por favor, não responda.</p>
-            <p>&copy; " . date('Y') . " ESTOX. Todos os direitos reservados.</p>
+            <p>Este é um e-mail automático do ESTOCX. Por favor, não responda.</p>
+            <p>&copy; " . date('Y') . " ESTOCX. Todos os direitos reservados.</p>
         </div>
     </div>
 </body>

@@ -65,9 +65,38 @@ ALTER TABLE stores
   CHECK (subscription_status IN ('trial', 'active', 'pending', 'suspended', 'canceled'));
 
 -- Adicionar índice para busca por status e data de expiração
-ALTER TABLE stores 
-  ADD INDEX idx_stores_subscription_status (subscription_status),
-  ADD INDEX idx_stores_subscription_ends_at (subscription_ends_at);
+-- Verificar se os índices já existem antes de criar (idempotente)
+SET @index_exists_status = (
+  SELECT COUNT(*) 
+  FROM information_schema.statistics 
+  WHERE table_schema = DATABASE() 
+    AND table_name = 'stores' 
+    AND index_name = 'idx_stores_subscription_status'
+);
+
+SET @index_exists_ends_at = (
+  SELECT COUNT(*) 
+  FROM information_schema.statistics 
+  WHERE table_schema = DATABASE() 
+    AND table_name = 'stores' 
+    AND index_name = 'idx_stores_subscription_ends_at'
+);
+
+SET @sql_status = IF(@index_exists_status = 0, 
+  'ALTER TABLE stores ADD INDEX idx_stores_subscription_status (subscription_status)', 
+  'SELECT "Índice idx_stores_subscription_status já existe" AS message');
+
+SET @sql_ends_at = IF(@index_exists_ends_at = 0, 
+  'ALTER TABLE stores ADD INDEX idx_stores_subscription_ends_at (subscription_ends_at)', 
+  'SELECT "Índice idx_stores_subscription_ends_at já existe" AS message');
+
+PREPARE stmt FROM @sql_status;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+PREPARE stmt FROM @sql_ends_at;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 
 

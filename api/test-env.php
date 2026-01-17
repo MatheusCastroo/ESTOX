@@ -43,7 +43,21 @@ foreach ($envVars as $var) {
 // Get database config
 try {
     $config = require __DIR__ . '/config/database.php';
+    
+    // Detect environment
+    $hostname = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $isLocal = (
+        $hostname === 'localhost' || 
+        $hostname === '127.0.0.1' || 
+        strpos($hostname, '192.168.') === 0 ||
+        strpos($hostname, 'localhost') !== false
+    );
+    
     $test['database_config'] = [
+        'environment_detected' => $isLocal ? 'development (localhost)' : 'production (Hostinger)',
+        'hostname' => $hostname,
+        'server_name' => $_SERVER['SERVER_NAME'] ?? 'não definido',
+        'server_addr' => $_SERVER['SERVER_ADDR'] ?? 'não definido',
         'host' => $config['host'],
         'port' => $config['port'],
         'database' => $config['database'],

@@ -105,8 +105,8 @@ switch ($method) {
             
             $checkoutData = [
                 'amount' => (float)$plan['price'],
-                'product_name' => "Plano {$plan['name']} - ESTOX",
-                'product_description' => "Assinatura {$plan['name']} do ESTOX - {$durationDays} dias",
+                'product_name' => "Plano {$plan['name']} - ESTOCX",
+                'product_description' => "Assinatura {$plan['name']} do ESTOCX - {$durationDays} dias",
                 'success_url' => $appUrl . '/renovar-plano?status=success&session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => $appUrl . '/renovar-plano?status=canceled',
                 'customer_email' => $store['user_email'] ?? $store['email'],

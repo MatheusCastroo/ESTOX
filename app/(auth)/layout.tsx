@@ -14,7 +14,7 @@ export default function AuthLayout({
         <div className="mx-auto max-w-7xl px-4">
           <Link href="/" className="flex items-center gap-2 w-fit">
             <Car className="h-8 w-8 text-white" />
-            <span className="text-xl font-bold text-white">AutoStock</span>
+            <span className="text-xl font-bold text-white">Estocx</span>
           </Link>
         </div>
       </header>
@@ -24,7 +24,7 @@ export default function AuthLayout({
 
       {/* Footer */}
       <footer className="py-4 text-center text-sm text-[#424242]/70">
-        <p>&copy; {new Date().getFullYear()} AutoStock. Todos os direitos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} Estocx. Todos os direitos reservados.</p>
       </footer>
     </div>
   )

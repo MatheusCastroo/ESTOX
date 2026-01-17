@@ -1,7 +1,7 @@
 <?php
 /**
  * Test Route - Simple test for routing
- * Acesse: https://nerdparadise.com.br/api/test-route.php
+ * Acesse: https://estocx.com.br/api/test-route.php
  */
 
 header('Content-Type: application/json; charset=utf-8');

@@ -5,7 +5,7 @@
  */
 
 $oldUrl = 'http://localhost/api';
-$newUrl = 'http://localhost/ESTOX/api';
+$newUrl = 'http://localhost/ESTOCX/api';
 
 $files = [
     'html-version/assets/js/auth.js',

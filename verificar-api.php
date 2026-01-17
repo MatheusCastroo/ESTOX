@@ -6,7 +6,7 @@
  * Este script verifica se a API está configurada corretamente
  */
 
-echo "🔍 Verificando configuração da API ESTOX...\n\n";
+echo "🔍 Verificando configuração da API ESTOCX...\n\n";
 
 $errors = [];
 $warnings = [];

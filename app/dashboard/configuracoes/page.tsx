@@ -70,7 +70,7 @@ export default function SettingsPage() {
                 <Label htmlFor="slug">URL do Catálogo</Label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 bg-[#F5F5F5] border border-r-0 rounded-l-md text-sm text-[#424242]/70">
-                    autostock.com.br/
+                    estocx.com.br/
                   </span>
                   <Input id="slug" defaultValue={store?.slug || "auto-prime"} className="rounded-l-none" />
                 </div>
@@ -196,7 +196,7 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-[#424242]">Novidades do AutoStock</p>
+                <p className="font-medium text-[#424242]">Novidades do Estocx</p>
                 <p className="text-sm text-[#424242]/70">Atualizações e novos recursos da plataforma</p>
               </div>
               <Switch />

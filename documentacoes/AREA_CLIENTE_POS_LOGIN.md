@@ -717,7 +717,7 @@ Cada seção é apresentada em cards Bootstrap com:
             <div class="col-md-6">
                 <label for="slug" class="form-label">URL do Catálogo <span class="text-danger">*</span></label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light">autostock.com.br/</span>
+                    <span class="input-group-text bg-light">estocx.com.br/</span>
                     <input type="text" class="form-control" id="slug" 
                            placeholder="sua-loja" required 
                            pattern="[a-z0-9-]+">

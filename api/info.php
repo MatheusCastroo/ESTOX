@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP Info - Simple test to verify PHP is working in /api/ directory
- * Acesse: https://nerdparadise.com.br/api/info.php
+ * Acesse: https://estocx.com.br/api/info.php
  * 
  * ⚠️ REMOVER ESTE ARQUIVO APÓS OS TESTES (segurança)
  */

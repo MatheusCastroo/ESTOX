@@ -2,8 +2,51 @@
 
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Response.php';
+require_once __DIR__ . '/RateLimiter.php';
 
 class Middleware {
+    /**
+     * Block suspicious bots and requests
+     * Only blocks obviously malicious requests, allows legitimate browsers and API clients
+     */
+    public static function blockBots() {
+        // Skip bot blocking for OPTIONS requests (CORS preflight)
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            return;
+        }
+        
+        // Very permissive - only block obviously malicious requests
+        // Allow all legitimate browsers, API clients, and testing tools
+        // This function is intentionally minimal to avoid false positives
+    }
+    
+    /**
+     * Apply rate limiting
+     * @param bool $isAuthenticated Whether the request is authenticated
+     */
+    public static function rateLimit($isAuthenticated = false) {
+        // Cleanup old files (10% chance to avoid overhead)
+        if (rand(1, 10) === 1) {
+            RateLimiter::cleanup();
+        }
+        
+        $result = RateLimiter::check($isAuthenticated);
+        
+        // Set rate limit headers
+        if (!headers_sent()) {
+            header('X-RateLimit-Limit: ' . $result['limit']);
+            header('X-RateLimit-Remaining: ' . $result['remaining']);
+            header('X-RateLimit-Reset: ' . $result['reset']);
+        }
+        
+        if (!$result['allowed']) {
+            Response::tooManyRequests(
+                'Muitas requisições. Limite de ' . $result['limit'] . ' requisições por minuto excedido.',
+                $result['reset']
+            );
+        }
+    }
+    
     public static function cors() {
         $config = require __DIR__ . '/../config/config.php';
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';

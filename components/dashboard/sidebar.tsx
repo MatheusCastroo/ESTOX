@@ -33,7 +33,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
         <Car className="h-8 w-8 text-white" />
-        <span className="text-xl font-bold text-white">AutoStock</span>
+        <span className="text-xl font-bold text-white">Estocx</span>
       </div>
 
       {/* Navigation */}
@@ -85,7 +85,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0D47A1] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Car className="h-7 w-7 text-white" />
-          <span className="text-lg font-bold text-white">AutoStock</span>
+          <span className="text-lg font-bold text-white">Estocx</span>
         </div>
         <Button
           variant="ghost"

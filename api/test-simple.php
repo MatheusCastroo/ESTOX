@@ -1,7 +1,7 @@
 <?php
 /**
  * Test Simple - Teste básico de PHP
- * Acesse: https://nerdparadise.com.br/api/test-simple.php
+ * Acesse: https://estocx.com.br/api/test-simple.php
  */
 
 header('Content-Type: text/plain; charset=utf-8');
