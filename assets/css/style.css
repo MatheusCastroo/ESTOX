@@ -11,6 +11,144 @@ body {
     color: var(--text-color);
 }
 
+/* ============================================
+   REQ-FR-UI-003: Padronização do comportamento do cursor
+   ============================================ */
+
+/* Elementos clicáveis - cursor pointer */
+button,
+a,
+.btn,
+.nav-link,
+.navbar-brand,
+.clickable,
+[role="button"],
+[onclick],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+label[for],
+select,
+.form-check-input,
+.form-switch input,
+.card:hover,
+.vehicle-card:hover,
+.vehicle-card-modern:hover,
+.dropdown-toggle,
+.dropdown-item,
+.pagination .page-link,
+.modal-header .btn-close,
+.alert-dismissible .btn-close,
+.badge[href],
+img[onclick],
+.clickable-image {
+    cursor: pointer;
+}
+
+/* Links específicos */
+a:not(.disabled):not([aria-disabled="true"]) {
+    cursor: pointer;
+}
+
+/* Ícones clicáveis */
+i[onclick],
+i.clickable,
+.bi[onclick],
+svg[onclick],
+.icon-clickable {
+    cursor: pointer;
+}
+
+/* Elementos desabilitados - cursor not-allowed */
+button:disabled,
+.btn:disabled,
+.btn.disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+.form-control:disabled,
+.form-select:disabled,
+a.disabled,
+.nav-link.disabled,
+[aria-disabled="true"],
+.disabled {
+    cursor: not-allowed !important;
+}
+
+/* Estados de carregamento - cursor wait/progress */
+.loading,
+.is-loading,
+[data-loading="true"],
+body.loading,
+.form-loading,
+.btn.loading,
+.spinner-border,
+.spinner-grow {
+    cursor: wait !important;
+}
+
+/* Progress indicators */
+.progress,
+.progress-bar {
+    cursor: progress;
+}
+
+/* Elementos informativos - cursor default (mantém padrão) */
+p,
+span,
+h1, h2, h3, h4, h5, h6,
+.text-muted,
+.alert:not(.alert-dismissible),
+.badge:not([href]),
+small {
+    cursor: default;
+}
+
+/* Inputs editáveis */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+textarea,
+.form-control:not(:disabled),
+.form-select:not(:disabled) {
+    cursor: text;
+}
+
+/* Inputs de seleção */
+input[type="checkbox"],
+input[type="radio"],
+.form-check-input {
+    cursor: pointer;
+}
+
+/* Drag and drop */
+[draggable="true"] {
+    cursor: grab;
+}
+
+[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Resize handles */
+textarea[resize],
+.resize {
+    cursor: nwse-resize;
+}
+
+/* Help cursor para elementos com tooltip */
+[data-bs-toggle="tooltip"],
+[title],
+[data-tooltip] {
+    cursor: help;
+}
+
 /* Hero Section */
 .hero-section {
     background: linear-gradient(135deg, #0D47A1 0%, #1A73E8 50%, #0D47A1 100%);
@@ -51,23 +189,35 @@ html {
 /* Navbar */
 .navbar-brand {
     font-size: 1.25rem;
+    cursor: pointer;
 }
 
 .nav-link {
     transition: opacity 0.3s ease;
+    cursor: pointer;
 }
 
 .nav-link:hover {
     opacity: 0.8;
 }
 
+.nav-link.disabled {
+    cursor: not-allowed;
+}
+
 /* Buttons */
 .btn {
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .btn:hover {
     transform: translateY(-2px);
+}
+
+.btn:disabled,
+.btn.disabled {
+    cursor: not-allowed !important;
 }
 
 /* Forms */
@@ -524,12 +674,19 @@ html {
     border-radius: 8px;
 }
 
+.header-logo-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
 .header-logo {
-    height: 64px;
-    max-height: 72px;
-    max-width: 300px;
+    max-height: 150px;
+    max-width: 600px;
     width: auto;
+    height: auto;
     object-fit: contain;
+    display: block;
 }
 
 @media (max-width: 768px) {
@@ -538,15 +695,23 @@ html {
     }
     
     #logoPreview {
-        min-width: 200px !important;
-        min-height: 80px !important;
+        min-width: 280px !important;
+        min-height: 140px !important;
         max-width: 100% !important;
+        max-height: 300px !important;
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    .header-logo-wrapper {
+        padding: 0.15rem 0;
     }
     
     .header-logo {
-        height: 48px;
-        max-height: 56px;
-        max-width: 200px;
+        max-height: 100px;
+        max-width: 400px;
+        width: auto;
+        height: auto;
     }
     
     /* Modal de filtros */

@@ -30,12 +30,22 @@
         .store-header {
             background: white;
             border-bottom: 1px solid #e0e0e0;
-            padding: 1rem 0;
+            padding: 0.5rem 0;
+        }
+
+        .store-logo-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 0.25rem 0;
         }
 
         .store-logo {
-            max-height: 50px;
-            max-width: 200px;
+            max-height: 150px;
+            max-width: 600px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
         }
 
         /* Galeria de Imagens */
@@ -391,7 +401,9 @@
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-3">
-                    <img id="storeLogo" src="" alt="Logo" class="store-logo d-none">
+                    <div class="store-logo-wrapper">
+                        <img id="storeLogo" src="" alt="Logo" class="store-logo d-none">
+                    </div>
                     <div>
                         <h5 class="mb-0 fw-bold" id="storeName">Carregando...</h5>
                         <small class="text-muted" id="storeLocation"></small>

@@ -109,3 +109,61 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================
+   RF-XX: Cursor Personalizado
+   ============================================ */
+
+/* Elementos clicáveis - cursor pointer */
+button,
+a:not(.disabled):not([aria-disabled="true"]),
+[role="button"]:not([aria-disabled="true"]),
+[onclick],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+label[for],
+select:not(:disabled),
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+/* Elementos desabilitados - cursor not-allowed */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"],
+.disabled {
+  cursor: not-allowed !important;
+}
+
+/* Estados de carregamento - cursor wait */
+.loading,
+.is-loading,
+[data-loading="true"],
+body.loading {
+  cursor: wait !important;
+}
+
+/* Inputs de texto */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+textarea:not(:disabled) {
+  cursor: text;
+}
+
+/* Elementos informativos - cursor default */
+p,
+span:not([onclick]),
+h1, h2, h3, h4, h5, h6 {
+  cursor: default;
+}

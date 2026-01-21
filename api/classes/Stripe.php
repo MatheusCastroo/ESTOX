@@ -142,6 +142,12 @@ class Stripe {
     private function makeRequest($method, $endpoint, $data = null) {
         $url = $this->baseUrl . $endpoint;
         
+        // Handle GET requests with query parameters
+        if ($method === 'GET' && $data && strpos($endpoint, '?') === false) {
+            $url .= '?' . http_build_query($data);
+            $data = null;
+        }
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -153,10 +159,14 @@ class Stripe {
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
             // Stripe API uses form-encoded data
-            $postData = $this->buildFormData($data);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            if ($data) {
+                $postData = $this->buildFormData($data);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            }
         } elseif ($method === 'GET') {
             curl_setopt($ch, CURLOPT_HTTPGET, true);
+        } elseif ($method === 'DELETE') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         }
         
         $response = curl_exec($ch);
@@ -234,6 +244,122 @@ class Stripe {
         }
         
         return http_build_query($formData);
+    }
+    
+    /**
+     * Create a Subscription Checkout Session
+     * Creates a recurring monthly subscription
+     * 
+     * @param array $data Subscription data
+     * @return array Stripe checkout session
+     */
+    public function createSubscriptionCheckoutSession($data) {
+        $payload = [
+            'mode' => 'subscription', // Recurring subscription
+            'success_url' => $data['success_url'],
+            'cancel_url' => $data['cancel_url'],
+            'line_items' => [
+                [
+                    'price_data' => [
+                        'currency' => 'brl',
+                        'product_data' => [
+                            'name' => $data['product_name'],
+                            'description' => $data['product_description'] ?? ''
+                        ],
+                        'recurring' => [
+                            'interval' => 'month', // Monthly billing
+                            'interval_count' => 1
+                        ],
+                        'unit_amount' => (int)($data['amount'] * 100) // Convert to cents
+                    ],
+                    'quantity' => 1
+                ]
+            ],
+            'metadata' => $data['metadata'] ?? [],
+            'customer_email' => $data['customer_email'] ?? null,
+            'client_reference_id' => $data['client_reference_id'] ?? null,
+            'subscription_data' => [
+                'metadata' => $data['metadata'] ?? []
+            ]
+        ];
+        
+        // Add customer email if provided
+        if (isset($data['customer_email'])) {
+            $payload['customer_email'] = $data['customer_email'];
+        }
+        
+        return $this->makeRequest('POST', '/checkout/sessions', $payload);
+    }
+    
+    /**
+     * Get Subscription by ID
+     * 
+     * @param string $subscriptionId Stripe subscription ID
+     * @return array Subscription data
+     */
+    public function getSubscription($subscriptionId) {
+        return $this->makeRequest('GET', "/subscriptions/{$subscriptionId}");
+    }
+    
+    /**
+     * Cancel Subscription at Period End
+     * Sets cancel_at_period_end = true so customer keeps access until period ends
+     * 
+     * @param string $subscriptionId Stripe subscription ID
+     * @return array Updated subscription data
+     */
+    public function cancelSubscriptionAtPeriodEnd($subscriptionId) {
+        $payload = [
+            'cancel_at_period_end' => true
+        ];
+        
+        return $this->makeRequest('POST', "/subscriptions/{$subscriptionId}", $payload);
+    }
+    
+    /**
+     * Resume Subscription (undo cancellation)
+     * 
+     * @param string $subscriptionId Stripe subscription ID
+     * @return array Updated subscription data
+     */
+    public function resumeSubscription($subscriptionId) {
+        $payload = [
+            'cancel_at_period_end' => false
+        ];
+        
+        return $this->makeRequest('POST', "/subscriptions/{$subscriptionId}", $payload);
+    }
+    
+    /**
+     * List Paid Invoices for a Subscription
+     * 
+     * @param string $subscriptionId Stripe subscription ID
+     * @return array List of paid invoices
+     */
+    public function listPaidInvoices($subscriptionId) {
+        $payload = [
+            'subscription' => $subscriptionId,
+            'status' => 'paid',
+            'limit' => 100
+        ];
+        
+        return $this->makeRequest('GET', '/invoices', $payload);
+    }
+    
+    /**
+     * Count Paid Invoices for a Subscription
+     * 
+     * @param string $subscriptionId Stripe subscription ID
+     * @return int Number of paid invoices
+     */
+    public function countPaidInvoices($subscriptionId) {
+        try {
+            $invoices = $this->listPaidInvoices($subscriptionId);
+            return isset($invoices['data']) ? count($invoices['data']) : 0;
+        } catch (Exception $e) {
+            error_log('Error counting paid invoices: ' . $e->getMessage());
+            return 0;
+        }
     }
     
     /**

@@ -49,6 +49,18 @@ try {
             handleCheckoutCompleted($db, $stripe, $emailService, $eventData);
             break;
             
+        case 'customer.subscription.created':
+            handleSubscriptionCreated($db, $stripe, $eventData);
+            break;
+            
+        case 'customer.subscription.updated':
+            handleSubscriptionUpdated($db, $stripe, $eventData);
+            break;
+            
+        case 'invoice.paid':
+            handleInvoicePaid($db, $stripe, $emailService, $eventData);
+            break;
+            
         case 'payment_intent.succeeded':
             handlePaymentSucceeded($db, $stripe, $emailService, $eventData);
             break;
@@ -441,4 +453,338 @@ function activateSubscription($db, $emailService, $storeId, $metadata, $transact
         'plan_name' => $plan['name'],
         'transaction_reference' => $transactionReference
     ]);
+}
+
+/**
+ * Handle customer.subscription.created event
+ * Creates stripe_subscriptions record when subscription is created
+ */
+function handleSubscriptionCreated($db, $stripe, $subscriptionData) {
+    $subscriptionId = $subscriptionData['id'] ?? null;
+    $metadata = $subscriptionData['metadata'] ?? [];
+    $storeId = $metadata['store_id'] ?? null;
+    
+    if (!$subscriptionId || !$storeId) {
+        error_log("Subscription created event missing subscription_id or store_id");
+        return;
+    }
+    
+    // Check if already exists
+    $existing = $db->fetchOne(
+        "SELECT * FROM stripe_subscriptions WHERE subscription_id = :subscription_id",
+        ['subscription_id' => $subscriptionId]
+    );
+    
+    if ($existing) {
+        // Already exists, skip
+        return;
+    }
+    
+    // Get plan
+    $planSlug = $metadata['plan_slug'] ?? null;
+    $planId = $metadata['plan_id'] ?? null;
+    
+    if (!$planSlug || !$planId) {
+        // Try to get from store
+        $store = $db->fetchOne(
+            "SELECT plan_id FROM stores WHERE id = :id",
+            ['id' => $storeId]
+        );
+        
+        if ($store && $store['plan_id']) {
+            $plan = $db->fetchOne(
+                "SELECT * FROM plans WHERE id = :id",
+                ['id' => $store['plan_id']]
+            );
+            
+            if ($plan) {
+                $planId = $plan['id'];
+                $planSlug = $plan['slug'];
+            }
+        }
+    }
+    
+    if (!$planId || !$planSlug) {
+        error_log("Subscription created event: Could not find plan for store {$storeId}");
+        return;
+    }
+    
+    // Get plan loyalty months
+    $plan = $db->fetchOne(
+        "SELECT loyalty_months FROM plans WHERE id = :id",
+        ['id' => $planId]
+    );
+    
+    $loyaltyMonths = $plan ? (int)($plan['loyalty_months'] ?? 0) : 0;
+    
+    // Calculate initial cancellation release date
+    // Will be recalculated more accurately when invoices are paid
+    $dataInicio = date('Y-m-d H:i:s', $subscriptionData['created'] ?? time());
+    $dataLiberacao = null;
+    $loyaltyStatus = 'locked';
+    
+    if ($loyaltyMonths > 0) {
+        $dataLiberacao = date('Y-m-d H:i:s', strtotime($dataInicio . " +{$loyaltyMonths} months"));
+    } else {
+        // No loyalty - can cancel immediately
+        $dataLiberacao = date('Y-m-d H:i:s');
+        $loyaltyStatus = 'completed';
+    }
+    
+    // Create stripe_subscriptions record
+    $db->insert('stripe_subscriptions', [
+        'id' => $db->generateUuid(),
+        'store_id' => $storeId,
+        'subscription_id' => $subscriptionId,
+        'plan_id' => $planId,
+        'plan_slug' => $planSlug,
+        'data_inicio' => $dataInicio,
+        'meses_pagos' => 0, // Will be updated when first invoice is paid
+        'data_liberacao_cancelamento' => $dataLiberacao,
+        'loyalty_status' => $loyaltyStatus,
+        'status' => $subscriptionData['status'] ?? 'active',
+        'cancel_at_period_end' => $subscriptionData['cancel_at_period_end'] ?? false,
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s')
+    ]);
+    
+    error_log("Stripe subscription created: {$subscriptionId} for store {$storeId}");
+}
+
+/**
+ * Handle customer.subscription.updated event
+ * Updates stripe_subscriptions record when subscription changes
+ */
+function handleSubscriptionUpdated($db, $stripe, $subscriptionData) {
+    $subscriptionId = $subscriptionData['id'] ?? null;
+    
+    if (!$subscriptionId) {
+        return;
+    }
+    
+    // Find existing subscription
+    $stripeSubscription = $db->fetchOne(
+        "SELECT * FROM stripe_subscriptions WHERE subscription_id = :subscription_id",
+        ['subscription_id' => $subscriptionId]
+    );
+    
+    if (!$stripeSubscription) {
+        // If not found, try to create it
+        handleSubscriptionCreated($db, $stripe, $subscriptionData);
+        return;
+    }
+    
+    // CRITICAL: Check for unauthorized cancellation (before loyalty period)
+    $plan = $db->fetchOne(
+        "SELECT loyalty_months FROM plans WHERE id = :id",
+        ['id' => $stripeSubscription['plan_id']]
+    );
+    
+    $loyaltyMonths = $plan ? (int)($plan['loyalty_months'] ?? 0) : 0;
+    $mesesPagos = (int)$stripeSubscription['meses_pagos'];
+    
+    // Detect unauthorized cancellation
+    if ($subscriptionData['status'] === 'canceled' && 
+        $loyaltyMonths > 0 && 
+        $mesesPagos < $loyaltyMonths &&
+        !$stripeSubscription['cancel_at_period_end']) {
+        
+        // Cancelamento indevido detectado - não foi feito via nosso endpoint
+        // Log alert for admin
+        error_log("⚠️ UNAUTHORIZED CANCELLATION DETECTED: Subscription {$subscriptionId} canceled before loyalty period completed. Store: {$stripeSubscription['store_id']}, Months paid: {$mesesPagos}, Required: {$loyaltyMonths}");
+        
+        // Log in subscription_logs
+        $db->insert('subscription_logs', [
+            'id' => $db->generateUuid(),
+            'store_id' => $stripeSubscription['store_id'],
+            'action' => 'unauthorized_cancellation',
+            'old_status' => $stripeSubscription['status'],
+            'new_status' => 'canceled',
+            'old_ends_at' => null,
+            'new_ends_at' => null,
+            'performed_by' => 'system',
+            'notes' => "⚠️ CANCELAMENTO INDEVIDO DETECTADO: Assinatura cancelada antes do período de fidelidade. Meses pagos: {$mesesPagos}, Fidelidade requerida: {$loyaltyMonths}. Possível cancelamento via Stripe Dashboard ou API direta.",
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        
+        // TODO: Send alert email to admin
+        // $emailService->sendAdminAlert(...);
+    }
+    
+    // Update status and cancel_at_period_end
+    $updateData = [
+        'status' => $subscriptionData['status'] ?? $stripeSubscription['status'],
+        'cancel_at_period_end' => $subscriptionData['cancel_at_period_end'] ?? false,
+        'updated_at' => date('Y-m-d H:i:s')
+    ];
+    
+    // If subscription was canceled and period ended, update store status
+    if ($subscriptionData['status'] === 'canceled' && 
+        $subscriptionData['cancel_at_period_end'] === true &&
+        isset($subscriptionData['canceled_at'])) {
+        
+        $store = $db->fetchOne(
+            "SELECT * FROM stores WHERE id = :id",
+            ['id' => $stripeSubscription['store_id']]
+        );
+        
+        if ($store && $store['subscription_status'] === 'active') {
+            $db->update('stores', [
+                'subscription_status' => 'canceled',
+                'updated_at' => date('Y-m-d H:i:s')
+            ], 'id = :id', ['id' => $store['id']]);
+            
+            // Log cancellation
+            $db->insert('subscription_logs', [
+                'id' => $db->generateUuid(),
+                'store_id' => $store['id'],
+                'action' => 'canceled',
+                'old_status' => 'active',
+                'new_status' => 'canceled',
+                'old_ends_at' => $store['subscription_ends_at'],
+                'new_ends_at' => $store['subscription_ends_at'],
+                'performed_by' => 'system',
+                'notes' => "Assinatura cancelada no Stripe ao final do período. Subscription ID: {$subscriptionId}",
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+        }
+    }
+    
+    $db->update('stripe_subscriptions', $updateData, 
+        'subscription_id = :subscription_id', 
+        ['subscription_id' => $subscriptionId]
+    );
+}
+
+/**
+ * Handle invoice.paid event
+ * Updates meses_pagos when invoice is paid
+ * CRITICAL: Prevents duplicate processing using stripe_invoices table
+ */
+function handleInvoicePaid($db, $stripe, $emailService, $invoiceData) {
+    $invoiceId = $invoiceData['id'] ?? null;
+    $subscriptionId = $invoiceData['subscription'] ?? null;
+    
+    if (!$invoiceId || !$subscriptionId) {
+        // Not a subscription invoice or missing ID
+        return;
+    }
+    
+    // CRITICAL: Check if invoice was already processed
+    $existingInvoice = $db->fetchOne(
+        "SELECT * FROM stripe_invoices WHERE invoice_id = :invoice_id",
+        ['invoice_id' => $invoiceId]
+    );
+    
+    if ($existingInvoice) {
+        // Invoice already processed - skip to prevent duplicate counting
+        error_log("Invoice {$invoiceId} already processed. Skipping duplicate webhook.");
+        return;
+    }
+    
+    // Find subscription
+    $stripeSubscription = $db->fetchOne(
+        "SELECT * FROM stripe_subscriptions WHERE subscription_id = :subscription_id",
+        ['subscription_id' => $subscriptionId]
+    );
+    
+    if (!$stripeSubscription) {
+        error_log("Invoice paid for unknown subscription: {$subscriptionId}");
+        return;
+    }
+    
+    // Get plan to check loyalty
+    $plan = $db->fetchOne(
+        "SELECT loyalty_months FROM plans WHERE id = :id",
+        ['id' => $stripeSubscription['plan_id']]
+    );
+    
+    $loyaltyMonths = $plan ? (int)($plan['loyalty_months'] ?? 0) : 0;
+    
+    // Increment meses_pagos
+    $newMesesPagos = $stripeSubscription['meses_pagos'] + 1;
+    
+    // Calculate cancellation release date based on paid invoices
+    // More accurate than data_inicio + loyalty_months
+    $dataLiberacao = null;
+    $loyaltyStatus = 'locked';
+    
+    if ($loyaltyMonths > 0) {
+        if ($newMesesPagos >= $loyaltyMonths) {
+            // Fidelidade cumprida - liberação imediata
+            $dataLiberacao = date('Y-m-d H:i:s');
+            $loyaltyStatus = 'completed';
+        } else {
+            // Ainda em fidelidade - calcular baseado em quando o último mês necessário será pago
+            // Usa a data do período atual da invoice como referência
+            $periodEnd = isset($invoiceData['period_end']) 
+                ? date('Y-m-d H:i:s', $invoiceData['period_end'])
+                : date('Y-m-d H:i:s', strtotime('+1 month'));
+            
+            $monthsRemaining = $loyaltyMonths - $newMesesPagos;
+            $dataLiberacao = date('Y-m-d H:i:s', strtotime($periodEnd . " +{$monthsRemaining} months"));
+        }
+    } else {
+        // Sem fidelidade - pode cancelar imediatamente
+        $dataLiberacao = date('Y-m-d H:i:s');
+        $loyaltyStatus = 'completed';
+    }
+    
+    // Update subscription
+    $updateData = [
+        'meses_pagos' => $newMesesPagos,
+        'data_liberacao_cancelamento' => $dataLiberacao,
+        'loyalty_status' => $loyaltyStatus,
+        'updated_at' => date('Y-m-d H:i:s')
+    ];
+    
+    $db->update('stripe_subscriptions', $updateData, 
+        'id = :id', ['id' => $stripeSubscription['id']]
+    );
+    
+    // Save invoice to prevent duplicate processing
+    $paidAt = isset($invoiceData['status_transitions']['paid_at']) 
+        ? date('Y-m-d H:i:s', $invoiceData['status_transitions']['paid_at'])
+        : date('Y-m-d H:i:s');
+    
+    $periodStart = isset($invoiceData['period_start']) 
+        ? date('Y-m-d H:i:s', $invoiceData['period_start'])
+        : null;
+    
+    $periodEnd = isset($invoiceData['period_end']) 
+        ? date('Y-m-d H:i:s', $invoiceData['period_end'])
+        : null;
+    
+    $db->insert('stripe_invoices', [
+        'id' => $db->generateUuid(),
+        'invoice_id' => $invoiceId,
+        'subscription_id' => $subscriptionId,
+        'store_id' => $stripeSubscription['store_id'],
+        'amount' => ($invoiceData['amount_paid'] ?? 0) / 100, // Convert from cents
+        'status' => $invoiceData['status'] ?? 'paid',
+        'paid_at' => $paidAt,
+        'period_start' => $periodStart,
+        'period_end' => $periodEnd,
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s')
+    ]);
+    
+    // Get store and plan for email
+    $store = $db->fetchOne(
+        "SELECT s.*, p.name as plan_name 
+         FROM stores s 
+         LEFT JOIN plans p ON s.plan_id = p.id 
+         WHERE s.id = :id",
+        ['id' => $stripeSubscription['store_id']]
+    );
+    
+    if ($store) {
+        // Send payment success email
+        $emailService->sendPaymentSuccess($store, [
+            'plan_name' => $store['plan_name'] ?? 'Plano',
+            'transaction_reference' => $invoiceId
+        ]);
+    }
+    
+    error_log("Invoice {$invoiceId} paid for subscription {$subscriptionId}. Total months paid: {$newMesesPagos}. Loyalty status: {$loyaltyStatus}");
 }

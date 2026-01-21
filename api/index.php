@@ -158,6 +158,10 @@ switch ($endpoint) {
         require_once __DIR__ . '/endpoints/notifications.php';
         break;
         
+    case 'subscriptions':
+        require_once __DIR__ . '/endpoints/subscriptions.php';
+        break;
+        
     default:
         // If endpoint is empty, might be accessing /api/ directly
         if (empty($endpoint)) {
@@ -173,7 +177,8 @@ switch ($endpoint) {
                     // 'leads' => '/api/leads', // Removido temporariamente
                     'dashboard' => '/api/dashboard',
                     'plans' => '/api/plans',
-                    'notifications' => '/api/notifications'
+                    'notifications' => '/api/notifications',
+                    'subscriptions' => '/api/subscriptions'
                 ],
                 'debug' => [
                     'endpoint_received' => $endpoint,
@@ -187,7 +192,7 @@ switch ($endpoint) {
             echo json_encode([
                 'error' => 'Endpoint não encontrado',
                 'endpoint' => $endpoint,
-                'available_endpoints' => ['auth', 'stores', 'vehicles', 'dashboard', 'plans', 'notifications'],
+                'available_endpoints' => ['auth', 'stores', 'vehicles', 'dashboard', 'plans', 'notifications', 'subscriptions'],
                 'debug' => [
                     'request_uri' => $_SERVER['REQUEST_URI'] ?? 'não definido',
                     'path_segments' => $pathSegments,

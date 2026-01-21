@@ -26,21 +26,29 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            padding: 1rem 0;
+            padding: 0.25rem 0;
+        }
+
+        .header-logo-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 0.125rem 0;
         }
 
         .header-logo {
-            height: 64px;
-            max-height: 72px;
-            max-width: 300px;
+            max-height: 150px;
+            max-width: 600px;
             width: auto;
+            height: auto;
             object-fit: contain;
+            display: block;
         }
         
         .header-logo-container {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            padding: 0;
         }
 
         .header-nav {
@@ -52,6 +60,8 @@
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
+            font-size: 0.9rem;
+            padding: 0.25rem 0;
         }
 
         .header-nav a:hover {
@@ -61,10 +71,11 @@
         .header-whatsapp-btn {
             background: #25d366;
             color: white;
-            padding: 0.5rem 1.5rem;
+            padding: 0.375rem 1.25rem;
             border-radius: 25px;
             font-weight: 600;
             transition: all 0.2s;
+            font-size: 0.9rem;
         }
 
         .header-whatsapp-btn:hover {
@@ -283,6 +294,84 @@
 
         /* WhatsApp Float Button */
 
+        /* ============================================
+           REQ-FR-UI-002: Comportamento do Cursor
+           ============================================ */
+
+        /* RN-01: Elementos clicáveis - cursor pointer */
+        .header-nav a,
+        .header-whatsapp-btn,
+        .filter-accordion-button,
+        .vehicle-card-modern,
+        .vehicle-card-favorite,
+        .sort-select,
+        .btn,
+        button:not(:disabled),
+        a:not(.disabled):not([aria-disabled="true"]),
+        .footer a,
+        #filtersToggle,
+        [onclick] {
+            cursor: pointer;
+        }
+
+        /* RN-02: Elementos desabilitados - cursor not-allowed */
+        button:disabled,
+        .btn:disabled,
+        .btn.disabled,
+        input:disabled,
+        select:disabled,
+        a.disabled,
+        [aria-disabled="true"],
+        .disabled {
+            cursor: not-allowed !important;
+        }
+
+        /* RN-03: Estados de carregamento - cursor wait */
+        .spinner-border,
+        body.loading,
+        .loading,
+        .is-loading {
+            cursor: wait !important;
+        }
+
+        /* RN-04: Elementos informativos - cursor default */
+        .vehicle-card-title,
+        .vehicle-card-info,
+        .vehicle-card-price,
+        .vehicle-card-location,
+        .results-count,
+        .vehicle-card-badge,
+        h1, h2, h3, h4, h5, h6,
+        p,
+        span:not([onclick]),
+        .text-muted,
+        #storeAbout,
+        #footerStoreName,
+        #footerAddress,
+        #footerPhone,
+        #footerCityState {
+            cursor: default;
+        }
+
+        /* Inputs de texto - cursor text */
+        .search-input-large,
+        .filter-input-group input,
+        .filter-input-group select,
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="tel"],
+        textarea {
+            cursor: text;
+        }
+
+        /* Inputs de seleção - cursor pointer */
+        input[type="checkbox"],
+        input[type="radio"],
+        select:not(:disabled) {
+            cursor: pointer;
+        }
+
         /* Responsive */
         @media (max-width: 991.98px) {
             .filters-sidebar {
@@ -296,6 +385,17 @@
             .header-nav {
                 flex-direction: column;
                 gap: 1rem;
+            }
+            
+            .header-logo-wrapper {
+                padding: 0.1rem 0;
+            }
+            
+            .header-logo {
+                max-height: 100px;
+                max-width: 400px;
+                width: auto;
+                height: auto;
             }
             
             /* Ocultar filtros laterais em mobile/tablet */
@@ -326,7 +426,7 @@
     <header class="main-header">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
+                <div class="header-logo-wrapper">
                     <div class="header-logo-container">
                         <img id="storeLogoHeader" src="" alt="Logo" class="header-logo d-none">
                         <h1 class="h5 mb-0 fw-normal text-muted d-none" id="storeNameHeaderFallback">Carregando...</h1>
