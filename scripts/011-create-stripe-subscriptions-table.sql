@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS stripe_subscriptions (
   meses_pagos INT DEFAULT 0 COMMENT 'Quantidade de faturas/meses pagos',
   data_liberacao_cancelamento TIMESTAMP NULL COMMENT 'Data a partir da qual o cancelamento é permitido (calculada baseada em invoices pagos)',
   loyalty_status VARCHAR(20) DEFAULT 'locked' COMMENT 'Estado da fidelidade: locked = em fidelidade, completed = fidelidade cumprida',
-  status VARCHAR(50) DEFAULT 'active' COMMENT 'active, canceled, past_due, etc',
+  status VARCHAR(50) DEFAULT 'active' COMMENT 'active, canceled, past_due, violation, etc',
   cancel_at_period_end BOOLEAN DEFAULT false COMMENT 'Se true, cancela ao final do período atual',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

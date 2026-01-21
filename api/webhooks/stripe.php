@@ -532,6 +532,8 @@ function handleSubscriptionCreated($db, $stripe, $subscriptionData) {
     }
     
     // Create stripe_subscriptions record
+    // IMPORTANT: meses_pagos starts at 0 and ONLY increments when invoice.paid is received
+    // This ensures that months are only counted when actually paid, not when subscription is created
     $db->insert('stripe_subscriptions', [
         'id' => $db->generateUuid(),
         'store_id' => $storeId,
@@ -539,7 +541,7 @@ function handleSubscriptionCreated($db, $stripe, $subscriptionData) {
         'plan_id' => $planId,
         'plan_slug' => $planSlug,
         'data_inicio' => $dataInicio,
-        'meses_pagos' => 0, // Will be updated when first invoice is paid
+        'meses_pagos' => 0, // CRITICAL: Only increments via invoice.paid webhook (billing_reason = 'subscription_cycle')
         'data_liberacao_cancelamento' => $dataLiberacao,
         'loyalty_status' => $loyaltyStatus,
         'status' => $subscriptionData['status'] ?? 'active',
@@ -548,7 +550,7 @@ function handleSubscriptionCreated($db, $stripe, $subscriptionData) {
         'updated_at' => date('Y-m-d H:i:s')
     ]);
     
-    error_log("Stripe subscription created: {$subscriptionId} for store {$storeId}");
+    error_log("Stripe subscription created: {$subscriptionId} for store {$storeId}. meses_pagos initialized to 0 (will increment only when invoice.paid with billing_reason='subscription_cycle')");
 }
 
 /**
@@ -590,25 +592,37 @@ function handleSubscriptionUpdated($db, $stripe, $subscriptionData) {
         !$stripeSubscription['cancel_at_period_end']) {
         
         // Cancelamento indevido detectado - não foi feito via nosso endpoint
-        // Log alert for admin
-        error_log("⚠️ UNAUTHORIZED CANCELLATION DETECTED: Subscription {$subscriptionId} canceled before loyalty period completed. Store: {$stripeSubscription['store_id']}, Months paid: {$mesesPagos}, Required: {$loyaltyMonths}");
+        // Mark as violation for legal/compliance tracking
+        $db->update('stripe_subscriptions', [
+            'status' => 'violation', // Special status for unauthorized cancellation
+            'updated_at' => date('Y-m-d H:i:s')
+        ], 'id = :id', ['id' => $stripeSubscription['id']]);
         
-        // Log in subscription_logs
+        // Log alert for admin
+        error_log("⚠️ UNAUTHORIZED CANCELLATION DETECTED: Subscription {$subscriptionId} canceled before loyalty period completed. Store: {$stripeSubscription['store_id']}, Months paid: {$mesesPagos}, Required: {$loyaltyMonths}. Status marked as 'violation'.");
+        
+        // Log in subscription_logs with violation flag
         $db->insert('subscription_logs', [
             'id' => $db->generateUuid(),
             'store_id' => $stripeSubscription['store_id'],
             'action' => 'unauthorized_cancellation',
             'old_status' => $stripeSubscription['status'],
-            'new_status' => 'canceled',
+            'new_status' => 'violation',
             'old_ends_at' => null,
             'new_ends_at' => null,
             'performed_by' => 'system',
-            'notes' => "⚠️ CANCELAMENTO INDEVIDO DETECTADO: Assinatura cancelada antes do período de fidelidade. Meses pagos: {$mesesPagos}, Fidelidade requerida: {$loyaltyMonths}. Possível cancelamento via Stripe Dashboard ou API direta.",
+            'notes' => "⚠️ CANCELAMENTO INDEVIDO DETECTADO (VIOLATION): Assinatura cancelada antes do período de fidelidade. Meses pagos: {$mesesPagos}, Fidelidade requerida: {$loyaltyMonths}. Possível cancelamento via Stripe Dashboard ou API direta. Status marcado como 'violation' para ação administrativa.",
             'created_at' => date('Y-m-d H:i:s')
         ]);
         
         // TODO: Send alert email to admin
-        // $emailService->sendAdminAlert(...);
+        // $emailService->sendAdminAlert([
+        //     'type' => 'unauthorized_cancellation',
+        //     'store_id' => $stripeSubscription['store_id'],
+        //     'subscription_id' => $subscriptionId,
+        //     'months_paid' => $mesesPagos,
+        //     'loyalty_required' => $loyaltyMonths
+        // ]);
     }
     
     // Update status and cancel_at_period_end
@@ -660,13 +674,22 @@ function handleSubscriptionUpdated($db, $stripe, $subscriptionData) {
  * Handle invoice.paid event
  * Updates meses_pagos when invoice is paid
  * CRITICAL: Prevents duplicate processing using stripe_invoices table
+ * CRITICAL: Only counts subscription_cycle invoices (not prorations, upgrades, etc)
  */
 function handleInvoicePaid($db, $stripe, $emailService, $invoiceData) {
     $invoiceId = $invoiceData['id'] ?? null;
     $subscriptionId = $invoiceData['subscription'] ?? null;
+    $billingReason = $invoiceData['billing_reason'] ?? null;
     
     if (!$invoiceId || !$subscriptionId) {
         // Not a subscription invoice or missing ID
+        return;
+    }
+    
+    // CRITICAL: Only count recurring subscription invoices
+    // Ignore prorations, upgrades, downgrades, manual adjustments
+    if ($billingReason !== 'subscription_cycle') {
+        error_log("Invoice {$invoiceId} ignored: billing_reason = '{$billingReason}' (only 'subscription_cycle' counts for loyalty)");
         return;
     }
     
@@ -769,6 +792,8 @@ function handleInvoicePaid($db, $stripe, $emailService, $invoiceData) {
         'updated_at' => date('Y-m-d H:i:s')
     ]);
     
+    error_log("Invoice {$invoiceId} paid for subscription {$subscriptionId}. Total months paid: {$newMesesPagos}. Loyalty status: {$loyaltyStatus}. Billing reason: {$billingReason}");
+    
     // Get store and plan for email
     $store = $db->fetchOne(
         "SELECT s.*, p.name as plan_name 
@@ -786,5 +811,4 @@ function handleInvoicePaid($db, $stripe, $emailService, $invoiceData) {
         ]);
     }
     
-    error_log("Invoice {$invoiceId} paid for subscription {$subscriptionId}. Total months paid: {$newMesesPagos}. Loyalty status: {$loyaltyStatus}");
 }
