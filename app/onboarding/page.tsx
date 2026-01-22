@@ -101,7 +101,7 @@ function OnboardingForm() {
         planSlug,
       )
 
-      router.push("/dashboard")
+      router.push("/dashboard/configuracoes")
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar loja")

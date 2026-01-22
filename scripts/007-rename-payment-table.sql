@@ -133,9 +133,7 @@ SET @table_exists = (
 
 SET @sql_add_index_order = IF(@table_exists > 0 AND @index_order_id_exists = 0,
   'ALTER TABLE payment_transactions ADD INDEX idx_payment_order_id (order_id)',
-  'SELECT "Índice idx_payment_order_id já existe ou tabela não existe" AS message');
-
-SET @sql_add_index_gateway = IF(@table_exists > 0 AND @index_gateway_exists = 0,
+  'SELECT "Índice idx_payment_order_id já existe ou tabela não existe" AS message');SET @sql_add_index_gateway = IF(@table_exists > 0 AND @index_gateway_exists = 0,
   'ALTER TABLE payment_transactions ADD INDEX idx_payment_gateway (gateway)',
   'SELECT "Índice idx_payment_gateway já existe ou tabela não existe" AS message');PREPARE stmt FROM @sql_add_index_order;
 EXECUTE stmt;

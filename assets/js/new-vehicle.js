@@ -20,10 +20,66 @@ document.addEventListener('DOMContentLoaded', function() {
             addFeature();
         }
     });
+    
+    // Verificar limite de veículos ao carregar a página
+    checkVehicleLimit();
 });
 
 function getAuthToken() {
     return localStorage.getItem('token');
+}
+
+// Verificar limite de veículos antes de permitir cadastro
+async function checkVehicleLimit() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard?action=stats`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+                const totalVehicles = data.data.total_vehicles || 0;
+                const planVehicleLimit = data.data.plan_vehicle_limit;
+                
+                // Se o limite for -1, significa ilimitado
+                if (planVehicleLimit !== null && planVehicleLimit !== -1 && planVehicleLimit !== undefined) {
+                    const limit = parseInt(planVehicleLimit);
+                    if (totalVehicles >= limit) {
+                        // Desabilitar formulário e mostrar mensagem
+                        const form = document.getElementById('newVehicleForm');
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="bi bi-lock me-2"></i>Limite Atingido';
+                        }
+                        
+                        // Mostrar alerta
+                        const isFreePlan = limit === 5;
+                        const message = isFreePlan 
+                            ? 'Você atingiu o limite de 5 veículos do plano gratuito. Faça upgrade do seu plano para cadastrar mais veículos.'
+                            : 'Você atingiu o limite de veículos permitido pelo seu plano.';
+                        
+                        // Adicionar alerta no topo do formulário
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Atenção:</strong> ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        form.insertBefore(alertDiv, form.firstChild);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('Não foi possível verificar o limite de veículos:', error);
+        // Não bloquear o formulário se houver erro na verificação
+    }
 }
 
 function addFeature() {
@@ -128,6 +184,13 @@ function removeImage(index) {
 
 async function saveVehicle(e) {
     e.preventDefault();
+    
+    // Verificar limite antes de enviar (validação no frontend)
+    const limitCheck = await checkVehicleLimitBeforeSubmit();
+    if (!limitCheck.allowed) {
+        Toast.error(limitCheck.message);
+        return;
+    }
     
     // Get submit button and disable it
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -245,6 +308,43 @@ async function saveVehicle(e) {
             submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Salvar Veículo';
         }
     }
+}
+
+// Verificar limite de veículos antes de submeter o formulário
+async function checkVehicleLimitBeforeSubmit() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard?action=stats`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+                const totalVehicles = data.data.total_vehicles || 0;
+                const planVehicleLimit = data.data.plan_vehicle_limit;
+                
+                // Se o limite for -1, significa ilimitado
+                if (planVehicleLimit !== null && planVehicleLimit !== -1 && planVehicleLimit !== undefined) {
+                    const limit = parseInt(planVehicleLimit);
+                    if (totalVehicles >= limit) {
+                        const isFreePlan = limit === 5;
+                        const message = isFreePlan 
+                            ? 'Você atingiu o limite de 5 veículos do plano gratuito. Faça upgrade do seu plano para cadastrar mais veículos.'
+                            : 'Você atingiu o limite de veículos permitido pelo seu plano.';
+                        
+                        return { allowed: false, message: message };
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('Não foi possível verificar o limite de veículos:', error);
+        // Se houver erro, permitir tentar (o backend vai validar)
+    }
+    
+    return { allowed: true };
 }
 
 

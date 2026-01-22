@@ -106,8 +106,8 @@ async function handleLogin(e) {
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
             
-            // Redirect to dashboard
-            window.location.href = 'dashboard.html';
+            // Redirect to configurações
+            window.location.href = 'configuracoes.html';
         } else {
             // Show error
             errorAlert.textContent = data.error || 'Erro ao fazer login';
@@ -265,8 +265,8 @@ async function handleRegister(e) {
                     return;
                 }
                 
-                // Store created successfully, redirect to dashboard
-                window.location.href = 'dashboard.html';
+                // Store created successfully, redirect to configurações
+                window.location.href = 'configuracoes.html';
                 return;
             } catch (storeError) {
                 console.error('Erro ao criar loja:', storeError);
@@ -276,9 +276,9 @@ async function handleRegister(e) {
             }
         }
         
-        // If no store name provided, redirect to dashboard anyway
+        // If no store name provided, redirect to configurações anyway
         // (user can configure store later)
-        window.location.href = 'dashboard.html';
+        window.location.href = 'configuracoes.html';
         
     } catch (error) {
         console.error('Erro ao criar conta:', error);

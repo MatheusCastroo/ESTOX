@@ -36,18 +36,34 @@ document.addEventListener('DOMContentLoaded', function() {
         filterVehicles();
     });
     
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
+    // Smooth scroll for anchor links (only internal links, not external links like WhatsApp)
+    // IMPORTANTE: Usar event delegation para evitar problemas com links atualizados dinamicamente
+    // Links externos (como WhatsApp) não devem ser processados aqui
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        const href = link.getAttribute('href');
+        // Verificar se é realmente uma âncora válida (começa com # e não é apenas #)
+        // Ignorar links externos (http, https, wa.me, etc)
+        if (href && href.startsWith('#') && href !== '#' && 
+            !href.includes('http') && !href.includes('https') && 
+            !href.includes('wa.me') && !href.includes('mailto:') && !href.includes('tel:')) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+            try {
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            } catch (error) {
+                // Se houver erro ao fazer querySelector, deixar o comportamento padrão
+                console.warn('Erro ao fazer smooth scroll:', error);
             }
-        });
+        }
+        // Se não for uma âncora válida, deixar o comportamento padrão (não fazer preventDefault)
     });
 });
 
@@ -232,7 +248,21 @@ function displayStoreInfo(store) {
 
 // Setup WhatsApp buttons - REQ-FR-021
 function setupWhatsAppButtons(store) {
-    if (!store.whatsapp) {
+    console.log('Setup WhatsApp - Store data:', store);
+    
+    // Verificar se whatsapp existe e não está vazio
+    let whatsappNumber = null;
+    if (store.whatsapp) {
+        whatsappNumber = store.whatsapp.toString().trim();
+    }
+    
+    // Verificar também no campo phone se whatsapp não estiver disponível
+    if ((!whatsappNumber || whatsappNumber === '' || whatsappNumber === 'null' || whatsappNumber === 'undefined') && store.phone) {
+        whatsappNumber = store.phone.toString().trim();
+        console.log('Usando número de telefone como WhatsApp:', whatsappNumber);
+    }
+    
+    if (!whatsappNumber || whatsappNumber === '' || whatsappNumber === 'null' || whatsappNumber === 'undefined') {
         // Hide WhatsApp buttons if not configured
         const heroBtn = document.getElementById('heroWhatsAppBtn');
         if (heroBtn) {
@@ -246,22 +276,33 @@ function setupWhatsAppButtons(store) {
         if (headerBtn) {
             headerBtn.classList.add('d-none');
         }
+        console.warn('WhatsApp não configurado para a loja. Store:', store);
         return;
     }
     
     const message = encodeURIComponent(`Olá ${store.name}! Gostaria de mais informações sobre os veículos.`);
-    const whatsappUrl = getWhatsAppUrl(store.whatsapp, message);
+    const whatsappUrl = getWhatsAppUrl(whatsappNumber, message);
+    
+    console.log('Configurando WhatsApp:', {
+        whatsappNumber: whatsappNumber,
+        whatsappUrl: whatsappUrl,
+        storeName: store.name
+    });
     
     // Hero button
     const heroBtn = document.getElementById('heroWhatsAppBtn');
     if (heroBtn) {
         heroBtn.href = whatsappUrl;
+        heroBtn.style.display = 'inline-block';
+        console.log('Botão WhatsApp do hero configurado:', heroBtn.href);
     }
     
     // Footer button
     const footerBtn = document.getElementById('footerWhatsAppBtn');
     if (footerBtn) {
         footerBtn.href = whatsappUrl;
+        footerBtn.classList.remove('d-none');
+        console.log('Botão WhatsApp do footer configurado:', footerBtn.href);
     }
     
     // Header button - REQ-FR-021
@@ -269,20 +310,58 @@ function setupWhatsAppButtons(store) {
     if (headerBtn) {
         headerBtn.href = whatsappUrl;
         headerBtn.classList.remove('d-none');
+        // Garantir que o botão está visível
+        headerBtn.style.display = 'inline-block';
+        console.log('✅ Botão WhatsApp do header configurado:', {
+            href: headerBtn.href,
+            whatsappNumber: whatsappNumber,
+            whatsappUrl: whatsappUrl,
+            element: headerBtn
+        });
+        
+        // Verificar se o href foi realmente definido
+        setTimeout(() => {
+            if (headerBtn.href === '#' || headerBtn.href.includes('#')) {
+                console.error('❌ ERRO: Link do WhatsApp não foi configurado corretamente!', {
+                    currentHref: headerBtn.href,
+                    expectedUrl: whatsappUrl,
+                    whatsappNumber: whatsappNumber
+                });
+            } else {
+                console.log('✅ Link do WhatsApp verificado e funcionando:', headerBtn.href);
+            }
+        }, 100);
+    } else {
+        console.error('❌ Botão WhatsApp do header não encontrado!');
     }
 }
 
 // Get WhatsApp URL
 function getWhatsAppUrl(phone, message = '') {
+    if (!phone) {
+        console.error('Número de WhatsApp não fornecido');
+        return '#';
+    }
+    
     // Remove non-numeric characters
-    let cleanPhone = phone.replace(/\D/g, '');
-    // Add country code if not present
+    let cleanPhone = phone.toString().replace(/\D/g, '');
+    
+    // Validar se tem pelo menos 10 dígitos (número válido)
+    if (cleanPhone.length < 10) {
+        console.error('Número de WhatsApp inválido:', phone);
+        return '#';
+    }
+    
+    // Add country code if not present (Brasil = 55)
     if (!cleanPhone.startsWith('55')) {
         cleanPhone = '55' + cleanPhone;
     }
     
-    const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${cleanPhone}${message ? '?text=' + encodedMessage : ''}`;
+    const encodedMessage = message ? encodeURIComponent(message) : '';
+    const url = `https://wa.me/${cleanPhone}${encodedMessage ? '?text=' + encodedMessage : ''}`;
+    
+    console.log('WhatsApp URL gerada:', url);
+    return url;
 }
 
 // Load all vehicles - REQ-FR-021: Only available vehicles

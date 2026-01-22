@@ -18,6 +18,45 @@ $action = $_GET['action'] ?? 'stats';
 switch ($method) {
     case 'GET':
         if ($action === 'stats') {
+            // Get store and plan information for vehicle limit
+            $store = $db->fetchOne(
+                "SELECT s.*, p.vehicle_limit, p.slug as plan_slug, p.price as plan_price
+                 FROM stores s 
+                 LEFT JOIN plans p ON s.plan_id = p.id 
+                 WHERE s.id = :store_id",
+                ['store_id' => $storeId]
+            );
+            
+            // Determinar o limite de veículos baseado no plano (mesma lógica do vehicles.php)
+            $planSlug = isset($store['plan_slug']) ? trim($store['plan_slug']) : null;
+            $planPrice = isset($store['plan_price']) ? (float)$store['plan_price'] : null;
+            $vehicleLimit = null;
+            
+            // PRIORIDADE 1: Se o slug do plano for 'gratuito', limite é sempre 5
+            if ($planSlug === 'gratuito') {
+                $vehicleLimit = 5;
+            }
+            // PRIORIDADE 2: Se o preço do plano for 0 (grátis), limite é 5
+            elseif ($planPrice !== null && $planPrice == 0.0) {
+                $vehicleLimit = 5;
+            }
+            // PRIORIDADE 3: Se status é 'trial' e não tem plano associado, limite é 5
+            elseif ($store['subscription_status'] === 'trial' && ($planSlug === null || $planSlug === '')) {
+                $vehicleLimit = 5;
+            }
+            // PRIORIDADE 4: Usar o limite do banco de dados se estiver definido
+            elseif (isset($store['vehicle_limit']) && $store['vehicle_limit'] !== null && (int)$store['vehicle_limit'] > 0) {
+                $vehicleLimit = (int)$store['vehicle_limit'];
+            }
+            // PRIORIDADE 5: Se status é 'active' e não tem limite definido, usar 50 (planos pagos)
+            elseif ($store['subscription_status'] === 'active') {
+                $vehicleLimit = 50;
+            }
+            // FALLBACK: Se nada se aplicar, usar 5 como padrão seguro
+            else {
+                $vehicleLimit = 5;
+            }
+            
             // Get dashboard statistics
             $totalVehicles = $db->fetchOne(
                 "SELECT COUNT(*) as count FROM vehicles WHERE store_id = :store_id",
@@ -64,7 +103,9 @@ switch ($method) {
                 'total_leads' => (int)$totalLeads,
                 'conversion_rate' => $conversionRate,
                 'views_change' => $viewsChange,
-                'leads_change' => $leadsChange
+                'leads_change' => $leadsChange,
+                'plan_vehicle_limit' => $vehicleLimit === -1 ? -1 : (int)$vehicleLimit, // -1 significa ilimitado
+                'is_free_plan' => ($planSlug === 'gratuito' || ($planPrice !== null && $planPrice == 0.0))
             ]);
         }
         elseif ($action === 'top-vehicles') {

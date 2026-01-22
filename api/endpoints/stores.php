@@ -8,7 +8,17 @@ Middleware::cors();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
-$userId = Middleware::requireAuth();
+
+// Check if this is a public endpoint (no auth required)
+$isPublic = isset($_GET['public']) && $_GET['public'] === 'true';
+$storeSlug = $_GET['slug'] ?? null;
+
+// Only require auth if not a public request
+if (!$isPublic) {
+    $userId = Middleware::requireAuth();
+} else {
+    $userId = null;
+}
 
 // REQ-FR-031: Helper function to get user's store
 // This function ensures data isolation - users can only access their own store
@@ -35,7 +45,38 @@ switch ($method) {
             );
             
             Response::success(['available' => !$exists]);
+        } elseif ($isPublic && $storeSlug) {
+            // Public endpoint - return store data by slug (including whatsapp)
+            $store = $db->fetchOne(
+                "SELECT id, name, slug, logo_url, phone, whatsapp, email, address, city, state, description, 
+                        subscription_status, subscription_ends_at, is_active
+                 FROM stores WHERE slug = :slug AND is_active = true",
+                ['slug' => $storeSlug]
+            );
+            
+            if (!$store) {
+                Response::error('Loja não encontrada', 404);
+            }
+            
+            // Block access if subscription is pending, suspended, or canceled
+            if (in_array($store['subscription_status'], ['pending', 'suspended', 'canceled'])) {
+                Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
+            }
+            
+            // Check if trial expired
+            if ($store['subscription_status'] === 'trial' && 
+                $store['subscription_ends_at'] && 
+                strtotime($store['subscription_ends_at']) < time()) {
+                Response::error('Esta loja está temporariamente indisponível. Entre em contato com o proprietário.', 403);
+            }
+            
+            Response::success(['store' => $store]);
         } else {
+            // Private endpoint - require auth
+            if (!$userId) {
+                Response::error('Não autorizado', 401);
+            }
+            
             $store = $db->fetchOne(
                 "SELECT * FROM stores WHERE user_id = :user_id",
                 ['user_id' => $userId]
@@ -78,14 +119,25 @@ switch ($method) {
             }
         }
         
-        // Get plan if specified
+        // Get plan if specified, otherwise assign free plan
         $planId = null;
-        if (isset($data['plan_slug'])) {
+        if (isset($data['plan_slug']) && !empty($data['plan_slug'])) {
             $plan = $db->fetchOne(
-                "SELECT id FROM plans WHERE slug = :slug",
+                "SELECT id FROM plans WHERE slug = :slug AND is_active = true",
                 ['slug' => $data['plan_slug']]
             );
             $planId = $plan['id'] ?? null;
+        }
+        
+        // Se não foi especificado um plano, atribuir o plano gratuito automaticamente
+        if ($planId === null) {
+            $freePlan = $db->fetchOne(
+                "SELECT id FROM plans WHERE slug = 'gratuito' AND is_active = true",
+                []
+            );
+            if ($freePlan) {
+                $planId = $freePlan['id'];
+            }
         }
         
         // Create store

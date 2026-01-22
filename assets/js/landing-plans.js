@@ -141,7 +141,7 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/test_6oUcMY7Xw32X7BgcZa4ko00'
+                checkout_url: 'https://buy.stripe.com/eVqdR3aUv2Qp4c02s7fjG02'
             },
             {
                 name: 'Trimestral',
@@ -155,7 +155,7 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/test_TRIMESTRAL_LINK_AQUI'
+                checkout_url: 'https://buy.stripe.com/7sY3cpd2D76F5g4eaPfjG01'
             },
             {
                 name: 'Anual',
@@ -169,7 +169,7 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/test_ANUAL_LINK_AQUI'
+                checkout_url: 'https://buy.stripe.com/5kQbIV3s3aiR4c07MrfjG00'
             }
         );
         
@@ -279,24 +279,15 @@
                     : []);
             
             // Get Stripe checkout link based on plan
-            // Prioridade: checkout_url do plano > links hardcoded > cadastro.html
-            let checkoutLink = plan.checkout_url || plan.stripe_link || 'cadastro.html';
+            // Prioridade: checkout_url do plano (vem do banco de dados) > fallback para cadastro
+            let checkoutLink = plan.checkout_url || plan.stripe_link;
             
             if (isFreePlan) {
                 // Plano grátis sempre vai para cadastro
                 checkoutLink = 'cadastro.html?plan=gratis';
-            } else if (!checkoutLink || checkoutLink === 'cadastro.html') {
-                if (plan.slug === 'profissional-mensal') {
-                    checkoutLink = 'https://buy.stripe.com/test_6oUcMY7Xw32X7BgcZa4ko00';
-                } else if (plan.slug === 'profissional-trimestral') {
-                    // Link para trimestral - manter estrutura, substituir depois
-                    checkoutLink = 'https://buy.stripe.com/test_TRIMESTRAL_LINK_AQUI';
-                } else if (plan.slug === 'profissional-anual') {
-                    // Link para anual - manter estrutura, substituir depois
-                    checkoutLink = 'https://buy.stripe.com/test_ANUAL_LINK_AQUI';
-                } else {
-                    checkoutLink = `cadastro.html${plan.slug ? `?plan=${plan.slug}` : ''}`;
-                }
+            } else if (!checkoutLink) {
+                // Se não tiver checkout_url, redireciona para cadastro com o plano
+                checkoutLink = `cadastro.html${plan.slug ? `?plan=${plan.slug}` : ''}`;
             }
             
             // Create plan card HTML

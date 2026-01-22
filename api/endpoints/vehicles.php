@@ -256,7 +256,7 @@ if ($isPublic && $storeSlug) {
                 // REQ-PLN-STRIPE-ASSINATURAS: Section 9 - Controle de Limites
                 // Check subscription status and vehicle limit before creating vehicle
                 $store = $db->fetchOne(
-                    "SELECT s.*, p.vehicle_limit 
+                    "SELECT s.*, p.vehicle_limit, p.slug as plan_slug, p.price as plan_price
                      FROM stores s 
                      LEFT JOIN plans p ON s.plan_id = p.id 
                      WHERE s.id = :store_id",
@@ -267,24 +267,69 @@ if ($isPublic && $storeSlug) {
                     Response::error('Loja não encontrada', 404);
                 }
                 
-                // Check if subscription is active
-                if ($store['subscription_status'] !== 'active') {
+                // Check if subscription is active or trial (trial allows free plan to work)
+                $allowedStatuses = ['active', 'trial'];
+                if (!in_array($store['subscription_status'], $allowedStatuses)) {
                     Response::error('Você precisa de uma assinatura ativa para cadastrar veículos. Renove seu plano para continuar.', 403);
                 }
                 
-                // Check vehicle limit
-                $vehicleLimit = isset($store['vehicle_limit']) ? (int)$store['vehicle_limit'] : 0;
+                // Identificar o plano pelo slug primeiro (mais confiável)
+                $planSlug = isset($store['plan_slug']) ? trim($store['plan_slug']) : null;
+                $planPrice = isset($store['plan_price']) ? (float)$store['plan_price'] : null;
                 
-                if ($vehicleLimit !== -1) { // -1 means unlimited
-                    // Get current vehicle count
+                // Determinar o limite de veículos baseado no plano
+                $vehicleLimit = null;
+                
+                // PRIORIDADE 1: Se o slug do plano for 'gratuito', limite é sempre 5
+                if ($planSlug === 'gratuito') {
+                    $vehicleLimit = 5;
+                }
+                // PRIORIDADE 2: Se o preço do plano for 0 (grátis), limite é 5
+                elseif ($planPrice !== null && $planPrice == 0.0) {
+                    $vehicleLimit = 5;
+                }
+                // PRIORIDADE 3: Se status é 'trial' e não tem plano associado, limite é 5
+                elseif ($store['subscription_status'] === 'trial' && ($planSlug === null || $planSlug === '')) {
+                    $vehicleLimit = 5;
+                }
+                // PRIORIDADE 4: Usar o limite do banco de dados se estiver definido
+                elseif (isset($store['vehicle_limit']) && $store['vehicle_limit'] !== null && (int)$store['vehicle_limit'] > 0) {
+                    $vehicleLimit = (int)$store['vehicle_limit'];
+                }
+                // PRIORIDADE 5: Se status é 'active' e não tem limite definido, usar 50 (planos pagos)
+                elseif ($store['subscription_status'] === 'active') {
+                    $vehicleLimit = 50;
+                }
+                // FALLBACK: Se nada se aplicar, usar 5 como padrão seguro
+                else {
+                    $vehicleLimit = 5;
+                }
+                
+                // Log para debug (pode remover em produção)
+                error_log("Vehicle limit check - Store ID: {$storeId}, Plan Slug: {$planSlug}, Plan Price: {$planPrice}, Status: {$store['subscription_status']}, Vehicle Limit: {$vehicleLimit}");
+                
+                // Sempre validar o limite (exceto se for -1 que significa ilimitado)
+                if ($vehicleLimit !== -1 && $vehicleLimit > 0) {
+                    // Get current vehicle count (todos os veículos, independente do status)
                     $vehicleCount = $db->fetchOne(
                         "SELECT COUNT(*) as count FROM vehicles WHERE store_id = :store_id",
                         ['store_id' => $storeId]
                     );
                     $currentCount = (int)($vehicleCount['count'] ?? 0);
                     
+                    // Log para debug
+                    error_log("Vehicle count check - Store ID: {$storeId}, Current: {$currentCount}, Limit: {$vehicleLimit}");
+                    
+                    // Validar se já atingiu o limite
                     if ($currentCount >= $vehicleLimit) {
-                        Response::error("Você atingiu o limite de {$vehicleLimit} veículos do seu plano. Faça upgrade para cadastrar mais veículos.", 403);
+                        // Mensagens específicas conforme requisito
+                        if ($planSlug === 'gratuito' || ($planPrice !== null && $planPrice == 0.0)) {
+                            // Plano Gratuito
+                            Response::error("Você atingiu o limite de 5 veículos do plano gratuito. Faça upgrade do seu plano para cadastrar mais veículos.", 403);
+                        } else {
+                            // Planos Pagos
+                            Response::error("Você atingiu o limite de veículos permitido pelo seu plano.", 403);
+                        }
                     }
                 }
                 

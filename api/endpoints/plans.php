@@ -15,7 +15,7 @@ if ($method === 'GET') {
     try {
         // Return all active plans (Section 4.2 - Source of truth is database)
         $plans = $db->fetchAll(
-            "SELECT id, name, slug, price, vehicle_limit, duration_days, features, is_active, created_at, updated_at 
+            "SELECT id, name, slug, price, vehicle_limit, duration_days, features, is_active, checkout_url, created_at, updated_at 
              FROM plans 
              WHERE is_active = true 
              ORDER BY price ASC"
