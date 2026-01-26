@@ -280,7 +280,8 @@ function setupWhatsAppButtons(store) {
         return;
     }
     
-    const message = encodeURIComponent(`Olá ${store.name}! Gostaria de mais informações sobre os veículos.`);
+    // NÃO codificar aqui - getWhatsAppUrl já faz a codificação
+    const message = `Olá ${store.name}! Gostaria de mais informações sobre os veículos.`;
     const whatsappUrl = getWhatsAppUrl(whatsappNumber, message);
     
     console.log('Configurando WhatsApp:', {
@@ -337,6 +338,7 @@ function setupWhatsAppButtons(store) {
 }
 
 // Get WhatsApp URL
+// REGRA: Manter mensagem sempre em formato legível, codificar apenas na URL
 function getWhatsAppUrl(phone, message = '') {
     if (!phone) {
         console.error('Número de WhatsApp não fornecido');
@@ -357,10 +359,40 @@ function getWhatsAppUrl(phone, message = '') {
         cleanPhone = '55' + cleanPhone;
     }
     
-    const encodedMessage = message ? encodeURIComponent(message) : '';
+    // IMPORTANTE: A mensagem deve sempre chegar em formato legível (não codificada)
+    // Se por algum motivo estiver codificada, decodificar primeiro
+    let cleanMessage = message;
+    
+    if (message && typeof message === 'string') {
+        // Verificar se a mensagem está codificada (contém padrão de URL encoding)
+        if (message.includes('%') && /%[0-9A-Fa-f]{2}/.test(message)) {
+            try {
+                // Decodificar uma vez
+                cleanMessage = decodeURIComponent(message);
+                // Se ainda contém padrão de encoding, pode estar duplamente codificada
+                if (cleanMessage.includes('%') && /%[0-9A-Fa-f]{2}/.test(cleanMessage)) {
+                    cleanMessage = decodeURIComponent(cleanMessage);
+                }
+            } catch (e) {
+                // Se falhar, usar a mensagem original
+                console.warn('Erro ao decodificar mensagem, usando original:', e);
+                cleanMessage = message;
+            }
+        }
+    }
+    
+    // Codificar a mensagem APENAS UMA VEZ para a URL
+    // O WhatsApp decodifica automaticamente quando recebe
+    const encodedMessage = cleanMessage ? encodeURIComponent(cleanMessage) : '';
     const url = `https://wa.me/${cleanPhone}${encodedMessage ? '?text=' + encodedMessage : ''}`;
     
-    console.log('WhatsApp URL gerada:', url);
+    // Log para debug (mensagem legível para verificação)
+    console.log('WhatsApp URL gerada:', {
+        mensagemOriginal: message,
+        mensagemLimpa: cleanMessage,
+        url: url
+    });
+    
     return url;
 }
 
@@ -422,14 +454,16 @@ function displayAllVehicles(vehicles) {
 function createVehicleCard(vehicle, isFeatured = false) {
     const mainImage = getVehicleImage(vehicle);
     const storeCityState = storeData ? `${storeData.city || ''}${storeData.city && storeData.state ? ', ' : ''}${storeData.state || ''}` : '';
+    const hasImage = mainImage && mainImage !== null;
     
     return `
         <div class="col-md-6 col-lg-4">
             <div class="vehicle-card-modern" onclick="window.location.href='veiculo-detalhe.html?store_slug=${storeSlug}&vehicle_id=${vehicle.id}'">
-                <div class="vehicle-card-image">
-                    <img src="${mainImage}" 
+                <div class="vehicle-card-image ${!hasImage ? 'no-image' : ''}">
+                    ${hasImage ? `<img src="${mainImage}" 
                          alt="${vehicle.brand} ${vehicle.model}"
-                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27250%27%3E%3Crect fill=%27%23ddd%27 width=%27400%27 height=%27250%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E'">
+                         loading="lazy"
+                         onerror="this.style.display='none'; this.parentElement.classList.add('no-image');">` : ''}
                     ${isFeatured ? '<span class="vehicle-card-badge">Novidade</span>' : ''}
                     <button class="vehicle-card-favorite" onclick="event.stopPropagation(); toggleFavorite('${vehicle.id}')" title="Adicionar aos favoritos">
                         <i class="bi bi-heart"></i>
@@ -438,12 +472,12 @@ function createVehicleCard(vehicle, isFeatured = false) {
                 <div class="vehicle-card-body">
                     <h3 class="vehicle-card-title">${vehicle.brand} ${vehicle.model}</h3>
                     <div class="vehicle-card-info">
-                        <span><i class="bi bi-calendar me-1"></i>${vehicle.year}</span>
-                        <span><i class="bi bi-speedometer2 me-1"></i>${formatNumber(vehicle.mileage)} km</span>
-                        ${vehicle.transmission ? `<span><i class="bi bi-gear me-1"></i>${vehicle.transmission}</span>` : ''}
+                        <span class="vehicle-card-info-item"><i class="bi bi-calendar"></i>${vehicle.year}</span>
+                        <span class="vehicle-card-info-item"><i class="bi bi-speedometer2"></i>${formatNumber(vehicle.mileage)} km</span>
+                        ${vehicle.transmission ? `<span class="vehicle-card-info-item"><i class="bi bi-gear"></i>${vehicle.transmission}</span>` : ''}
                     </div>
                     <div class="vehicle-card-price">${formatPrice(vehicle.price)}</div>
-                    ${storeCityState ? `<div class="vehicle-card-location"><i class="bi bi-geo-alt me-1"></i>${storeCityState}</div>` : ''}
+                    ${storeCityState ? `<div class="vehicle-card-location"><i class="bi bi-geo-alt"></i>${storeCityState}</div>` : ''}
                 </div>
             </div>
         </div>
@@ -469,7 +503,7 @@ function toggleFavorite(vehicleId) {
 // Get vehicle image
 function getVehicleImage(vehicle) {
     if (!vehicle.images) {
-        return 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+        return null; // Retorna null para usar placeholder elegante
     }
     
     let images = [];
@@ -483,23 +517,57 @@ function getVehicleImage(vehicle) {
         images = vehicle.images;
     }
     
-    return images.length > 0 ? images[0] : 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect fill=%27%23ddd%27 width=%27200%27 height=%27200%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2714%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+    return images.length > 0 ? images[0] : null; // Retorna null para usar placeholder elegante
 }
 
 // Filter vehicles - REQ-FR-LP-001: Filtros completos e ordenação
 function filterVehicles() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const brand = document.getElementById('brandFilter').value;
-    const model = document.getElementById('modelFilter').value;
-    const minYear = parseInt(document.getElementById('minYear').value) || 0;
-    const maxYear = parseInt(document.getElementById('maxYear').value) || 9999;
-    const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
-    const maxPrice = parseFloat(document.getElementById('maxPrice').value) || Infinity;
-    const maxMileage = parseInt(document.getElementById('maxMileage').value) || Infinity;
-    const transmission = document.getElementById('transmissionFilter').value;
-    const color = document.getElementById('colorFilter').value;
-    const bodyType = document.getElementById('bodyTypeFilter').value;
-    const sortBy = document.getElementById('sortSelect').value;
+    const searchInputEl = document.getElementById('searchInput');
+    const search = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+    
+    // Ler valores dos filtros desktop ou mobile (prioridade para desktop se ambos existirem)
+    const brandFilterEl = document.getElementById('brandFilter');
+    const brandFilterMobileEl = document.getElementById('brandFilterMobile');
+    const brand = brandFilterEl ? brandFilterEl.value : (brandFilterMobileEl ? brandFilterMobileEl.value : '');
+    
+    const modelFilterEl = document.getElementById('modelFilter');
+    const modelFilterMobileEl = document.getElementById('modelFilterMobile');
+    const model = modelFilterEl ? modelFilterEl.value : (modelFilterMobileEl ? modelFilterMobileEl.value : '');
+    
+    const minYearEl = document.getElementById('minYear');
+    const minYearMobileEl = document.getElementById('minYearMobile');
+    const minYear = parseInt((minYearEl ? minYearEl.value : (minYearMobileEl ? minYearMobileEl.value : '')) || '0') || 0;
+    
+    const maxYearEl = document.getElementById('maxYear');
+    const maxYearMobileEl = document.getElementById('maxYearMobile');
+    const maxYear = parseInt((maxYearEl ? maxYearEl.value : (maxYearMobileEl ? maxYearMobileEl.value : '')) || '9999') || 9999;
+    
+    const minPriceEl = document.getElementById('minPrice');
+    const minPriceMobileEl = document.getElementById('minPriceMobile');
+    const minPrice = parseFloat((minPriceEl ? minPriceEl.value : (minPriceMobileEl ? minPriceMobileEl.value : '')) || '0') || 0;
+    
+    const maxPriceEl = document.getElementById('maxPrice');
+    const maxPriceMobileEl = document.getElementById('maxPriceMobile');
+    const maxPrice = parseFloat((maxPriceEl ? maxPriceEl.value : (maxPriceMobileEl ? maxPriceMobileEl.value : '')) || 'Infinity') || Infinity;
+    
+    const maxMileageEl = document.getElementById('maxMileage');
+    const maxMileageMobileEl = document.getElementById('maxMileageMobile');
+    const maxMileage = parseInt((maxMileageEl ? maxMileageEl.value : (maxMileageMobileEl ? maxMileageMobileEl.value : '')) || 'Infinity') || Infinity;
+    
+    const transmissionFilterEl = document.getElementById('transmissionFilter');
+    const transmissionFilterMobileEl = document.getElementById('transmissionFilterMobile');
+    const transmission = transmissionFilterEl ? transmissionFilterEl.value : (transmissionFilterMobileEl ? transmissionFilterMobileEl.value : '');
+    
+    const colorFilterEl = document.getElementById('colorFilter');
+    const colorFilterMobileEl = document.getElementById('colorFilterMobile');
+    const color = colorFilterEl ? colorFilterEl.value : (colorFilterMobileEl ? colorFilterMobileEl.value : '');
+    
+    const bodyTypeFilterEl = document.getElementById('bodyTypeFilter');
+    const bodyTypeFilterMobileEl = document.getElementById('bodyTypeFilterMobile');
+    const bodyType = bodyTypeFilterEl ? bodyTypeFilterEl.value : (bodyTypeFilterMobileEl ? bodyTypeFilterMobileEl.value : '');
+    
+    const sortSelectEl = document.getElementById('sortSelect');
+    const sortBy = sortSelectEl ? sortSelectEl.value : 'relevance';
     
     let filtered = allVehicles.filter(vehicle => {
         // REQ-FR-LP-001: Only show available vehicles
@@ -573,23 +641,36 @@ function filterVehicles() {
 function updateBrandFilter(vehicles) {
     const brands = [...new Set(vehicles.map(v => v.brand))].sort();
     const brandFilter = document.getElementById('brandFilter');
-    const currentBrand = brandFilter.value;
+    const brandFilterMobile = document.getElementById('brandFilterMobile');
+    const currentBrand = brandFilter ? brandFilter.value : '';
     
-    brandFilter.innerHTML = '<option value="">Todas as marcas</option>' + 
+    const optionsHtml = '<option value="">Todas as marcas</option>' + 
         brands.map(brand => `<option value="${brand}">${brand}</option>`).join('');
     
-    if (currentBrand) {
-        brandFilter.value = currentBrand;
+    if (brandFilter) {
+        brandFilter.innerHTML = optionsHtml;
+        if (currentBrand && brands.includes(currentBrand)) {
+            brandFilter.value = currentBrand;
+        }
+    }
+    
+    // Sincronizar com mobile
+    if (brandFilterMobile) {
+        brandFilterMobile.innerHTML = optionsHtml;
+        if (currentBrand && brands.includes(currentBrand)) {
+            brandFilterMobile.value = currentBrand;
+        }
     }
     
     // Atualizar modelos baseado na marca selecionada
-    updateModelFilter(vehicles, currentBrand);
+    updateModelFilter(vehicles, brandFilter ? brandFilter.value : '');
 }
 
 // Update model filter based on selected brand - REQ-FR-LP-001
 function updateModelFilter(vehicles, selectedBrand) {
     const modelFilter = document.getElementById('modelFilter');
-    const currentModel = modelFilter.value;
+    const modelFilterMobile = document.getElementById('modelFilterMobile');
+    const currentModel = modelFilter ? modelFilter.value : '';
     
     let models = vehicles;
     if (selectedBrand) {
@@ -598,19 +679,47 @@ function updateModelFilter(vehicles, selectedBrand) {
     
     const uniqueModels = [...new Set(models.map(v => v.model))].sort();
     
-    modelFilter.innerHTML = '<option value="">Todos os modelos</option>' + 
+    const optionsHtml = '<option value="">Todos os modelos</option>' + 
         uniqueModels.map(model => `<option value="${model}">${model}</option>`).join('');
     
-    if (currentModel) {
-        modelFilter.value = currentModel;
+    if (modelFilter) {
+        modelFilter.innerHTML = optionsHtml;
+        if (currentModel && uniqueModels.includes(currentModel)) {
+            modelFilter.value = currentModel;
+        }
     }
     
-    // Listener para atualizar modelos quando marca mudar
+    // Sincronizar com mobile
+    if (modelFilterMobile) {
+        modelFilterMobile.innerHTML = optionsHtml;
+        if (currentModel && uniqueModels.includes(currentModel)) {
+            modelFilterMobile.value = currentModel;
+        }
+    }
+    
+    // Listener para atualizar modelos quando marca mudar (desktop e mobile)
     const brandFilter = document.getElementById('brandFilter');
+    const brandFilterMobile = document.getElementById('brandFilterMobile');
+    
     if (brandFilter && !brandFilter.hasAttribute('data-listener-added')) {
         brandFilter.setAttribute('data-listener-added', 'true');
         brandFilter.addEventListener('change', function() {
-            updateModelFilter(vehicles, this.value);
+            updateModelFilter(allVehicles, this.value);
+            // Sincronizar com mobile
+            if (brandFilterMobile) {
+                brandFilterMobile.value = this.value;
+            }
+        });
+    }
+    
+    if (brandFilterMobile && !brandFilterMobile.hasAttribute('data-listener-added')) {
+        brandFilterMobile.setAttribute('data-listener-added', 'true');
+        brandFilterMobile.addEventListener('change', function() {
+            updateModelFilter(allVehicles, this.value);
+            // Sincronizar com desktop
+            if (brandFilter) {
+                brandFilter.value = this.value;
+            }
         });
     }
 }
