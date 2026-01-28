@@ -106,8 +106,17 @@ async function handleLogin(e) {
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
             
-            // Redirect to configurações
-            window.location.href = 'configuracoes.html';
+            // Verificar role do usuário para redirecionamento correto
+            const user = data.data.user;
+            const userRole = (user.role || '').toLowerCase().trim();
+            
+            // Se for admin, redirecionar para painel admin
+            if (userRole === 'admin') {
+                window.location.href = 'admin-panel.html';
+            } else {
+                // Usuário normal vai para configurações
+                window.location.href = 'configuracoes.html';
+            }
         } else {
             // Show error
             errorAlert.textContent = data.error || 'Erro ao fazer login';

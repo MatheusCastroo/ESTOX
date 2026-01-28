@@ -463,7 +463,14 @@ function createVehicleCard(vehicle, isFeatured = false) {
                     ${hasImage ? `<img src="${mainImage}" 
                          alt="${vehicle.brand} ${vehicle.model}"
                          loading="lazy"
+<<<<<<< HEAD
+                         crossorigin="anonymous"
+                         style="width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.3s;"
+                         onerror="console.error('Erro ao carregar imagem:', this.src); this.style.display='none'; this.parentElement.classList.add('no-image'); this.onerror=null;"
+                         onload="this.style.opacity='1'; this.parentElement.classList.remove('no-image');">` : ''}
+=======
                          onerror="this.style.display='none'; this.parentElement.classList.add('no-image');">` : ''}
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
                     ${isFeatured ? '<span class="vehicle-card-badge">Novidade</span>' : ''}
                     <button class="vehicle-card-favorite" onclick="event.stopPropagation(); toggleFavorite('${vehicle.id}')" title="Adicionar aos favoritos">
                         <i class="bi bi-heart"></i>
@@ -500,6 +507,33 @@ function toggleFavorite(vehicleId) {
     }
 }
 
+// Normalize image URL - convert relative to absolute if needed
+function normalizeImageUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return null;
+    }
+    
+    // Se já é uma URL absoluta (http/https) ou data URI, retornar como está
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+    }
+    
+    // Se começa com //, adicionar protocolo
+    if (url.startsWith('//')) {
+        return window.location.protocol + url;
+    }
+    
+    // Se é um caminho relativo, converter para absoluto
+    if (url.startsWith('/')) {
+        // Caminho absoluto do servidor
+        return window.location.origin + url;
+    }
+    
+    // Caminho relativo - construir URL completa
+    const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    return baseUrl + '/' + url.replace(/^\.\//, '');
+}
+
 // Get vehicle image
 function getVehicleImage(vehicle) {
     if (!vehicle.images) {
@@ -517,7 +551,17 @@ function getVehicleImage(vehicle) {
         images = vehicle.images;
     }
     
+<<<<<<< HEAD
+    if (images.length === 0) {
+        return null;
+    }
+    
+    // Normalizar a primeira imagem
+    const firstImage = images[0];
+    return normalizeImageUrl(firstImage);
+=======
     return images.length > 0 ? images[0] : null; // Retorna null para usar placeholder elegante
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
 }
 
 // Filter vehicles - REQ-FR-LP-001: Filtros completos e ordenação

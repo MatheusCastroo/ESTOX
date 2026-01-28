@@ -5,15 +5,19 @@
 (function() {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
+    const origin = window.location.origin;
     
     // Check if running on Hostinger or production domain
     if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('192.168.')) {
         // Production (Hostinger) - detecta automaticamente o domínio
-        window.API_URL = protocol + '//' + hostname + '/api';
+        // Usa index.php para não depender de rewrite do .htaccess (Hostinger às vezes ignora)
+        window.API_URL = origin + '/api/index.php';
     } else {
         // Development (Localhost)
-        window.API_URL = 'http://localhost/ESTOCX/api';
+        // Mantém compatibilidade local sem depender de rewrite
+        window.API_URL = 'http://localhost/ESTOCX/api/index.php';
     }
+
 })();
 
 // Make it available globally

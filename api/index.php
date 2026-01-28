@@ -36,6 +36,7 @@ require_once __DIR__ . '/classes/Response.php';
 register_shutdown_function(function() {
     $error = error_get_last();
     if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        $isDebug = isset($_GET['__debug']) && $_GET['__debug'] === '1';
         // Fatal error occurred
         if (!headers_sent()) {
             http_response_code(500);
@@ -46,7 +47,15 @@ register_shutdown_function(function() {
         try {
             echo json_encode([
                 'success' => false,
-                'error' => 'Erro interno do servidor'
+                'error' => 'Erro interno do servidor',
+                // Debug info is only returned when explicitly requested.
+                // Never include secrets (tokens/passwords/keys).
+                'debug' => $isDebug ? [
+                    'type' => $error['type'] ?? null,
+                    'message' => $error['message'] ?? null,
+                    'file' => $error['file'] ?? null,
+                    'line' => $error['line'] ?? null,
+                ] : null
             ]);
         } catch (Exception $e) {
             // Last resort: send minimal response
@@ -125,6 +134,12 @@ if (isset($pathSegments[0]) && $pathSegments[0] === 'api') {
     array_shift($pathSegments);
 }
 
+// Allow calling the router directly without rewrite, e.g. /api/index.php/auth
+// Some hosts don't apply .htaccess rewrite rules, so PATH_INFO style URLs are used.
+if (isset($pathSegments[0]) && ($pathSegments[0] === 'index.php' || $pathSegments[0] === 'index.php/')) {
+    array_shift($pathSegments);
+}
+
 // Route to appropriate endpoint
 $endpoint = $pathSegments[0] ?? '';
 
@@ -162,6 +177,29 @@ switch ($endpoint) {
         require_once __DIR__ . '/endpoints/subscriptions.php';
         break;
         
+    case 'admin':
+        // Handle admin endpoints (e.g., /api/admin/subscriptions)
+        $adminEndpoint = $pathSegments[1] ?? '';
+        switch ($adminEndpoint) {
+            case 'subscriptions':
+                require_once __DIR__ . '/endpoints/admin/subscriptions.php';
+                break;
+            default:
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'error' => 'Endpoint admin não encontrado',
+                    'endpoint' => $adminEndpoint,
+                    'available_admin_endpoints' => ['subscriptions'],
+                    'debug' => [
+                        'request_uri' => $_SERVER['REQUEST_URI'] ?? 'não definido',
+                        'path_segments' => $pathSegments,
+                    ]
+                ]);
+                break;
+        }
+        break;
+        
     default:
         // If endpoint is empty, might be accessing /api/ directly
         if (empty($endpoint)) {
@@ -178,7 +216,8 @@ switch ($endpoint) {
                     'dashboard' => '/api/dashboard',
                     'plans' => '/api/plans',
                     'notifications' => '/api/notifications',
-                    'subscriptions' => '/api/subscriptions'
+                    'subscriptions' => '/api/subscriptions',
+                    'admin' => '/api/admin/subscriptions'
                 ],
                 'debug' => [
                     'endpoint_received' => $endpoint,
@@ -192,7 +231,7 @@ switch ($endpoint) {
             echo json_encode([
                 'error' => 'Endpoint não encontrado',
                 'endpoint' => $endpoint,
-                'available_endpoints' => ['auth', 'stores', 'vehicles', 'dashboard', 'plans', 'notifications', 'subscriptions'],
+                'available_endpoints' => ['auth', 'stores', 'vehicles', 'dashboard', 'plans', 'notifications', 'subscriptions', 'admin'],
                 'debug' => [
                     'request_uri' => $_SERVER['REQUEST_URI'] ?? 'não definido',
                     'path_segments' => $pathSegments,

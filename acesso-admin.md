@@ -89,7 +89,7 @@ http://localhost/ESTOX/login.html
 
 **Para produção (Hostinger):**
 ```
-https://nerdparadise.com.br/login.html
+https://estocx.com.br/login.html
 ```
 
 **Ou com www:**
@@ -119,7 +119,7 @@ http://localhost/ESTOX/admin-panel.html
 
 **Para produção (Hostinger):**
 ```
-https://nerdparadise.com.br/admin-panel.html
+https://estocx.com.br/admin-panel.html
 ```
 
 **Ou com www:**
@@ -210,7 +210,7 @@ Se preferir, você pode editar o arquivo `criar-admin.php` diretamente:
 1. Acesse o phpMyAdmin: `http://localhost/phpmyadmin`
 
 **Para produção (Hostinger):**
-1. Acesse o phpMyAdmin através do painel Hostinger ou: `https://nerdparadise.com.br/phpmyadmin`
+1. Acesse o phpMyAdmin através do painel Hostinger ou: `https://estocx.com.br/phpmyadmin`
 2. Selecione o banco `estox`
 3. Vá na tabela `users`
 4. Encontre seu usuário e verifique a coluna `role`
@@ -228,7 +228,7 @@ Se preferir, você pode editar o arquivo `criar-admin.php` diretamente:
 2. Verifique se as credenciais do banco estão corretas no `.env`
 3. Teste a conexão acessando:
    - **Local**: `http://localhost/ESTOX/api/test.php` (se existir)
-   - **Produção**: `https://nerdparadise.com.br/api/test.php` (se existir)
+   - **Produção**: `https://estocx.com.br/api/test.php` (se existir)
 
 **Erro:** "A coluna 'role' não existe"
 
@@ -309,16 +309,16 @@ Se você esquecer a senha do admin:
 2. Faça login com as credenciais
 3. Acesse: `http://localhost/ESTOX/admin-panel.html`
 
-### Produção (Hostinger - nerdparadise.com.br)
+### Produção (Hostinger - estocx.com.br)
 
 **Para configurar (uma vez):**
 1. Acesse: `https://estocx.com.br/criar-admin.php`
 2. Anote as credenciais exibidas
 
 **Para acessar o painel admin:**
-1. Acesse: `https://nerdparadise.com.br/login.html`
+1. Acesse: `https://estocx.com.br/login.html`
 2. Faça login com as credenciais
-3. Acesse: `https://nerdparadise.com.br/admin-panel.html`
+3. Acesse: `https://estocx.com.br/admin-panel.html`
 
 **Credenciais padrão:**
 - Email: `admin@estox.com`

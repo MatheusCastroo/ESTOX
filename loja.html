@@ -370,7 +370,19 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+<<<<<<< HEAD
+            transition: transform 0.2s ease, opacity 0.3s;
+            z-index: 1;
+        }
+
+        /* Garantir que imagens sejam sempre visíveis quando carregadas */
+        .vehicle-card-image:not(.no-image) img {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+=======
             transition: transform 0.2s ease;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
         }
 
         .vehicle-card-image.no-image::before {
@@ -382,7 +394,11 @@
             top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
+<<<<<<< HEAD
+            z-index: 0;
+=======
             z-index: 1;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
             opacity: 0.3;
         }
 
@@ -395,7 +411,11 @@
             color: var(--text-secondary);
             font-size: 0.875rem;
             white-space: nowrap;
+<<<<<<< HEAD
+            z-index: 0;
+=======
             z-index: 1;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
         }
 
         .vehicle-card-modern:hover .vehicle-card-image img {
@@ -734,7 +754,11 @@
             }
 
             .header-logo {
+<<<<<<< HEAD
+                max-height: 130px;
+=======
                 max-height: 40px;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
                 height: auto;
             }
 
@@ -845,10 +869,47 @@
                 padding-bottom: 0;
                 height: 200px;
                 background: #F1F5F9;
+<<<<<<< HEAD
+                position: relative;
+                overflow: hidden;
+            }
+
+            .vehicle-card-image img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                transition: opacity 0.3s;
+            }
+
+            /* Garantir que imagens carregadas sejam visíveis */
+            .vehicle-card-image:not(.no-image) img {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            /* Quando imagem falha, mostrar placeholder */
+            .vehicle-card-image.no-image img {
+                display: none !important;
+            }
+
+            .vehicle-card-image.no-image::before {
+                content: '📷';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 3rem;
+                opacity: 0.3;
+=======
             }
 
             .vehicle-card-image img {
                 object-fit: cover;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
             }
 
             .vehicle-card-body {

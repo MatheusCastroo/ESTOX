@@ -1,8 +1,11 @@
 // REQ-ADM-FRONT-PAINEL-ASSINATURAS: Admin Panel JavaScript
 // Painel Administrativo de Assinaturas
 
-// API_URL is defined in config.js
-const API_URL = window.API_URL || 'http://localhost/api';
+// API_URL is defined in config.js (loaded before this file)
+// Usar window.API_URL para evitar erro de redeclaração
+function getApiUrl() {
+    return window.API_URL || 'http://localhost/ESTOCX/api/index.php';
+}
 
 // Global state
 let currentPage = 1;
@@ -14,7 +17,7 @@ let storesData = [];
 // Validar token e role admin ANTES de renderizar qualquer conteúdo
 async function validateAdminAccess() {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
         console.warn('Token não encontrado. Redirecionando para login...');
         localStorage.removeItem('token');
@@ -24,11 +27,31 @@ async function validateAdminAccess() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/auth`, {
+        const apiUrl = getApiUrl();
+        
+        console.log('Validando acesso admin...', { 
+            API_URL: apiUrl, 
+            token: token ? token.substring(0, 20) + '...' : 'TOKEN NÃO ENCONTRADO' 
+        });
+        
+        // Verificar se token existe
+        if (!token || token.trim() === '') {
+            console.error('Token não encontrado ou vazio');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+            return false;
+        }
+        
+        const response = await fetch(`${apiUrl}/auth`, {
+            method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
+
+        console.log('Resposta da API:', { status: response.status, ok: response.ok });
         
         if (!response.ok) {
             if (response.status === 401) {
@@ -38,27 +61,44 @@ async function validateAdminAccess() {
                 window.location.href = 'login.html';
                 return false;
             }
-            throw new Error(`HTTP error! status: ${response.status}`);
+            
+            // Tentar ler a resposta de erro
+            let errorText = '';
+            try {
+                const errorData = await response.json();
+                errorText = errorData.error || `HTTP error! status: ${response.status}`;
+            } catch (e) {
+                errorText = `HTTP error! status: ${response.status}`;
+            }
+            
+            console.error('Erro na resposta:', errorText);
+            throw new Error(errorText);
         }
         
         const data = await response.json();
+        console.log('Dados recebidos:', data);
         
         if (!data.success || !data.data || !data.data.user) {
-            console.warn('Resposta inválida da API. Redirecionando para login...');
+            console.warn('Resposta inválida da API:', data);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            alert('Erro: Resposta inválida da API. Por favor, faça login novamente.');
             window.location.href = 'login.html';
             return false;
         }
         
         const user = data.data.user;
+        console.log('Dados do usuário:', { id: user.id, email: user.email, role: user.role });
         
         // REQ-ADM-FRONT-PAINEL-ASSINATURAS: Validar role = admin
-        if (user.role !== 'admin') {
-            console.warn('Acesso negado. Usuário não é admin. Redirecionando para login...');
+        // Tratar caso onde role pode ser null, undefined ou string vazia
+        const userRole = (user.role || '').toLowerCase().trim();
+        
+        if (userRole !== 'admin') {
+            console.warn('Acesso negado. Usuário não é admin.', { role: userRole, user });
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            alert('Acesso negado. Apenas administradores podem acessar este painel.');
+            alert('Acesso negado. Apenas administradores podem acessar este painel.\n\nSeu perfil: ' + (userRole || 'sem role definido'));
             window.location.href = 'login.html';
             return false;
         }
@@ -69,12 +109,29 @@ async function validateAdminAccess() {
             adminUserNameEl.textContent = user.name || user.email;
         }
         
+        console.log('Acesso validado com sucesso!');
         return true;
     } catch (error) {
         console.error('Erro ao validar acesso:', error);
+        console.error('Detalhes do erro:', {
+            message: error.message,
+            stack: error.stack,
+            API_URL: getApiUrl()
+        });
+        
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        alert('Erro ao validar acesso. Redirecionando para login...');
+        
+        // Mostrar mensagem mais informativa
+        const errorMsg = error.message || 'Erro ao validar acesso';
+        alert(`Erro ao validar acesso administrativo:\n\n${errorMsg}\n\nVerifique o console para mais detalhes.`);
+        
+        // Não redirecionar automaticamente em caso de erro de rede, apenas mostrar mensagem
+        if (error.message && error.message.includes('Failed to fetch')) {
+            console.error('Erro de conexão com a API. Verifique se a API está acessível em:', getApiUrl());
+            return false;
+        }
+        
         window.location.href = 'login.html';
         return false;
     }
@@ -88,7 +145,7 @@ function getAuthToken() {
 // Carregar planos para o filtro
 async function loadPlans() {
     try {
-        const response = await fetch(`${API_URL}/plans`);
+        const response = await fetch(`${getApiUrl()}/plans`);
         const data = await response.json();
         
         if (data.success && data.data && data.data.plans) {
@@ -152,7 +209,7 @@ async function loadStores() {
         params.append('limit', '50');
         
         const token = getAuthToken();
-        const response = await fetch(`${API_URL}/admin/subscriptions?${params.toString()}`, {
+        const response = await fetch(`${getApiUrl()}/admin/subscriptions?${params.toString()}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -213,7 +270,10 @@ function displayStores(stores) {
         const statusText = getStatusText(store.subscription_status);
         const expiresAt = store.subscription_ends_at ? formatDate(store.subscription_ends_at) : '-';
         const planName = store.plan_name || '-';
-        const vehicleLimit = store.plan_vehicle_limit !== null ? store.plan_vehicle_limit : '-';
+        // Usar effective_vehicle_limit se disponível (prioriza custom_vehicle_limit), senão usa plan_vehicle_limit
+        const vehicleLimit = store.effective_vehicle_limit !== undefined && store.effective_vehicle_limit !== null 
+            ? store.effective_vehicle_limit 
+            : (store.plan_vehicle_limit !== null ? store.plan_vehicle_limit : '-');
         const vehicleCount = store.vehicle_count || 0;
         const vehicleDisplay = vehicleLimit === -1 
             ? `${vehicleCount} (ilimitado)` 
@@ -250,6 +310,7 @@ function displayStores(stores) {
                                 <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'suspend');"><i class="bi bi-pause-circle me-2"></i>Suspender</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'reactivate');"><i class="bi bi-play-circle me-2"></i>Reativar</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'change_plan');"><i class="bi bi-arrow-repeat me-2"></i>Alterar Plano</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'set_vehicle_limit');"><i class="bi bi-car-front me-2"></i>Limitar Veículos</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'cancel');"><i class="bi bi-x-circle me-2"></i>Cancelar</a></li>
                             </ul>
@@ -328,7 +389,7 @@ async function showStoreDetails(storeId) {
     
     try {
         const token = getAuthToken();
-        const response = await fetch(`${API_URL}/admin/subscriptions?store_id=${storeId}`, {
+        const response = await fetch(`${getApiUrl()}/admin/subscriptions?store_id=${storeId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -469,6 +530,7 @@ function showActionModal(storeId, action) {
     const actionStoreId = document.getElementById('actionStoreId');
     const actionType = document.getElementById('actionType');
     const actionChangePlan = document.getElementById('actionChangePlan');
+    const actionVehicleLimit = document.getElementById('actionVehicleLimit');
     const actionWarning = document.getElementById('actionWarning');
     const actionWarningText = document.getElementById('actionWarningText');
     const actionNotes = document.getElementById('actionNotes');
@@ -481,14 +543,32 @@ function showActionModal(storeId, action) {
     actionError.classList.add('d-none');
     actionError.textContent = '';
     
-    // Mostrar/ocultar campo de plano
+    // Mostrar/ocultar campos específicos
     if (action === 'change_plan') {
         actionChangePlan.style.display = 'block';
+        if (actionVehicleLimit) actionVehicleLimit.style.display = 'none';
         document.getElementById('newPlanId').required = true;
+        if (document.getElementById('vehicleLimit')) {
+            document.getElementById('vehicleLimit').required = false;
+            document.getElementById('vehicleLimit').value = '';
+        }
+    } else if (action === 'set_vehicle_limit') {
+        actionChangePlan.style.display = 'none';
+        if (actionVehicleLimit) actionVehicleLimit.style.display = 'block';
+        document.getElementById('newPlanId').required = false;
+        if (document.getElementById('vehicleLimit')) {
+            document.getElementById('vehicleLimit').required = true;
+        }
+        document.getElementById('newPlanId').value = '';
     } else {
         actionChangePlan.style.display = 'none';
+        if (actionVehicleLimit) actionVehicleLimit.style.display = 'none';
         document.getElementById('newPlanId').required = false;
         document.getElementById('newPlanId').value = '';
+        if (document.getElementById('vehicleLimit')) {
+            document.getElementById('vehicleLimit').required = false;
+            document.getElementById('vehicleLimit').value = '';
+        }
     }
     
     // Definir título e avisos
@@ -497,7 +577,8 @@ function showActionModal(storeId, action) {
         'suspend': 'Suspender Assinatura',
         'reactivate': 'Reativar Assinatura',
         'cancel': 'Cancelar Assinatura',
-        'change_plan': 'Alterar Plano'
+        'change_plan': 'Alterar Plano',
+        'set_vehicle_limit': 'Definir Limite de Veículos'
     };
     
     title.textContent = actionLabels[action] || 'Ação Administrativa';
@@ -530,6 +611,18 @@ async function executeAction() {
         return;
     }
     
+    if (actionType === 'set_vehicle_limit') {
+        const vehicleLimitInput = document.getElementById('vehicleLimit');
+        if (vehicleLimitInput) {
+            const limit = parseInt(vehicleLimitInput.value);
+            if (isNaN(limit) || (limit < -1)) {
+                actionError.textContent = 'Por favor, informe um limite válido (-1 para ilimitado ou um número positivo).';
+                actionError.classList.remove('d-none');
+                return;
+            }
+        }
+    }
+    
     // Confirmar ação crítica
     if (actionType === 'cancel') {
         if (!confirm('Tem certeza que deseja CANCELAR esta assinatura? Esta ação é irreversível.')) {
@@ -548,6 +641,13 @@ async function executeAction() {
         payload.plan_id = newPlanId;
     }
     
+    if (actionType === 'set_vehicle_limit') {
+        const vehicleLimitInput = document.getElementById('vehicleLimit');
+        if (vehicleLimitInput) {
+            payload.vehicle_limit = parseInt(vehicleLimitInput.value);
+        }
+    }
+    
     // Desabilitar botão e mostrar spinner
     confirmBtn.disabled = true;
     actionSpinner.classList.remove('d-none');
@@ -555,7 +655,7 @@ async function executeAction() {
     
     try {
         const token = getAuthToken();
-        const response = await fetch(`${API_URL}/admin/subscriptions`, {
+        const response = await fetch(`${getApiUrl()}/admin/subscriptions`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -665,35 +765,57 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// REQ-ADM-FRONT-PAINEL-ASSINATURAS: Inicialização
+// REQ-ADM-FRONT-PAINEL-ASSINATURAS: Logout
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+}
+
+// Bootstrap do Painel Admin
+// - Valida acesso ANTES de renderizar
+// - Evita tela travada em "Validando..." quando há erro de rede/rota
 document.addEventListener('DOMContentLoaded', async () => {
-    // Validar acesso admin ANTES de renderizar
-    const isValid = await validateAdminAccess();
-    
-    if (!isValid) {
-        // Redirecionamento já foi feito em validateAdminAccess
-        return;
+    const loadingEl = document.getElementById('loadingAccess');
+    const mainEl = document.getElementById('mainContent');
+
+    function showAccessError(message) {
+        if (mainEl) mainEl.style.display = 'none';
+        if (!loadingEl) return;
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = `
+            <div class="alert alert-danger d-inline-block text-start" role="alert" style="max-width: 720px;">
+                <div class="fw-bold mb-2">Não foi possível validar o acesso administrativo.</div>
+                <div class="small mb-2">${escapeHtml(message || 'Erro desconhecido')}</div>
+                <div class="small text-muted mb-3">
+                    API usada: <code>${escapeHtml(getApiUrl())}</code><br>
+                    Teste no navegador: <code>/api/index.php/auth</code> (deve retornar 401/403/200 — mas não 404 puro)
+                </div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-primary" href="login.html">Ir para Login</a>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="location.reload()">Recarregar</button>
+                </div>
+            </div>
+        `;
     }
-    
-    // Mostrar conteúdo principal
-    const loadingAccess = document.getElementById('loadingAccess');
-    const mainContent = document.getElementById('mainContent');
-    
-    if (loadingAccess) loadingAccess.style.display = 'none';
-    if (mainContent) mainContent.style.display = 'block';
-    
-    // Carregar planos
-    await loadPlans();
-    
-    // Carregar lojas
-    await loadStores();
-    
-    // Event listeners para filtros
-    const filtersForm = document.getElementById('filtersForm');
-    if (filtersForm) {
-        // Auto-submit quando filtros checkbox mudarem
-        document.getElementById('expiredFilter')?.addEventListener('change', loadStores);
-        document.getElementById('expiringFilter')?.addEventListener('change', loadStores);
-        document.getElementById('trialFilter')?.addEventListener('change', loadStores);
+
+    try {
+        const ok = await validateAdminAccess();
+        if (!ok) {
+            // validateAdminAccess pode redirecionar; se não redirecionou, mostramos erro pra não ficar infinito
+            showAccessError('Validação falhou (token ausente/inválido, acesso negado ou erro de rede).');
+            return;
+        }
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (mainEl) mainEl.style.display = 'block';
+
+        // Carregar dados iniciais do painel
+        await loadPlans();
+        await loadStores();
+    } catch (e) {
+        console.error('Erro no bootstrap do painel admin:', e);
+        showAccessError(e?.message || 'Erro no bootstrap do painel admin');
     }
 });

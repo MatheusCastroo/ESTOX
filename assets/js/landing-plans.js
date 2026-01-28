@@ -4,7 +4,7 @@
 (async function() {
     'use strict';
 
-    const API_URL = window.API_URL || 'http://localhost/ESTOCX/api';
+    const API_URL = window.API_URL || 'http://localhost/ESTOCX/api/index.php';
 
     /**
      * Format price to Brazilian Real format

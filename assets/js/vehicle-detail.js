@@ -69,6 +69,33 @@ function showError(message) {
     `;
 }
 
+// Normalize image URL - convert relative to absolute if needed
+function normalizeImageUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return null;
+    }
+    
+    // Se já é uma URL absoluta (http/https) ou data URI, retornar como está
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+    }
+    
+    // Se começa com //, adicionar protocolo
+    if (url.startsWith('//')) {
+        return window.location.protocol + url;
+    }
+    
+    // Se é um caminho relativo, converter para absoluto
+    if (url.startsWith('/')) {
+        // Caminho absoluto do servidor
+        return window.location.origin + url;
+    }
+    
+    // Caminho relativo - construir URL completa
+    const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    return baseUrl + '/' + url.replace(/^\.\//, '');
+}
+
 function displayVehicleDetail() {
     // Parse JSON fields
     if (vehicleData.images) {
@@ -82,6 +109,9 @@ function displayVehicleDetail() {
             images = vehicleData.images;
         }
     }
+    
+    // Normalizar todas as URLs das imagens
+    images = images.map(img => normalizeImageUrl(img)).filter(img => img !== null);
     
     // Se não houver imagens, usar placeholder
     if (images.length === 0) {
@@ -195,8 +225,25 @@ function changeImage(direction) {
 
 function updateMainImage() {
     const mainImage = document.getElementById('mainImage');
-    mainImage.src = images[currentImageIndex];
+    const imageUrl = images[currentImageIndex];
+    
+    // Adicionar tratamento de erro melhor para mobile
+    mainImage.onerror = function() {
+        this.src = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27800%27 height=%27500%27%3E%3Crect fill=%27%23f5f5f5%27 width=%27800%27 height=%27500%27/%3E%3Ctext fill=%27%23999%27 font-family=%27sans-serif%27 font-size=%2724%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3EImagem não disponível%3C/text%3E%3C/svg%3E';
+        this.onerror = null; // Prevenir loop infinito
+    };
+    
+    mainImage.src = imageUrl;
     mainImage.alt = `${vehicleData.brand} ${vehicleData.model} - Foto ${currentImageIndex + 1}`;
+    
+    // Garantir que a imagem carregue corretamente
+    if (!mainImage.complete) {
+        mainImage.onload = function() {
+            this.style.opacity = '1';
+        };
+        mainImage.style.opacity = '0';
+        mainImage.style.transition = 'opacity 0.3s';
+    }
     
     // Show/hide navigation buttons
     document.getElementById('prevImage').style.display = images.length > 1 ? 'flex' : 'none';
@@ -210,7 +257,11 @@ function updateThumbnails() {
              alt="Miniatura ${index + 1}" 
              class="thumbnail ${index === currentImageIndex ? 'active' : ''}"
              onclick="selectImage(${index})"
-             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2760%27%3E%3Crect fill=%27%23ddd%27 width=%2780%27 height=%2760%27/%3E%3C/svg%3E'">
+             loading="lazy"
+             crossorigin="anonymous"
+             onerror="console.error('Erro ao carregar miniatura:', this.src); this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2760%27%3E%3Crect fill=%27%23ddd%27 width=%2780%27 height=%2760%27/%3E%3C/svg%3E'; this.onerror=null;"
+             onload="this.style.opacity='1';"
+             style="opacity: 0; transition: opacity 0.3s;">
     `).join('');
 }
 

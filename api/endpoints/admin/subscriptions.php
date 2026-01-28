@@ -125,35 +125,61 @@ switch ($method) {
             WHEN s.subscription_status = 'canceled' THEN 5
             ELSE 6
         END, s.subscription_ends_at ASC";
-        
-        $stores = $db->fetchAll(
-            "SELECT s.*, 
-                    u.name as user_name, 
-                    u.email as user_email,
-                    p.name as plan_name,
-                    p.slug as plan_slug,
-                    p.price as plan_price,
-                    p.vehicle_limit as plan_vehicle_limit,
-                    (SELECT COUNT(*) FROM vehicles WHERE store_id = s.id) as vehicle_count,
-                    (SELECT pt.created_at FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_payment,
-                    (SELECT pt.gateway FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_gateway
-             FROM stores s
-             LEFT JOIN users u ON s.user_id = u.id
-             LEFT JOIN plans p ON s.plan_id = p.id
-             WHERE {$where}
-             ORDER BY {$orderBy}
-             LIMIT :limit OFFSET :offset",
-            array_merge($params, ['limit' => $limit, 'offset' => $offset])
-        );
-        
-        // Get total count
-        $total = $db->fetchOne(
-            "SELECT COUNT(*) as total FROM stores s 
-             LEFT JOIN users u ON s.user_id = u.id
-             LEFT JOIN plans p ON s.plan_id = p.id
-             WHERE {$where}",
-            $params
-        )['total'];
+
+        // Check if custom_vehicle_limit column exists (to avoid SQL errors)
+        $hasCustomLimitColumn = false;
+        try {
+            $columnCheck = $db->fetchOne(
+                "SELECT COUNT(*) as cnt FROM information_schema.COLUMNS 
+                 WHERE TABLE_SCHEMA = DATABASE() 
+                 AND TABLE_NAME = 'stores' 
+                 AND COLUMN_NAME = 'custom_vehicle_limit'"
+            );
+            $hasCustomLimitColumn = ($columnCheck && $columnCheck['cnt'] > 0);
+        } catch (Exception $e) {
+            // If check fails, assume column doesn't exist
+            $hasCustomLimitColumn = false;
+        }
+
+        // Build SELECT with or without custom_vehicle_limit column
+        $effectiveLimitExpr = $hasCustomLimitColumn 
+            ? "COALESCE(s.custom_vehicle_limit, p.vehicle_limit) as effective_vehicle_limit"
+            : "p.vehicle_limit as effective_vehicle_limit";
+
+        try {
+            $stores = $db->fetchAll(
+                "SELECT s.*, 
+                        u.name as user_name, 
+                        u.email as user_email,
+                        p.name as plan_name,
+                        p.slug as plan_slug,
+                        p.price as plan_price,
+                        p.vehicle_limit as plan_vehicle_limit,
+                        {$effectiveLimitExpr},
+                        (SELECT COUNT(*) FROM vehicles WHERE store_id = s.id) as vehicle_count,
+                        (SELECT pt.created_at FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_payment,
+                        (SELECT pt.gateway FROM payment_transactions pt WHERE pt.store_id = s.id ORDER BY pt.created_at DESC LIMIT 1) as last_gateway
+                 FROM stores s
+                 LEFT JOIN users u ON s.user_id = u.id
+                 LEFT JOIN plans p ON s.plan_id = p.id
+                 WHERE {$where}
+                 ORDER BY {$orderBy}
+                 LIMIT :limit OFFSET :offset",
+                array_merge($params, ['limit' => $limit, 'offset' => $offset])
+            );
+            
+            // Get total count
+            $totalRow = $db->fetchOne(
+                "SELECT COUNT(*) as total FROM stores s 
+                 LEFT JOIN users u ON s.user_id = u.id
+                 LEFT JOIN plans p ON s.plan_id = p.id
+                 WHERE {$where}",
+                $params
+            );
+            $total = $totalRow ? $totalRow['total'] : 0;
+        } catch (Exception $e) {
+            Response::error('Erro interno do servidor', 500);
+        }
         
         Response::success([
             'stores' => $stores,
@@ -300,8 +326,44 @@ switch ($method) {
                 $newStatus = $oldStatus;
                 break;
                 
+            case 'set_vehicle_limit':
+                // Nova ação: Definir limite de veículos personalizado
+                $vehicleLimit = $data['vehicle_limit'] ?? null;
+                
+                if ($vehicleLimit === null) {
+                    Response::error('vehicle_limit é obrigatório para definir limite de veículos', 400);
+                }
+                
+                // Validar valor (-1 para ilimitado, ou número positivo)
+                $vehicleLimit = (int)$vehicleLimit;
+                if ($vehicleLimit < -1) {
+                    Response::error('Limite de veículos inválido. Use -1 para ilimitado ou um número positivo.', 400);
+                }
+                
+                $actionType = 'vehicle_limit_changed';
+                
+                // Verificar se a tabela stores tem coluna custom_vehicle_limit
+                // Se não tiver, vamos usar uma abordagem alternativa (armazenar em notes ou criar coluna)
+                // Por enquanto, vamos atualizar o plano para um plano customizado ou criar uma coluna
+                try {
+                    // Tentar adicionar coluna se não existir
+                    $db->query("ALTER TABLE stores ADD COLUMN custom_vehicle_limit INT NULL COMMENT 'Limite customizado de veículos (sobrescreve o limite do plano)'");
+                } catch (Exception $e) {
+                    // Coluna já existe ou erro ao criar - continuar
+                }
+                
+                // Atualizar limite customizado
+                $updateData['custom_vehicle_limit'] = $vehicleLimit;
+                
+                $limitText = $vehicleLimit === -1 ? 'ilimitado' : $vehicleLimit;
+                $notes = "Limite de veículos alterado para: {$limitText}. " . ($data['notes'] ?? '');
+                
+                // Não altera status ou datas
+                $newStatus = $oldStatus;
+                break;
+                
             default:
-                Response::error('Ação inválida. Use: renew, suspend, reactivate, cancel ou change_plan', 400);
+                Response::error('Ação inválida. Use: renew, suspend, reactivate, cancel, change_plan ou set_vehicle_limit', 400);
         }
         
         // Add status to update data (except for change_plan which doesn't change status)

@@ -708,7 +708,11 @@ html {
     }
     
     .header-logo {
+<<<<<<< HEAD
+        max-height: 120px;
+=======
         max-height: 100px;
+>>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
         max-width: 400px;
         width: auto;
         height: auto;
