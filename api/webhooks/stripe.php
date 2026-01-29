@@ -394,19 +394,74 @@ function activateSubscription($db, $emailService, $storeId, $metadata, $transact
         }
     }
     
-    // Get plan
-    $planId = $metadata['plan_id'] ?? $store['plan_id'];
-    if (!$planId) {
-        throw new Exception("Plan ID not found in metadata or store");
+    // Get plan - PRIORIDADE: plan_slug do metadata > plan_id do metadata > plan_id da loja
+    // Isso garante que o plano correto seja atribuído baseado na origem do cadastro/contratação
+    $plan = null;
+    $planId = null;
+    
+    // Prioridade 1: Buscar por plan_slug do metadata (mais confiável)
+    if (isset($metadata['plan_slug']) && !empty($metadata['plan_slug'])) {
+        $plan = $db->fetchOne(
+            "SELECT * FROM plans WHERE slug = :slug AND is_active = true",
+            ['slug' => $metadata['plan_slug']]
+        );
+        if ($plan) {
+            $planId = $plan['id'];
+        }
     }
     
-    $plan = $db->fetchOne(
-        "SELECT * FROM plans WHERE id = :id",
-        ['id' => $planId]
-    );
+    // Prioridade 2: Se não encontrou por slug, tentar plan_id do metadata
+    if (!$plan && isset($metadata['plan_id']) && !empty($metadata['plan_id'])) {
+        $plan = $db->fetchOne(
+            "SELECT * FROM plans WHERE id = :id AND is_active = true",
+            ['id' => $metadata['plan_id']]
+        );
+        if ($plan) {
+            $planId = $plan['id'];
+        }
+    }
     
+    // Prioridade 3: Fallback para plan_id da loja (pode estar incorreto, mas é melhor que nada)
+    if (!$plan && isset($store['plan_id']) && !empty($store['plan_id'])) {
+        $plan = $db->fetchOne(
+            "SELECT * FROM plans WHERE id = :id AND is_active = true",
+            ['id' => $store['plan_id']]
+        );
+        if ($plan) {
+            $planId = $plan['id'];
+        }
+    }
+    
+    // Se ainda não encontrou, tentar identificar pelo tipo de periodicidade ou origem
     if (!$plan) {
-        throw new Exception("Plan not found: {$planId}");
+        // Se não há metadata de plano, assumir plano gratuito para novos cadastros
+        // ou tentar identificar pela periodicidade se disponível
+        $planSlug = 'gratuito'; // Plano padrão para novos cadastros
+        
+        // Se há metadata indicando periodicidade, tentar identificar o plano correto
+        if (isset($metadata['duration_days'])) {
+            $durationDays = (int)$metadata['duration_days'];
+            if ($durationDays === 30) {
+                $planSlug = 'profissional-mensal';
+            } elseif ($durationDays === 90) {
+                $planSlug = 'profissional-trimestral';
+            } elseif ($durationDays === 365) {
+                $planSlug = 'profissional-anual';
+            }
+        }
+        
+        $plan = $db->fetchOne(
+            "SELECT * FROM plans WHERE slug = :slug AND is_active = true",
+            ['slug' => $planSlug]
+        );
+        
+        if ($plan) {
+            $planId = $plan['id'];
+        }
+    }
+    
+    if (!$plan || !$planId) {
+        throw new Exception("Plan not found. Metadata: " . json_encode($metadata) . ", Store plan_id: " . ($store['plan_id'] ?? 'null'));
     }
     
     $durationDays = (int)($metadata['duration_days'] ?? $plan['duration_days'] ?? 30);

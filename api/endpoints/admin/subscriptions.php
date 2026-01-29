@@ -14,6 +14,7 @@ Middleware::cors();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $db = Database::getInstance();
+$isDebug = (isset($_GET['__debug']) && $_GET['__debug'] === '1');
 
 // REQ-ADM-PAINEL-ASSINATURAS-COM-AUTH: Validar role admin do token
 $adminUserId = Middleware::requireAdmin();
@@ -178,6 +179,17 @@ switch ($method) {
             );
             $total = $totalRow ? $totalRow['total'] : 0;
         } catch (Exception $e) {
+            if ($isDebug) {
+                Response::json([
+                    'success' => false,
+                    'error' => 'Falha ao consultar assinaturas (debug ativo).',
+                    'debug' => [
+                        'step' => 'list_subscriptions',
+                        'exception_message' => $e->getMessage(),
+                        'hint' => 'Se o erro for sobre "custom_vehicle_limit", rode a migration/adicione a coluna ou ajuste o endpoint para fallback quando a coluna não existir.'
+                    ]
+                ], 500);
+            }
             Response::error('Erro interno do servidor', 500);
         }
         

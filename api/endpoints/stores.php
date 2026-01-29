@@ -120,16 +120,29 @@ switch ($method) {
         }
         
         // Get plan if specified, otherwise assign free plan
+        // REGRA DE NEGÓCIO: Vincular plano correto baseado em plan_slug ou origem do cadastro
         $planId = null;
+        $planSlug = null;
+        
+        // Prioridade 1: Se plan_slug foi especificado, usar ele
         if (isset($data['plan_slug']) && !empty($data['plan_slug'])) {
+            $planSlug = trim($data['plan_slug']);
             $plan = $db->fetchOne(
                 "SELECT id FROM plans WHERE slug = :slug AND is_active = true",
-                ['slug' => $data['plan_slug']]
+                ['slug' => $planSlug]
             );
-            $planId = $plan['id'] ?? null;
+            if ($plan) {
+                $planId = $plan['id'];
+            } else {
+                // Plano especificado não encontrado - logar erro mas continuar com gratuito
+                error_log("Plano especificado não encontrado: {$planSlug}. Atribuindo plano gratuito.");
+            }
         }
         
-        // Se não foi especificado um plano, atribuir o plano gratuito automaticamente
+        // Prioridade 2: Se não foi especificado um plano, atribuir o plano gratuito automaticamente
+        // Isso cobre casos de:
+        // - Cadastro direto pelo plano gratuito
+        // - Início do uso pelo fluxo de trial gratuito
         if ($planId === null) {
             $freePlan = $db->fetchOne(
                 "SELECT id FROM plans WHERE slug = 'gratuito' AND is_active = true",
@@ -137,6 +150,11 @@ switch ($method) {
             );
             if ($freePlan) {
                 $planId = $freePlan['id'];
+                $planSlug = 'gratuito';
+            } else {
+                // Plano gratuito não encontrado - erro crítico
+                error_log("ERRO CRÍTICO: Plano gratuito não encontrado no banco de dados!");
+                Response::error('Erro ao configurar plano inicial. Entre em contato com o suporte.', 500);
             }
         }
         

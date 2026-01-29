@@ -17,7 +17,7 @@ let storesData = [];
 // Validar token e role admin ANTES de renderizar qualquer conteúdo
 async function validateAdminAccess() {
     const token = localStorage.getItem('token');
-
+    
     if (!token) {
         console.warn('Token não encontrado. Redirecionando para login...');
         localStorage.removeItem('token');
@@ -50,7 +50,7 @@ async function validateAdminAccess() {
                 'Content-Type': 'application/json'
             }
         });
-
+        
         console.log('Resposta da API:', { status: response.status, ok: response.ok });
         
         if (!response.ok) {
@@ -153,7 +153,7 @@ async function loadPlans() {
             const planFilter = document.getElementById('planFilter');
             
             if (planFilter) {
-                planFilter.innerHTML = '<option value="">Todos</option>';
+                planFilter.innerHTML = '<option value="">Todos os planos</option>';
                 plansList.forEach(plan => {
                     const option = document.createElement('option');
                     option.value = plan.slug;
@@ -209,7 +209,9 @@ async function loadStores() {
         params.append('limit', '50');
         
         const token = getAuthToken();
-        const response = await fetch(`${getApiUrl()}/admin/subscriptions?${params.toString()}`, {
+        const url = `${getApiUrl()}/admin/subscriptions?${params.toString()}`;
+
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -249,7 +251,7 @@ async function loadStores() {
     } catch (error) {
         console.error('Erro ao carregar lojas:', error);
         if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-danger">Erro ao carregar lojas. Tente novamente.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle me-2"></i>Não foi possível carregar as assinaturas. Tente novamente.</div></td></tr>';
         }
     }
 }
@@ -269,17 +271,32 @@ function displayStores(stores) {
         const statusClass = getStatusClass(store.subscription_status);
         const statusText = getStatusText(store.subscription_status);
         const expiresAt = store.subscription_ends_at ? formatDate(store.subscription_ends_at) : '-';
-        const planName = store.plan_name || '-';
+        const planName = getPlanDisplayName(store.plan_name, store.plan_slug);
+        const planBadgeClass = getPlanBadgeClass(store.plan_slug);
+        
+        // Verificar se está próximo do vencimento (≤7 dias)
+        let expiresAtClass = '';
+        if (store.subscription_ends_at) {
+            const expiresDate = new Date(store.subscription_ends_at);
+            const now = new Date();
+            const daysUntilExpiry = Math.ceil((expiresDate - now) / (1000 * 60 * 60 * 24));
+            if (daysUntilExpiry <= 7 && daysUntilExpiry > 0 && store.subscription_status === 'active') {
+                expiresAtClass = 'text-warning fw-bold';
+            } else if (daysUntilExpiry <= 0 && store.subscription_status !== 'canceled') {
+                expiresAtClass = 'text-danger fw-bold';
+            }
+        }
+        
         // Usar effective_vehicle_limit se disponível (prioriza custom_vehicle_limit), senão usa plan_vehicle_limit
         const vehicleLimit = store.effective_vehicle_limit !== undefined && store.effective_vehicle_limit !== null 
             ? store.effective_vehicle_limit 
             : (store.plan_vehicle_limit !== null ? store.plan_vehicle_limit : '-');
         const vehicleCount = store.vehicle_count || 0;
         const vehicleDisplay = vehicleLimit === -1 
-            ? `${vehicleCount} (ilimitado)` 
+            ? `<span class="badge bg-success">${vehicleCount} (ilimitado)</span>` 
             : `${vehicleCount} / ${vehicleLimit}`;
-        const lastPayment = store.last_payment ? formatDateTime(store.last_payment) : '-';
-        const gateway = store.last_gateway || '-';
+        const lastPayment = store.last_payment ? formatDateTime(store.last_payment) : '<span class="text-muted">-</span>';
+        const gateway = store.last_gateway || '<span class="text-muted">-</span>';
         
         return `
             <tr>
@@ -288,31 +305,58 @@ function displayStores(stores) {
                     <small class="text-muted">${escapeHtml(store.slug || '-')}</small>
                 </td>
                 <td>${escapeHtml(store.user_email || '-')}</td>
-                <td>${escapeHtml(planName)}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td><small>${expiresAt}</small></td>
+                <td>
+                    <span class="plan-badge ${planBadgeClass}">${escapeHtml(planName)}</span>
+                </td>
+                <td>
+                    <span class="badge ${statusClass}">${statusText}</span>
+                </td>
+                <td>
+                    <small class="${expiresAtClass}">${expiresAt}</small>
+                </td>
                 <td><small>${vehicleDisplay}</small></td>
                 <td><small>${lastPayment}</small></td>
-                <td><small>${escapeHtml(gateway)}</small></td>
+                <td><small>${gateway}</small></td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" onclick="showStoreDetails('${store.id}')" title="Ver detalhes">
+                        <button type="button" class="btn btn-outline-primary action-btn" 
+                                onclick="showStoreDetails('${store.id}')" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                title="Ver detalhes completos da loja">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="showActionModal('${store.id}', 'renew')" title="Renovar">
+                        <button type="button" class="btn btn-outline-success action-btn" 
+                                onclick="showActionModal('${store.id}', 'renew')" 
+                                data-bs-toggle="tooltip" 
+                                data-bs-placement="top" 
+                                title="Renovar assinatura">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
                         <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Mais ações">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle action-btn" 
+                                    data-bs-toggle="dropdown" 
+                                    data-bs-placement="top" 
+                                    title="Mais ações administrativas">
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'suspend');"><i class="bi bi-pause-circle me-2"></i>Suspender</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'reactivate');"><i class="bi bi-play-circle me-2"></i>Reativar</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'change_plan');"><i class="bi bi-arrow-repeat me-2"></i>Alterar Plano</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'set_vehicle_limit');"><i class="bi bi-car-front me-2"></i>Limitar Veículos</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'suspend');">
+                                    <i class="bi bi-pause-circle me-2"></i>Suspender
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'reactivate');">
+                                    <i class="bi bi-play-circle me-2"></i>Reativar
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'change_plan');">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Alterar Plano
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'set_vehicle_limit');">
+                                    <i class="bi bi-car-front me-2"></i>Limitar Veículos
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'cancel');"><i class="bi bi-x-circle me-2"></i>Cancelar</a></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); showActionModal('${store.id}', 'cancel');">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </a></li>
                             </ul>
                         </div>
                     </div>
@@ -320,6 +364,12 @@ function displayStores(stores) {
             </tr>
         `;
     }).join('');
+    
+    // Inicializar tooltips do Bootstrap após renderizar a tabela
+    const tooltipTriggerList = [].slice.call(tableBody.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 }
 
 // REQ-ADM-FRONT-PAINEL-ASSINATURAS: Atualizar paginação
@@ -432,7 +482,7 @@ function renderStoreDetails(store, transactions, logs) {
                     <tr><th>Email:</th><td>${escapeHtml(store.user_email || '-')}</td></tr>
                     <tr><th>Responsável:</th><td>${escapeHtml(store.user_name || '-')}</td></tr>
                     <tr><th>Plano:</th><td>${escapeHtml(store.plan_name || '-')}</td></tr>
-                    <tr><th>Status:</th><td><span class="status-badge ${statusClass}">${statusText}</span></td></tr>
+                    <tr><th>Status:</th><td><span class="badge ${statusClass}">${statusText}</span></td></tr>
                     <tr><th>Expiração:</th><td>${store.subscription_ends_at ? formatDateTime(store.subscription_ends_at) : '-'}</td></tr>
                 </table>
             </div>
@@ -708,14 +758,15 @@ async function executeAction() {
 
 // Funções auxiliares
 function getStatusClass(status) {
+    // Usar classes Bootstrap para badges
     const classes = {
-        'active': 'status-active',
-        'pending': 'status-pending',
-        'suspended': 'status-suspended',
-        'canceled': 'status-canceled',
-        'trial': 'status-trial'
+        'active': 'bg-success text-white',
+        'pending': 'bg-warning text-dark',
+        'suspended': 'bg-danger text-white',
+        'canceled': 'bg-secondary text-white',
+        'trial': 'bg-info text-white'
     };
-    return classes[status] || 'status-pending';
+    return classes[status] || 'bg-secondary text-white';
 }
 
 function getStatusText(status) {
@@ -727,6 +778,27 @@ function getStatusText(status) {
         'trial': 'Trial'
     };
     return texts[status] || status;
+}
+
+function getPlanBadgeClass(planSlug) {
+    if (!planSlug) return 'plan-gratuito';
+    const slug = planSlug.toLowerCase();
+    if (slug.includes('gratuito')) return 'plan-gratuito';
+    if (slug.includes('mensal')) return 'plan-mensal';
+    if (slug.includes('trimestral')) return 'plan-trimestral';
+    if (slug.includes('anual')) return 'plan-anual';
+    return 'plan-gratuito';
+}
+
+function getPlanDisplayName(planName, planSlug) {
+    if (!planName || planName === '-') return 'Não definido';
+    // Simplificar nomes para exibição
+    const name = planName.toLowerCase();
+    if (name.includes('mensal')) return 'Mensal';
+    if (name.includes('trimestral')) return 'Trimestral';
+    if (name.includes('anual')) return 'Anual';
+    if (name.includes('gratuito')) return 'Gratuito';
+    return planName;
 }
 
 function getTransactionStatusClass(status) {
@@ -814,6 +886,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Carregar dados iniciais do painel
         await loadPlans();
         await loadStores();
+        
+        // Inicializar tooltips globais
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     } catch (e) {
         console.error('Erro no bootstrap do painel admin:', e);
         showAccessError(e?.message || 'Erro no bootstrap do painel admin');

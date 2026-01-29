@@ -13,22 +13,93 @@
     <link rel="stylesheet" href="assets/css/style.css">
     
     <style>
+        /* Melhorias visuais do Painel Administrativo */
         .status-badge {
             font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .status-active { background-color: #d1e7dd; color: #0f5132; }
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-suspended { background-color: #f8d7da; color: #842029; }
-        .status-canceled { background-color: #d3d3d3; color: #495057; }
-        .status-trial { background-color: #cfe2ff; color: #084298; }
+        .status-active { 
+            background-color: #d1e7dd; 
+            color: #0f5132; 
+            border: 1px solid #badbcc;
+        }
+        .status-pending { 
+            background-color: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffc107;
+        }
+        .status-suspended { 
+            background-color: #f8d7da; 
+            color: #842029; 
+            border: 1px solid #f5c2c7;
+        }
+        .status-canceled { 
+            background-color: #d3d3d3; 
+            color: #495057; 
+            border: 1px solid #adb5bd;
+        }
+        .status-trial { 
+            background-color: #cfe2ff; 
+            color: #084298; 
+            border: 1px solid #9ec5fe;
+        }
+        .status-expiring {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
         .table-container {
             overflow-x: auto;
+            border-radius: 0.5rem;
         }
         .modal-body-scrollable {
             max-height: 60vh;
             overflow-y: auto;
+        }
+        .filters-card {
+            border-left: 4px solid #0d6efd;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .filter-group {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+        .filter-active {
+            background-color: #e7f3ff;
+            border-left: 3px solid #0d6efd;
+        }
+        .plan-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+        .plan-gratuito { background-color: #e9ecef; color: #495057; }
+        .plan-mensal { background-color: #cfe2ff; color: #084298; }
+        .plan-trimestral { background-color: #d1e7dd; color: #0f5132; }
+        .plan-anual { background-color: #fff3cd; color: #856404; }
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .page-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
@@ -64,22 +135,33 @@
         <!-- Main content (oculto até validação) -->
         <div id="mainContent" style="display: none;">
             <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-1">Gestão de Assinaturas</h1>
-                    <p class="text-muted mb-0">Gerencie assinaturas, planos e lojas</p>
+                        <h1 class="h3 mb-1 fw-bold">
+                            <i class="bi bi-shield-check me-2 text-primary"></i>Gestão de Assinaturas
+                        </h1>
+                        <p class="text-muted mb-0">Gerencie assinaturas, planos e lojas do sistema</p>
+                    </div>
                 </div>
             </div>
 
             <!-- REQ-ADM-FRONT-PAINEL-ASSINATURAS: Filtros -->
-            <div class="card mb-4">
+            <div class="card mb-4 filters-card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>Filtros de Busca
+                    </h5>
+                </div>
                 <div class="card-body">
                     <form id="filtersForm" onsubmit="event.preventDefault(); loadStores();">
-                        <div class="row g-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label">Status</label>
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-info-circle me-1"></i>Status
+                                </label>
                                 <select class="form-select" id="statusFilter">
-                                    <option value="">Todos</option>
+                                    <option value="">Todos os status</option>
                                     <option value="active">Ativo</option>
                                     <option value="pending">Pendente</option>
                                     <option value="trial">Trial</option>
@@ -88,14 +170,18 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Plano</label>
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-1"></i>Plano
+                                </label>
                                 <select class="form-select" id="planFilter">
-                                    <option value="">Todos</option>
+                                    <option value="">Todos os planos</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Buscar (nome ou email)</label>
-                                <input type="text" class="form-control" id="searchInput" placeholder="Digite para buscar...">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-search me-1"></i>Buscar
+                                </label>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Nome da loja ou email...">
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary w-100">
@@ -103,21 +189,34 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="row g-3 mt-2">
-                            <div class="col-md-12">
-                                <div class="form-check form-check-inline">
+                        <div class="filter-group">
+                            <label class="form-label fw-semibold mb-2">
+                                <i class="bi bi-filter me-1"></i>Filtros Rápidos
+                            </label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="expiredFilter" value="true">
-                                    <label class="form-check-label" for="expiredFilter">Vencidos</label>
+                                    <label class="form-check-label" for="expiredFilter">
+                                        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Vencidos
+                                    </label>
                                 </div>
-                                <div class="form-check form-check-inline">
+                                <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="expiringFilter" value="true">
-                                    <label class="form-check-label" for="expiringFilter">Próximos do vencimento (≤7 dias)</label>
+                                    <label class="form-check-label" for="expiringFilter">
+                                        <i class="bi bi-clock-fill text-warning me-1"></i>Próximos do vencimento (≤7 dias)
+                                    </label>
                                 </div>
-                                <div class="form-check form-check-inline">
+                                <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="trialFilter" value="true">
-                                    <label class="form-check-label" for="trialFilter">Trial</label>
+                                    <label class="form-check-label" for="trialFilter">
+                                        <i class="bi bi-hourglass-split text-info me-1"></i>Trial
+                                    </label>
                                 </div>
-                                <button type="button" class="btn btn-link btn-sm ms-2" onclick="resetFilters()">Limpar filtros</button>
+                                <div class="ms-auto">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                                        <i class="bi bi-x-circle me-1"></i>Limpar filtros
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -125,11 +224,13 @@
             </div>
 
             <!-- REQ-ADM-FRONT-PAINEL-ASSINATURAS: Tabela de Assinaturas -->
-            <div class="card">
-                <div class="card-header bg-white">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Assinaturas</h5>
-                        <span class="text-muted small" id="storesCount">0 registros</span>
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-list-ul me-2"></i>Assinaturas
+                        </h5>
+                        <span class="badge bg-secondary" id="storesCount">0 registros</span>
                     </div>
                 </div>
                 <div class="card-body p-0">

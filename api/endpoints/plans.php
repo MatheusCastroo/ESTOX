@@ -43,8 +43,23 @@ if ($method === 'GET') {
         Response::success(['plans' => $plans]);
     } catch (Exception $e) {
         error_log('Error fetching plans: ' . $e->getMessage());
-        // If there's an error, return empty array so frontend can use fallback
-        Response::success(['plans' => []]);
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        
+        // Retornar erro detalhado em modo de desenvolvimento
+        $isDebug = (isset($_GET['__debug']) && $_GET['__debug'] === '1') || 
+                   (isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true');
+        
+        if ($isDebug) {
+            Response::error('Erro ao buscar planos: ' . $e->getMessage(), 500, [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        } else {
+            // Em produção, retornar array vazio para não quebrar o frontend
+            Response::success(['plans' => []]);
+        }
     }
 } else {
     Response::error('Método não permitido', 405);

@@ -1,0 +1,5 @@
+# Arquivos sensíveis - não versionar
+*
+!.gitignore
+!README.md
+!LISTA_ARQUIVOS.txt

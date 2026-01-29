@@ -17,7 +17,6 @@
         // Mantém compatibilidade local sem depender de rewrite
         window.API_URL = 'http://localhost/ESTOCX/api/index.php';
     }
-
 })();
 
 // Make it available globally

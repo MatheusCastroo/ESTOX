@@ -1064,3 +1064,8 @@ Para migrar de HTML para Next.js:
 
 
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 0ce95f4594b2d76a44f1ee6811e50c5939cb2975
+

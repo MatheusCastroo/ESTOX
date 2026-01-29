@@ -1,0 +1,40 @@
+LISTA DE ARQUIVOS SENSÍVEIS - NÃO SUBIR PARA HOSTINGER
+=======================================================
+
+Copie esta lista e verifique antes de cada upload:
+
+ARQUIVOS COM CREDENCIAIS (NUNCA SUBIR):
+----------------------------------------
+✓ ACESSO_ADMIN_FIXO.txt
+✓ ENV_HOSTINGER.txt
+✓ acesso-admin.md
+
+SCRIPTS DE CONFIGURAÇÃO (remover após uso no servidor):
+-------------------------------------------------------
+✓ criar-admin.php
+✓ criar-env-hostinger.php
+✓ api/criar-env.php
+✓ api/atualizar-env-hostinger.php
+
+ARQUIVOS DE TESTE/DEBUG (remover em produção):
+-----------------------------------------------
+✓ api/info.php
+✓ api/test.php
+✓ api/test-auth.php
+✓ api/test-env.php
+✓ api/test-route.php
+✓ api/test-simple.php
+✓ api/debug-route.php
+✓ verificar-api.php
+✓ testar-cadastro.php
+✓ diagnostico-planos.php
+✓ atualizar-urls-api.php
+✓ test-api.html
+
+ARQUIVOS .ENV (criar manualmente no servidor):
+-------------------------------------------------
+✓ api/.env (NÃO fazer upload, criar manualmente no servidor)
+
+=======================================================
+TOTAL: 18 arquivos que NÃO devem ser enviados
+=======================================================
