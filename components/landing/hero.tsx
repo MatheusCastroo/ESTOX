@@ -59,7 +59,7 @@ export function Hero() {
           <div className="relative">
             <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 shadow-2xl">
               <img
-                src="/car-dealership-dashboard-interface-showing-vehicle.jpg"
+                src="/imageReal.png"
                 alt="Dashboard de gestão de veículos"
                 className="rounded-lg w-full"
               />

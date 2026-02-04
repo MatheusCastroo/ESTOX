@@ -165,36 +165,233 @@
     // TABELAS RESPONSIVAS (Converter para Cards)
     // ============================================
     
+    // Flags para evitar loops infinitos
+    let isConverting = false;
+    let observers = new Map();
+    let lastProcessedWidth = window.innerWidth;
+    
     function initResponsiveTables() {
         const tables = document.querySelectorAll('.table-responsive table, .table');
         
-        tables.forEach(table => {
-            if (window.innerWidth <= 768) {
-                convertTableToCards(table);
+        function processTables(force = false) {
+            // Evitar processamento se já estiver convertendo
+            if (isConverting && !force) {
+                return;
             }
-        });
+            
+            const currentWidth = window.innerWidth;
+            const isMobile = currentWidth <= 768;
+            const wasMobile = lastProcessedWidth <= 768;
+            
+            // Se forçar, processar independente da mudança de largura
+            // Caso contrário, só processar se mudou de mobile para desktop ou vice-versa
+            if (!force && isMobile === wasMobile && currentWidth === lastProcessedWidth) {
+                return;
+            }
+            
+            lastProcessedWidth = currentWidth;
+            isConverting = true;
+            
+            tables.forEach(table => {
+                if (isMobile) {
+                    // Remover cards existentes antes de recriar
+                    const existingCards = table.parentElement.querySelector('.table-mobile-cards');
+                    if (existingCards) {
+                        existingCards.remove();
+                    }
+                    // Verificar se há dados antes de converter
+                    const tbody = table.querySelector('tbody');
+                    if (tbody) {
+                        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+                            // Filtrar linhas válidas (não spinner, não erro, não vazia)
+                            return !row.querySelector('.spinner-border') && 
+                                   !row.querySelector('.text-danger') && 
+                                   row.textContent.trim() !== '' &&
+                                   row.cells.length > 1;
+                        });
+                        
+                        // Converter se houver dados válidos
+                        if (rows.length > 0) {
+                            // Aguardar um pouco para garantir que dados foram renderizados
+                            setTimeout(() => {
+                                convertTableToCards(table);
+                            }, 50);
+                        }
+                    }
+                } else {
+                    const cardContainer = table.parentElement.querySelector('.table-mobile-cards');
+                    if (cardContainer) {
+                        cardContainer.remove();
+                    }
+                    table.style.display = '';
+                }
+            });
+            
+            setTimeout(() => {
+                isConverting = false;
+            }, 100);
+        }
+        
+        // Processar imediatamente, mas aguardar um pouco para garantir que DOM está pronto
+        function initialProcess() {
+            // Se estiver em mobile, forçar processamento mesmo se não mudou largura
+            if (window.innerWidth <= 768) {
+                lastProcessedWidth = -1; // Forçar processamento
+                processTables(true); // Forçar conversão
+            } else {
+                processTables();
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initialProcess, 100);
+            });
+        } else {
+            setTimeout(initialProcess, 100);
+        }
+        
+        // Também processar após um delay maior para garantir que dados foram carregados
+        setTimeout(() => {
+            if (window.innerWidth <= 768) {
+                const tables = document.querySelectorAll('.table-responsive table, .table');
+                tables.forEach(table => {
+                    const tbody = table.querySelector('tbody');
+                    if (tbody) {
+                        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+                            return !row.querySelector('.spinner-border') && 
+                                   !row.querySelector('.text-danger') && 
+                                   row.textContent.trim() !== '' &&
+                                   row.cells.length > 1;
+                        });
+                        
+                        if (rows.length > 0) {
+                            const existingCards = table.parentElement.querySelector('.table-mobile-cards');
+                            if (!existingCards) {
+                                convertTableToCards(table);
+                            }
+                        }
+                    }
+                });
+            }
+        }, 1000);
 
-        // Reverter ao redimensionar
+        // Reverter ao redimensionar com debounce mais robusto
         let resizeTimeout;
-        window.addEventListener('resize', function() {
+        let orientationTimeout;
+        
+        function handleResize() {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(function() {
-                if (window.innerWidth > 768) {
-                    tables.forEach(table => {
+            clearTimeout(orientationTimeout);
+            
+            resizeTimeout = setTimeout(() => {
+                processTables();
+            }, 300);
+        }
+        
+        // Detectar mudança de orientação especificamente
+        window.addEventListener('orientationchange', function() {
+            clearTimeout(orientationTimeout);
+            orientationTimeout = setTimeout(() => {
+                // Forçar recalculo após orientação mudar
+                lastProcessedWidth = -1;
+                processTables();
+            }, 500);
+        });
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Observar mudanças no tbody para recriar cards quando dados são carregados
+        // Mas apenas uma vez por tabela e com proteção contra loops
+        tables.forEach(table => {
+            const tbody = table.querySelector('tbody');
+            if (tbody && !observers.has(table)) {
+                let isProcessing = false;
+                
+                const observer = new MutationObserver(function(mutations) {
+                    // Ignorar se já estiver processando ou se não for mobile
+                    if (isProcessing || isConverting || window.innerWidth > 768) {
+                        return;
+                    }
+                    
+                    // Verificar se realmente houve mudança relevante
+                    const hasRelevantChange = mutations.some(mutation => {
+                        const hasAdded = Array.from(mutation.addedNodes).some(node => {
+                            return node.nodeType === 1 && (
+                                node.matches && node.matches('tr') ||
+                                node.querySelector && node.querySelector('tr')
+                            );
+                        });
+                        const hasRemoved = Array.from(mutation.removedNodes).some(node => {
+                            return node.nodeType === 1 && (
+                                node.matches && node.matches('tr') ||
+                                node.querySelector && node.querySelector('tr')
+                            );
+                        });
+                        return hasAdded || hasRemoved;
+                    });
+                    
+                    if (!hasRelevantChange) {
+                        return;
+                    }
+                    
+                    // Verificar se há dados válidos (não apenas spinner sendo removido)
+                    const tbody = table.querySelector('tbody');
+                    if (!tbody) return;
+                    
+                    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+                        return !row.querySelector('.spinner-border') && 
+                               !row.querySelector('.text-danger') && 
+                               row.textContent.trim() !== '' &&
+                               row.cells.length > 1;
+                    });
+                    
+                    if (rows.length === 0) {
+                        return;
+                    }
+                    
+                    isProcessing = true;
+                    
+                    // Desabilitar observer temporariamente
+                    observer.disconnect();
+                    
+                    setTimeout(() => {
+                        // Verificar novamente se ainda está em mobile
+                        if (window.innerWidth > 768) {
+                            isProcessing = false;
+                            observer.observe(tbody, {
+                                childList: true,
+                                subtree: true
+                            });
+                            return;
+                        }
+                        
                         const cardContainer = table.parentElement.querySelector('.table-mobile-cards');
                         if (cardContainer) {
                             cardContainer.remove();
-                            table.style.display = '';
                         }
-                    });
-                } else {
-                    tables.forEach(table => {
-                        if (!table.parentElement.querySelector('.table-mobile-cards')) {
-                            convertTableToCards(table);
-                        }
-                    });
-                }
-            }, 250);
+                        
+                        // Forçar conversão
+                        convertTableToCards(table);
+                        
+                        // Reativar observer após processamento
+                        setTimeout(() => {
+                            observer.observe(tbody, {
+                                childList: true,
+                                subtree: true
+                            });
+                            isProcessing = false;
+                        }, 200);
+                    }, 200);
+                });
+                
+                observer.observe(tbody, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                observers.set(table, observer);
+            }
         });
     }
 
@@ -203,10 +400,37 @@
         if (table.parentElement.querySelector('.table-mobile-cards')) {
             return;
         }
+        
+        // Verificar se não está em modo mobile
+        if (window.innerWidth > 768) {
+            return;
+        }
 
         const thead = table.querySelector('thead');
         const tbody = table.querySelector('tbody');
-        if (!thead || !tbody) return;
+        if (!thead || !tbody) {
+            console.warn('Table structure incomplete for mobile conversion');
+            return;
+        }
+        
+        // Verificar se há dados para exibir (ignorar spinner e mensagens de erro/vazio)
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+            const hasSpinner = row.querySelector('.spinner-border');
+            const hasError = row.querySelector('.text-danger');
+            const isEmpty = row.textContent.trim() === '';
+            const isSingleCell = row.cells.length === 1;
+            const isSingleCellWithMessage = isSingleCell && (
+                row.textContent.includes('Nenhum') || 
+                row.textContent.includes('Carregando') ||
+                row.textContent.includes('Erro')
+            );
+            
+            return !hasSpinner && !hasError && !isEmpty && !isSingleCellWithMessage && row.cells.length > 1;
+        });
+        
+        if (rows.length === 0) {
+            return;
+        }
 
         // Obter headers
         const headers = Array.from(thead.querySelectorAll('th')).map(th => th.textContent.trim());
@@ -217,6 +441,14 @@
 
         // Converter cada linha em card
         tbody.querySelectorAll('tr').forEach((row, index) => {
+            // Pular linha de loading, erro ou vazia
+            if (row.querySelector('.spinner-border') || 
+                row.querySelector('.text-danger') || 
+                row.querySelector('.text-muted') && row.cells.length === 1 ||
+                row.textContent.trim() === '') {
+                return;
+            }
+            
             const card = document.createElement('div');
             card.className = 'card mb-3';
 
@@ -225,16 +457,62 @@
 
             const cells = row.querySelectorAll('td');
             cells.forEach((cell, cellIndex) => {
+                // Pular última célula se for ações (será adicionada depois)
+                if (cellIndex === cells.length - 1 && cell.querySelector('.btn, a')) {
+                    return;
+                }
+                
                 if (headers[cellIndex]) {
                     const item = document.createElement('div');
-                    item.className = 'mb-2';
+                    item.className = 'mb-3';
+                    item.style.wordWrap = 'break-word';
+                    item.style.overflowWrap = 'break-word';
                     
                     const label = document.createElement('strong');
                     label.textContent = headers[cellIndex] + ': ';
-                    label.className = 'text-muted';
+                    label.className = 'text-muted d-block mb-1';
+                    label.style.fontSize = '0.875rem';
                     
-                    const value = document.createElement('span');
+                    const value = document.createElement('div');
                     value.innerHTML = cell.innerHTML;
+                    value.style.wordWrap = 'break-word';
+                    value.style.overflowWrap = 'break-word';
+                    
+                    // Ajustar imagens dentro dos cards
+                    const images = value.querySelectorAll('img');
+                    images.forEach(img => {
+                        // Para imagens de veículos, sempre tratar como miniatura no mobile
+                        if (img.classList.contains('vehicle-thumbnail') || img.parentElement.classList.contains('d-flex')) {
+                            // Miniatura de veículo no mobile
+                            img.style.maxWidth = '100px';
+                            img.style.width = '100px';
+                            img.style.height = '75px';
+                            img.style.objectFit = 'cover';
+                            img.style.flexShrink = '0';
+                            img.style.borderRadius = '8px';
+                            img.style.display = 'block';
+                            img.style.marginBottom = '0.5rem';
+                            
+                            // Garantir que o container pai permita a exibição
+                            const parent = img.parentElement;
+                            if (parent) {
+                                parent.style.display = 'flex';
+                                parent.style.alignItems = 'center';
+                                parent.style.gap = '0.75rem';
+                                parent.style.flexWrap = 'wrap';
+                            }
+                        } else {
+                            img.style.maxWidth = '100%';
+                            img.style.height = 'auto';
+                        }
+                        
+                        // Garantir que onerror está presente
+                        const placeholderUrl = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%2775%27%3E%3Crect fill=%27%23e2e8f0%27 width=%27100%27 height=%2775%27/%3E%3Ctext fill=%27%2394a3b8%27 font-family=%27sans-serif%27 font-size=%2710%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+                        img.onerror = function() {
+                            this.onerror = null;
+                            this.src = placeholderUrl;
+                        };
+                    });
                     
                     item.appendChild(label);
                     item.appendChild(value);
@@ -247,7 +525,31 @@
             if (actionsCell && actionsCell.querySelector('.btn, a')) {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'mt-3 pt-3 border-top d-flex gap-2 flex-wrap';
-                actionsDiv.innerHTML = actionsCell.innerHTML;
+                actionsDiv.style.width = '100%';
+                
+                // Clonar botões para evitar problemas de referência
+                const buttons = actionsCell.querySelectorAll('.btn, a');
+                buttons.forEach(btn => {
+                    const clonedBtn = btn.cloneNode(true);
+                    clonedBtn.style.flex = '1 1 auto';
+                    clonedBtn.style.minWidth = '44px';
+                    clonedBtn.style.minHeight = '44px';
+                    clonedBtn.style.height = '44px';
+                    clonedBtn.style.display = 'flex';
+                    clonedBtn.style.alignItems = 'center';
+                    clonedBtn.style.justifyContent = 'center';
+                    clonedBtn.style.padding = '0.5rem 1rem';
+                    
+                    // Ajustar ícones dentro dos botões
+                    const icons = clonedBtn.querySelectorAll('i');
+                    icons.forEach(icon => {
+                        icon.style.fontSize = '1rem';
+                        icon.style.lineHeight = '1';
+                    });
+                    
+                    actionsDiv.appendChild(clonedBtn);
+                });
+                
                 cardBody.appendChild(actionsDiv);
             }
 
@@ -357,8 +659,9 @@
         }
     }
 
-    // Tornar função global
+    // Tornar funções globais para acesso externo
     window.closeFiltersModal = closeFiltersModal;
+    window.convertTableToCards = convertTableToCards;
 
     // ============================================
     // LAZY LOADING DE IMAGENS
@@ -416,17 +719,34 @@
     init();
 
     // Re-inicializar se necessário após carregamento dinâmico
+    // Mas com proteção para evitar loops
     if (window.MutationObserver) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length) {
+        let globalObserverActive = true;
+        const globalObserver = new MutationObserver(function(mutations) {
+            if (!globalObserverActive) return;
+            
+            const hasNewTables = Array.from(mutations).some(mutation => {
+                return Array.from(mutation.addedNodes).some(node => {
+                    return node.nodeType === 1 && (
+                        (node.matches && node.matches('.table, .table-responsive')) ||
+                        (node.querySelector && node.querySelector('.table, .table-responsive'))
+                    );
+                });
+            });
+            
+            if (hasNewTables) {
+                globalObserverActive = false;
+                setTimeout(() => {
                     initResponsiveTables();
                     initLazyLoading();
-                }
-            });
+                    globalObserverActive = true;
+                }, 200);
+            } else {
+                initLazyLoading();
+            }
         });
 
-        observer.observe(document.body, {
+        globalObserver.observe(document.body, {
             childList: true,
             subtree: true
         });
