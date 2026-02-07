@@ -25,3 +25,8 @@ const API_URL = window.API_URL;
 // Log for debugging (remove in production if desired)
 console.log('API_URL configurada:', API_URL);
 
+// #region agent log
+try {
+    fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'config.js:26',message:'CONFIG LOADED',data:{apiUrl:API_URL,width:window.innerWidth,isMobile:window.innerWidth<=768},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(e=>console.error('Log error:',e));
+} catch(e) { console.error('Log setup error:',e); }
+// #endregion

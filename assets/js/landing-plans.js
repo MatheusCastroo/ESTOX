@@ -132,7 +132,7 @@
             {
                 name: 'Mensal',
                 slug: 'profissional-mensal',
-                price: 139.90,  // Valor cheio mensal
+                price: 105.90,  // Valor cheio mensal
                 features: [
                     'Até 50 veículos',
                     'Catálogo com URL personalizada',
@@ -141,12 +141,12 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/eVqdR3aUv2Qp4c02s7fjG02'
+                checkout_url: 'https://buy.stripe.com/9B600daUv0IhaAofeTfjG03'
             },
             {
                 name: 'Trimestral',
                 slug: 'profissional-trimestral',
-                price: 359.70,  // R$ 119,90/mês x 3
+                price: 287.70,  // R$ 95,90/mês x 3
                 features: [
                     'Até 50 veículos',
                     'Catálogo com URL personalizada',
@@ -155,12 +155,12 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/7sY3cpd2D76F5g4eaPfjG01'
+                checkout_url: 'https://buy.stripe.com/5kQdR31jV4Yx8sgfeTfjG04'
             },
             {
                 name: 'Anual',
                 slug: 'profissional-anual',
-                price: 1318.80,  // R$ 109,90/mês x 12
+                price: 1030.80,  // R$ 85,90/mês x 12
                 features: [
                     'Até 50 veículos',
                     'Catálogo com URL personalizada',
@@ -169,7 +169,7 @@
                     'Integração WhatsApp',
                     'Destaque nos anúncios'
                 ],
-                checkout_url: 'https://buy.stripe.com/5kQbIV3s3aiR4c07MrfjG00'
+                checkout_url: 'https://buy.stripe.com/5kQdR31jV4Yx8sgfeTfjG04'
             }
         );
         
@@ -238,25 +238,25 @@
                 showSavings = false;
             } else if (planName.includes('mensal')) {
                 // Mensal: apenas valor cheio, sem desconto
-                const monthlyReferencePrice = 139.90;
+                const monthlyReferencePrice = 105.90;
                 pricePerMonth = planPrice;
                 periodLabel = '/mês';
                 showSavings = false;
             } else if (planName.includes('trimestral')) {
-                // Trimestral: R$ 119,90/mês (R$ 359,70/trimestre)
-                const monthlyReferencePrice = 139.90;
+                // Trimestral: R$ 95,90/mês (R$ 287,70/trimestre)
+                const monthlyReferencePrice = 105.90;
                 pricePerMonth = planPrice / 3;
                 periodLabel = '/mês';
-                savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 20,00/mês
-                savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 14,3%
+                savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 10,00/mês
+                savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 9,4%
                 showSavings = true;
             } else if (planName.includes('anual')) {
-                // Anual: R$ 109,90/mês (R$ 1.318,80/ano)
-                const monthlyReferencePrice = 139.90;
+                // Anual: R$ 85,90/mês (R$ 1.030,80/ano)
+                const monthlyReferencePrice = 105.90;
                 pricePerMonth = planPrice / 12;
                 periodLabel = '/mês';
-                savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 30,00/mês
-                savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 21,4%
+                savingsAmount = monthlyReferencePrice - pricePerMonth; // R$ 20,00/mês
+                savingsPercent = ((savingsAmount / monthlyReferencePrice) * 100).toFixed(1); // 18,9%
                 showSavings = true;
             } else {
                 pricePerMonth = planPrice;
