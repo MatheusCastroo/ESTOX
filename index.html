@@ -333,59 +333,6 @@
             line-height: 1.7;
         }
 
-        /* Catálogo Preview */
-        .catalog-preview {
-            background: var(--bg);
-        }
-
-        .vehicle-card {
-            border-radius: 18px;
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
-
-        .vehicle-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-        }
-
-        .vehicle-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: linear-gradient(135deg, #E0E7FF, #C7D2FE);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-size: 3rem;
-        }
-
-        .vehicle-info {
-            padding: 1.5rem;
-        }
-
-        .vehicle-name {
-            font-weight: 700;
-            font-size: 1.125rem;
-            margin-bottom: 0.5rem;
-            color: var(--secondary);
-        }
-
-        .vehicle-details {
-            color: #64748B;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
-
-        .vehicle-price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
         /* Pricing Cards */
         .pricing-card {
             border-radius: 18px;
@@ -415,6 +362,11 @@
         @media (min-width: 992px) {
             .pricing-card.featured {
                 transform: scale(1.02);
+            }
+            
+            .pricing-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 18px 40px rgba(0,0,0,0.12);
             }
             
             /* Ajustar para 4 planos na mesma linha no index (col-lg-3 = 25% cada) */
@@ -596,6 +548,23 @@
             .cta-title {
                 font-size: 2rem;
             }
+            
+            /* Garantir que a imagem apareça em mobile */
+            .hero-image-container {
+                margin-top: 2rem;
+            }
+            
+            .hero-image-wrapper {
+                padding: 1rem;
+            }
+            
+            .hero-image-wrapper img {
+                width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
         }
     </style>
 </head>
@@ -682,11 +651,12 @@
                 <div class="col-lg-6 hero-image-container">
                     <div class="hero-image-wrapper">
                         <img id="heroImage" 
-                             src="public/imageReal.png" 
+                             src="./public/imageReal.png" 
                              alt="Dashboard de gestão de veículos" 
                              class="img-fluid"
-                             loading="lazy"
-                             onerror="handleImageError(this)">
+                             loading="eager"
+                             onerror="handleImageError(this)"
+                             style="max-width: 100%; height: auto; display: block;">
                         <div id="heroImageFallback" style="display: none; width: 100%; min-height: 400px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%); border-radius: 12px; flex-direction: column; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold; text-align: center; padding: 2rem;">
                             <i class="bi bi-speedometer2" style="font-size: 4rem; display: block; margin-bottom: 1rem;"></i>
                             <div>Estocx Dashboard</div>
@@ -942,8 +912,47 @@
             }
         }
         
+        // Force image load on mobile
+        function ensureImageLoads() {
+            const heroImg = document.getElementById('heroImage');
+            if (heroImg) {
+                // Try alternative paths if main path fails
+                const paths = [
+                    './public/imageReal.png',
+                    'public/imageReal.png',
+                    '/public/imageReal.png',
+                    window.location.origin + '/public/imageReal.png'
+                ];
+                
+                let currentPathIndex = 0;
+                
+                heroImg.onerror = function() {
+                    currentPathIndex++;
+                    if (currentPathIndex < paths.length) {
+                        console.log('Tentando caminho alternativo:', paths[currentPathIndex]);
+                        this.src = paths[currentPathIndex];
+                    } else {
+                        handleImageError(this);
+                    }
+                };
+                
+                // Force reload if image hasn't loaded after 2 seconds
+                setTimeout(function() {
+                    if (!heroImg.complete || heroImg.naturalHeight === 0) {
+                        console.log('Imagem não carregou, tentando caminho alternativo...');
+                        if (currentPathIndex < paths.length - 1) {
+                            currentPathIndex++;
+                            heroImg.src = paths[currentPathIndex];
+                        }
+                    }
+                }, 2000);
+            }
+        }
+        
         // Check if image loads after page load
         window.addEventListener('load', function() {
+            ensureImageLoads();
+            
             const heroImg = document.getElementById('heroImage');
             if (heroImg && !heroImg.complete) {
                 heroImg.addEventListener('error', function() {
@@ -953,6 +962,11 @@
                 // Image failed to load
                 handleImageError(heroImg);
             }
+        });
+        
+        // Also try on DOMContentLoaded for faster mobile loading
+        document.addEventListener('DOMContentLoaded', function() {
+            ensureImageLoads();
         });
         
         // Check if CSS loaded (for debugging)

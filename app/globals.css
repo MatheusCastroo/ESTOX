@@ -3,67 +3,137 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* <CHANGE> Custom color palette based on client requirements */
+/* ============================================
+   🎨 DESIGN SYSTEM MINIMALISTA - ESTOCX
+   Inspirado em: Linear, Vercel, Stripe
+   ============================================ */
+
 :root {
-  --background: #f5f5f5;
-  --foreground: #424242;
-  --card: #ffffff;
-  --card-foreground: #424242;
-  --popover: #ffffff;
-  --popover-foreground: #424242;
-  --primary: #1a73e8;
-  --primary-foreground: #ffffff;
-  --secondary: #e3f2fd;
-  --secondary-foreground: #0d47a1;
-  --muted: #e3f2fd;
-  --muted-foreground: #424242;
-  --accent: #e3f2fd;
-  --accent-foreground: #0d47a1;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e0e0e0;
-  --input: #e0e0e0;
-  --ring: #1a73e8;
-  --chart-1: #1a73e8;
-  --chart-2: #0d47a1;
-  --chart-3: #e3f2fd;
-  --chart-4: #424242;
-  --chart-5: #f5f5f5;
+  /* 🔵 Paleta Minimalista (Light Mode) */
+  --primary: #000000;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #1A1A1A;
+  
+  --secondary: #000000;
+  --secondary-foreground: #FFFFFF;
+  --secondary-hover: #1A1A1A;
+  
+  --accent: #000000;
+  --accent-foreground: #FFFFFF;
+  --accent-hover: #1A1A1A;
+  
+  --success: #22C55E;
+  --success-foreground: #FFFFFF;
+  
+  --danger: #EF4444;
+  --danger-foreground: #FFFFFF;
+  
+  --warning: #F59E0B;
+  --warning-foreground: #FFFFFF;
+  
+  /* Backgrounds - Mais neutros */
+  --background: #FFFFFF;
+  --foreground: #000000;
+  
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+  --card-hover: #FAFAFA;
+  
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  
+  /* Borders - Mais sutis */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.12);
+  --input: rgba(0, 0, 0, 0.06);
+  --input-focus: #000000;
+  --ring: #000000;
+  
+  /* Text Colors */
+  --muted: #6B7280;
+  --muted-foreground: #9CA3AF;
+  
+  /* Shadows - Mais sutis */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Radius - Mais sutis */
   --radius: 0.5rem;
-
-  /* Custom brand colors */
-  --brand-primary: #1a73e8;
-  --brand-dark: #0d47a1;
-  --brand-light: #e3f2fd;
-  --brand-gray: #424242;
-  --brand-gray-light: #f5f5f5;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Transitions - Mais rápidas */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Chart Colors */
+  --chart-1: #000000;
+  --chart-2: #6B7280;
+  --chart-3: #22C55E;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
 }
 
+/* 🌑 Dark Mode Minimalista */
 .dark {
-  --background: #1a1a1a;
-  --foreground: #f5f5f5;
-  --card: #262626;
-  --card-foreground: #f5f5f5;
-  --popover: #262626;
-  --popover-foreground: #f5f5f5;
-  --primary: #1a73e8;
-  --primary-foreground: #ffffff;
-  --secondary: #0d47a1;
-  --secondary-foreground: #e3f2fd;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #0d47a1;
-  --accent-foreground: #e3f2fd;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #404040;
-  --input: #404040;
-  --ring: #1a73e8;
+  /* Primary Colors */
+  --primary: #FFFFFF;
+  --primary-foreground: #000000;
+  --primary-hover: #F5F5F5;
+  
+  --secondary: #FFFFFF;
+  --secondary-foreground: #000000;
+  --secondary-hover: #F5F5F5;
+  
+  --accent: #FFFFFF;
+  --accent-foreground: #000000;
+  --accent-hover: #F5F5F5;
+  
+  /* Backgrounds */
+  --background: #000000;
+  --foreground: #FFFFFF;
+  
+  --card: #0A0A0A;
+  --card-foreground: #FFFFFF;
+  --card-hover: #141414;
+  
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+  
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.06);
+  --input-focus: #FFFFFF;
+  --ring: #FFFFFF;
+  
+  /* Text Colors */
+  --muted: #9CA3AF;
+  --muted-foreground: #6B7280;
+  
+  /* Shadows - Mais sutis no dark */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.9);
 }
+
+/* ============================================
+   Tailwind Theme Configuration
+   ============================================ */
 
 @theme inline {
-  --font-sans: "Inter", "Geist", "Geist Fallback", sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Fira Code", "Fira Mono", monospace;
+  
+  /* Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -74,47 +144,129 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--danger-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  
+  /* Chart Colors */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  /* Brand color utilities */
-  --color-brand-primary: var(--brand-primary);
-  --color-brand-dark: var(--brand-dark);
-  --color-brand-light: var(--brand-light);
-  --color-brand-gray: var(--brand-gray);
-  --color-brand-gray-light: var(--brand-gray-light);
+  
+  /* Radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 }
+
+/* ============================================
+   Base Styles
+   ============================================ */
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color var(--transition-base), color var(--transition-base);
+  }
+  
+  /* Smooth transitions for theme changes */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
 }
 
 /* ============================================
-   RF-XX: Cursor Personalizado
+   Utility Classes Minimalistas
    ============================================ */
 
-/* Elementos clicáveis - cursor pointer */
+@layer utilities {
+  /* Hover Scale - Mais sutil */
+  .hover-scale {
+    transition: transform var(--transition-base);
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.01);
+  }
+  
+  /* Smooth Fade In */
+  .fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Skeleton Loader - Mais sutil */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--card) 0%,
+      var(--card-hover) 50%,
+      var(--card) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+  
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--card) 0%,
+      var(--card-hover) 50%,
+      var(--card) 100%
+    );
+    background-size: 200% 100%;
+  }
+  
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/* ============================================
+   Cursor Personalizado
+   ============================================ */
+
 button,
 a:not(.disabled):not([aria-disabled="true"]),
 [role="button"]:not([aria-disabled="true"]),
@@ -129,7 +281,6 @@ input[type="radio"] {
   cursor: pointer;
 }
 
-/* Elementos desabilitados - cursor not-allowed */
 button:disabled,
 input:disabled,
 select:disabled,
@@ -139,7 +290,6 @@ textarea:disabled,
   cursor: not-allowed !important;
 }
 
-/* Estados de carregamento - cursor wait */
 .loading,
 .is-loading,
 [data-loading="true"],
@@ -147,7 +297,6 @@ body.loading {
   cursor: wait !important;
 }
 
-/* Inputs de texto */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -161,9 +310,44 @@ textarea:not(:disabled) {
   cursor: text;
 }
 
-/* Elementos informativos - cursor default */
 p,
 span:not([onclick]),
 h1, h2, h3, h4, h5, h6 {
   cursor: default;
+}
+
+/* ============================================
+   Scrollbar Minimalista
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* ============================================
+   Selection
+   ============================================ */
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+::-moz-selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
 }

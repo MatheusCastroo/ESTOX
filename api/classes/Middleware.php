@@ -69,6 +69,28 @@ class Middleware {
         $auth = new Auth();
         
         $headers = getallheaders();
+        // #region agent log
+        $logPath = __DIR__ . '/../../.cursor/debug.log';
+        $logDir = dirname($logPath);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $logData = [
+            'location' => 'api/classes/Middleware.php:71',
+            'message' => 'Verificando autenticação',
+            'data' => [
+                'hasHeaders' => !empty($headers),
+                'headersKeys' => $headers ? array_keys($headers) : [],
+                'hasAuthHeader' => isset($headers['Authorization']),
+                'authHeaderValue' => isset($headers['Authorization']) ? substr($headers['Authorization'], 0, 50) . '...' : null,
+                'serverAuth' => $_SERVER['HTTP_AUTHORIZATION'] ?? 'não definido'
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'D'
+        ];
+        @file_put_contents($logPath, json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion
         $token = null;
 
         if (isset($headers['Authorization'])) {
@@ -78,11 +100,42 @@ class Middleware {
             }
         }
 
+        // #region agent log
+        $logData2 = [
+            'location' => 'api/classes/Middleware.php:95',
+            'message' => 'Token extraído',
+            'data' => [
+                'hasToken' => !empty($token),
+                'tokenLength' => $token ? strlen($token) : 0,
+                'tokenPreview' => $token ? substr($token, 0, 20) . '...' : null
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'D'
+        ];
+        @file_put_contents($logPath, json_encode($logData2) . "\n", FILE_APPEND);
+        // #endregion
+
         if (!$token) {
             Response::unauthorized('Token de autenticação não fornecido');
         }
 
         $userId = $auth->verifyToken($token);
+        
+        // #region agent log
+        $logData3 = [
+            'location' => 'api/classes/Middleware.php:105',
+            'message' => 'Token verificado',
+            'data' => [
+                'hasUserId' => !empty($userId),
+                'userId' => $userId
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'D'
+        ];
+        @file_put_contents($logPath, json_encode($logData3) . "\n", FILE_APPEND);
+        // #endregion
         
         if (!$userId) {
             Response::unauthorized('Token inválido ou expirado');
@@ -113,10 +166,40 @@ class Middleware {
      * @throws Response::error if store not found
      */
     public static function getUserStoreId($db, $userId) {
+        // #region agent log
+        $logPath = __DIR__ . '/../../.cursor/debug.log';
+        $logData = [
+            'location' => 'api/classes/Middleware.php:116',
+            'message' => 'Buscando loja do usuário',
+            'data' => [
+                'userId' => $userId
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'E'
+        ];
+        @file_put_contents($logPath, json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion
+        
         $store = $db->fetchOne(
             "SELECT id FROM stores WHERE user_id = :user_id",
             ['user_id' => $userId]
         );
+        
+        // #region agent log
+        $logData2 = [
+            'location' => 'api/classes/Middleware.php:125',
+            'message' => 'Resultado da busca de loja',
+            'data' => [
+                'hasStore' => !empty($store),
+                'storeId' => $store['id'] ?? null
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'E'
+        ];
+        @file_put_contents($logPath, json_encode($logData2) . "\n", FILE_APPEND);
+        // #endregion
         
         if (!$store) {
             Response::error('Loja não encontrada. Por favor, configure sua loja primeiro.', 404);

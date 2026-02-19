@@ -39,6 +39,12 @@ class Database {
         }
         
         try {
+            // Ensure password is empty string (not null) for localhost
+            $password = $config['password'] ?? '';
+            if (empty($password) && ($config['username'] === 'root' || $config['host'] === 'localhost')) {
+                $password = ''; // Explicitly set to empty string
+            }
+            
             $dsn = sprintf(
                 "mysql:host=%s;port=%s;dbname=%s;charset=%s",
                 $config['host'],
@@ -50,7 +56,7 @@ class Database {
             $this->connection = new PDO(
                 $dsn,
                 $config['username'],
-                $config['password'],
+                $password, // Use the cleaned password
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -139,6 +145,25 @@ class Database {
     }
 
     public function update($table, $data, $where, $whereParams = []) {
+        // #region agent log
+        $logPath = __DIR__ . '/../../.cursor/debug.log';
+        $logData = [
+            'location' => 'api/classes/Database.php:update:entry',
+            'message' => 'Iniciando update',
+            'data' => [
+                'table' => $table,
+                'dataKeys' => array_keys($data),
+                'where' => $where,
+                'hasLogoUrl' => isset($data['logo_url']),
+                'logoUrlLength' => isset($data['logo_url']) ? strlen($data['logo_url']) : 0
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ];
+        @file_put_contents($logPath, json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion
+        
         $set = [];
         foreach (array_keys($data) as $key) {
             $set[] = "{$key} = :{$key}";
@@ -147,11 +172,87 @@ class Database {
         
         $sql = "UPDATE {$table} SET {$setClause} WHERE {$where}";
         $params = array_merge($data, $whereParams);
-        $this->query($sql, $params);
+        
+        // #region agent log
+        $logData2 = [
+            'location' => 'api/classes/Database.php:update:beforeQuery',
+            'message' => 'Antes de executar query',
+            'data' => [
+                'sqlLength' => strlen($sql),
+                'paramsCount' => count($params)
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ];
+        @file_put_contents($logPath, json_encode($logData2) . "\n", FILE_APPEND);
+        // #endregion
+        
+        try {
+            $this->query($sql, $params);
+            
+            // #region agent log
+            $logData3 = [
+                'location' => 'api/classes/Database.php:update:afterQuery',
+                'message' => 'Query executada com sucesso',
+                'data' => [],
+                'timestamp' => time() * 1000,
+                'runId' => 'run1',
+                'hypothesisId' => 'A'
+            ];
+            @file_put_contents($logPath, json_encode($logData3) . "\n", FILE_APPEND);
+            // #endregion
+        } catch (Exception $e) {
+            // #region agent log
+            $logDataErr = [
+                'location' => 'api/classes/Database.php:update:queryError',
+                'message' => 'Erro ao executar query',
+                'data' => [
+                    'error' => $e->getMessage(),
+                    'errorType' => get_class($e),
+                    'errorCode' => method_exists($e, 'getCode') ? $e->getCode() : null
+                ],
+                'timestamp' => time() * 1000,
+                'runId' => 'run1',
+                'hypothesisId' => 'A'
+            ];
+            @file_put_contents($logPath, json_encode($logDataErr) . "\n", FILE_APPEND);
+            // #endregion
+            throw $e;
+        }
         
         // Fetch the updated record using the WHERE clause
         $fetchSql = "SELECT * FROM {$table} WHERE {$where}";
-        return $this->fetchOne($fetchSql, $whereParams);
+        
+        // #region agent log
+        $logData4 = [
+            'location' => 'api/classes/Database.php:update:beforeFetch',
+            'message' => 'Antes de buscar registro atualizado',
+            'data' => [],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ];
+        @file_put_contents($logPath, json_encode($logData4) . "\n", FILE_APPEND);
+        // #endregion
+        
+        $result = $this->fetchOne($fetchSql, $whereParams);
+        
+        // #region agent log
+        $logData5 = [
+            'location' => 'api/classes/Database.php:update:afterFetch',
+            'message' => 'Registro atualizado buscado',
+            'data' => [
+                'hasResult' => !empty($result)
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ];
+        @file_put_contents($logPath, json_encode($logData5) . "\n", FILE_APPEND);
+        // #endregion
+        
+        return $result;
     }
 
     public function delete($table, $where, $params = []) {

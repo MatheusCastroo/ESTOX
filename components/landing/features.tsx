@@ -1,63 +1,126 @@
+"use client"
+
+import * as React from "react"
+import { motion } from "framer-motion"
 import { Car, BarChart3, Globe, Shield, Smartphone, Zap } from "lucide-react"
+import { Card } from "@/components/ui/card"
 
 const features = [
   {
     icon: Car,
     title: "Gestão de Estoque",
-    description: "Cadastre veículos com fotos, especificações e preços. Ative ou desative anúncios a qualquer momento.",
+    description:
+      "Cadastre veículos com fotos, especificações e preços. Ative ou desative anúncios a qualquer momento.",
   },
   {
     icon: Globe,
     title: "Catálogo Online",
-    description: "Sua loja virtual com URL personalizada. Seus clientes encontram e filtram veículos facilmente.",
+    description:
+      "Sua loja virtual com URL personalizada. Seus clientes encontram e filtram veículos facilmente.",
   },
   {
     icon: BarChart3,
     title: "Relatórios Detalhados",
-    description: "Acompanhe visualizações, leads gerados e performance de cada veículo do seu estoque.",
+    description:
+      "Acompanhe visualizações, leads gerados e performance de cada veículo do seu estoque.",
   },
   {
     icon: Smartphone,
     title: "100% Responsivo",
-    description: "Acesse de qualquer dispositivo. Seus clientes também têm a melhor experiência no celular.",
+    description:
+      "Acesse de qualquer dispositivo. Seus clientes também têm a melhor experiência no celular.",
   },
   {
     icon: Shield,
     title: "Dados Seguros",
-    description: "Seus dados protegidos com criptografia de ponta. Backup automático diário.",
+    description:
+      "Seus dados protegidos com criptografia de ponta. Backup automático diário.",
   },
   {
     icon: Zap,
     title: "Integração WhatsApp",
-    description: "Botão de contato direto para seus clientes entrarem em contato instantaneamente.",
+    description:
+      "Botão de contato direto para seus clientes entrarem em contato instantaneamente.",
   },
 ]
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+}
+
 export function Features() {
   return (
-    <section id="recursos" className="py-24 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#424242]">Tudo que você precisa para vender mais</h2>
-          <p className="mt-4 text-lg text-[#424242]/70">
-            Ferramentas poderosas para gerenciar seu estoque e alcançar mais clientes
+    <section id="features" className="py-24 lg:py-32 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="text-center max-w-2xl mx-auto mb-16"
+        >
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium text-foreground mb-4">
+            Tudo que você precisa para vender mais
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Ferramentas poderosas para gerenciar seu estoque e alcançar mais
+            clientes
           </p>
-        </div>
+        </motion.div>
 
-        <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group relative bg-[#F5F5F5] rounded-xl p-6 hover:bg-[#E3F2FD] transition-colors duration-300"
-            >
-              <div className="h-12 w-12 rounded-lg bg-[#1A73E8] flex items-center justify-center mb-4 group-hover:bg-[#0D47A1] transition-colors">
-                <feature.icon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-[#424242] mb-2">{feature.title}</h3>
-              <p className="text-[#424242]/70">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {features.map((feature, index) => {
+            const Icon = feature.icon
+            return (
+              <motion.div key={feature.title} variants={itemVariants}>
+                <Card
+                  variant="default"
+                  padding="lg"
+                  hover
+                  animated
+                  className="h-full"
+                >
+                  {/* Icon */}
+                  <div className="mb-4">
+                    <Icon className="h-6 w-6 text-foreground" />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed text-sm">
+                    {feature.description}
+                  </p>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </motion.div>
       </div>
     </section>
   )

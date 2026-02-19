@@ -27,7 +27,7 @@ async function loadLeads() {
         if (search) params.append('search', search);
         if (status !== 'all') params.append('status', status);
         
-        const response = await fetch(`${API_URL}/leads?${params.toString()}`, {
+        const response = await fetch(window.buildApiUrl(`leads?${params.toString()}`), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -113,7 +113,7 @@ function displayLeads(leads) {
 
 async function updateLeadStatus(leadId, status) {
     try {
-        const response = await fetch(`${API_URL}/leads?id=${leadId}`, {
+        const response = await fetch(window.buildApiUrl(`leads?id=${leadId}`), {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

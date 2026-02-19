@@ -1,5 +1,13 @@
 // Edit Vehicle JavaScript
-// API_URL is defined in config.js
+// API_URL and buildApiUrl are defined in config.js
+// Ensure buildApiUrl is available (fallback if config.js didn't load)
+if (typeof window.buildApiUrl !== 'function') {
+    window.buildApiUrl = function(endpoint) {
+        const apiBase = (window.API_URL || 'http://localhost/ESTOX/api/index.php').replace(/\/$/, '');
+        const base = apiBase.endsWith('/index.php') ? apiBase : apiBase + '/index.php';
+        return `${base}/${endpoint.replace(/^\//, '')}`;
+    };
+}
 
 let features = [];
 let images = [];
@@ -40,9 +48,65 @@ function getAuthToken() {
     return localStorage.getItem('token');
 }
 
+// Normalize image URL - convert relative to absolute if needed
+function normalizeImageUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return null;
+    }
+    
+    // Se já é uma URL absoluta (http/https) ou data URI, retornar como está
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+    }
+    
+    // Se começa com //, adicionar protocolo
+    if (url.startsWith('//')) {
+        return window.location.protocol + url;
+    }
+    
+    // Se é um caminho absoluto do servidor, adicionar origin
+    if (url.startsWith('/')) {
+        return window.location.origin + url;
+    }
+    
+    // Caminho relativo - construir URL completa baseada na API
+    // Se a imagem está na pasta de uploads da API
+    if (url.includes('uploads') || url.includes('vehicles')) {
+        // Tentar múltiplas formas de construir a URL base
+        let apiBase = '';
+        
+        // Método 1: Remover /api/index.php ou /api
+        if (API_URL) {
+            apiBase = API_URL.replace('/api/index.php', '').replace('/api', '');
+        }
+        
+        // Método 2: Se não funcionou, usar origin
+        if (!apiBase || apiBase === API_URL) {
+            apiBase = window.location.origin;
+        }
+        
+        // Limpar barras duplas e construir URL
+        const cleanUrl = url.replace(/^\.\//, '').replace(/^\//, '');
+        const finalUrl = apiBase + '/' + cleanUrl;
+        
+        return finalUrl;
+    }
+    
+    // Caso padrão: construir URL relativa ao diretório atual
+    const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    const cleanUrl = url.replace(/^\.\//, '').replace(/^\//, '');
+    return baseUrl + '/' + cleanUrl;
+}
+
+// Get placeholder image
+function getPlaceholderImage() {
+    return 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23e2e8f0%27 width=%27100%27 height=%27100%27/%3E%3Ctext fill=%27%2394a3b8%27 font-family=%27sans-serif%27 font-size=%2712%27 dy=%2710.5%27 font-weight=%27bold%27 x=%2750%25%27 y=%2750%25%27 text-anchor=%27middle%27%3ESem imagem%3C/text%3E%3C/svg%3E';
+}
+
 async function loadVehicle() {
     try {
-        const response = await fetch(`${API_URL}/vehicles?id=${vehicleId}`, {
+        const url = window.buildApiUrl(`vehicles?id=${vehicleId}`);
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -115,6 +179,17 @@ function populateForm(vehicle) {
     } else {
         images = [];
     }
+    
+    // Normalizar todas as URLs das imagens
+    images = images.map(img => {
+        // Se já é data URI (base64), retornar como está
+        if (img.startsWith('data:')) {
+            return img;
+        }
+        // Normalizar URL
+        return normalizeImageUrl(img);
+    }).filter(img => img !== null);
+    
     updateImagesPreview();
     
     // Hide loading, show form
@@ -149,36 +224,122 @@ function updateFeaturesList() {
 }
 
 function handleImageUpload(e) {
-    const files = Array.from(e.target.files);
+    let files = Array.from(e.target.files || []);
     const preview = document.getElementById('imagesPreview');
     const maxImages = 10;
+    
+    if (!files || files.length === 0) {
+        return;
+    }
     
     // Limitar número de imagens
     if (images.length + files.length > maxImages) {
         Toast.error(`Máximo de ${maxImages} imagens permitidas`);
-        const allowedFiles = files.slice(0, maxImages - images.length);
-        files = allowedFiles;
+        files = files.slice(0, maxImages - images.length);
     }
     
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-            // Validar tamanho (máximo 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                Toast.error(`Imagem ${file.name} muito grande. Máximo 5MB.`);
-                return;
+    // Processar imagens uma de cada vez para evitar problemas em mobile
+    let processedCount = 0;
+    const totalFiles = files.length;
+    
+    files.forEach((file, fileIndex) => {
+        if (!file.type.startsWith('image/')) {
+            processedCount++;
+            if (processedCount === totalFiles) {
+                e.target.value = '';
+            }
+            return;
+        }
+        
+        // Validar tamanho (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Toast.error(`Imagem ${file.name} muito grande. Máximo 5MB.`);
+            processedCount++;
+            if (processedCount === totalFiles) {
+                e.target.value = '';
+            }
+            return;
+        }
+        
+        // Mostrar placeholder enquanto carrega
+        const tempId = 'temp-' + Date.now() + '-' + fileIndex;
+        const tempDiv = document.createElement('div');
+        tempDiv.id = tempId;
+        tempDiv.className = 'col-6 col-md-4 col-lg-3';
+        tempDiv.innerHTML = `
+            <div class="position-relative mb-2">
+                <div class="d-flex align-items-center justify-content-center rounded" style="height: 100px; background: #f0f0f0;">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        preview.appendChild(tempDiv);
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            try {
+                const dataUrl = event.target.result;
+                
+                // Adicionar à lista de imagens
+                images.push(dataUrl);
+                
+                // Remover placeholder temporário
+                const tempElement = document.getElementById(tempId);
+                if (tempElement) {
+                    tempElement.remove();
+                }
+                
+                // Atualizar preview completo para garantir ordem correta
+                updateImagesPreview();
+                
+                processedCount++;
+                if (processedCount === totalFiles) {
+                    e.target.value = '';
+                }
+            } catch (error) {
+                console.error('Erro ao processar imagem:', error);
+                Toast.error(`Erro ao processar imagem ${file.name}`);
+                
+                // Remover placeholder temporário
+                const tempElement = document.getElementById(tempId);
+                if (tempElement) {
+                    tempElement.remove();
+                }
+                
+                processedCount++;
+                if (processedCount === totalFiles) {
+                    e.target.value = '';
+                }
+            }
+        };
+        
+        reader.onerror = function() {
+            console.error('Erro ao ler arquivo:', file.name);
+            Toast.error(`Erro ao ler imagem ${file.name}`);
+            
+            // Remover placeholder temporário
+            const tempElement = document.getElementById(tempId);
+            if (tempElement) {
+                tempElement.remove();
             }
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                images.push(e.target.result);
-                updateImagesPreview();
-            };
-            reader.readAsDataURL(file);
-        }
+            processedCount++;
+            if (processedCount === totalFiles) {
+                e.target.value = '';
+            }
+        };
+        
+        // Ler arquivo como data URL
+        reader.readAsDataURL(file);
     });
     
-    // Clear input
-    e.target.value = '';
+    // Se não houver arquivos válidos, limpar input
+    if (totalFiles === 0) {
+        e.target.value = '';
+    }
 }
 
 function removeImage(index) {
@@ -195,19 +356,104 @@ function updateImagesPreview() {
         return;
     }
     
+    const placeholderUrl = getPlaceholderImage();
+    
     images.forEach((img, index) => {
         const div = document.createElement('div');
         div.className = 'col-6 col-md-4 col-lg-3';
+        
+        // Escapar caracteres especiais no src para evitar problemas
+        const escapedImg = img.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        
         div.innerHTML = `
             <div class="position-relative mb-2">
-                <img src="${img}" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;" loading="lazy">
-                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeImage(${index})" style="min-width: 32px; min-height: 32px; padding: 0;">
+                <img src="${escapedImg}" 
+                     class="img-fluid rounded vehicle-edit-image" 
+                     style="height: 100px; object-fit: cover; width: 100%; display: block !important; visibility: visible !important; opacity: 1 !important; background: #f0f0f0;" 
+                     loading="eager"
+                     onerror="this.onerror=null; this.src='${placeholderUrl}'; this.style.display='block'; this.style.visibility='visible'; this.style.opacity='1';"
+                     onload="this.style.display='block'; this.style.visibility='visible'; this.style.opacity='1'; this.style.background='transparent';">
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeImage(${index})" style="min-width: 32px; min-height: 32px; padding: 0; z-index: 10;">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
         `;
         preview.appendChild(div);
     });
+    
+    // Adicionar tratamento de erro para todas as imagens após inserir no DOM
+    setTimeout(() => {
+        const imageElements = preview.querySelectorAll('img.vehicle-edit-image');
+        imageElements.forEach((img, index) => {
+            if (!img.hasAttribute('data-error-handled')) {
+                img.setAttribute('data-error-handled', 'true');
+                
+                // Garantir que a imagem seja visível
+                img.style.display = 'block';
+                img.style.visibility = 'visible';
+                img.style.opacity = '1';
+                
+                // Se for data URI, não tentar caminhos alternativos
+                if (img.src.startsWith('data:')) {
+                    // Apenas garantir que está visível
+                    img.onload = function() {
+                        this.style.display = 'block';
+                        this.style.visibility = 'visible';
+                        this.style.opacity = '1';
+                        this.style.background = 'transparent';
+                    };
+                    img.onerror = function() {
+                        // Se data URI falhar, usar placeholder
+                        if (this.src !== placeholderUrl) {
+                            this.src = placeholderUrl;
+                            this.style.display = 'block';
+                        }
+                    };
+                } else {
+                    // Para URLs normais, tentar múltiplos caminhos se falhar
+                    const originalSrc = img.src;
+                    let attemptCount = 0;
+                    const alternativePaths = [
+                        originalSrc,
+                        originalSrc.replace(/^\.\//, ''),
+                        window.location.origin + '/' + originalSrc.replace(window.location.origin, '').replace(/^\//, ''),
+                        originalSrc.startsWith('/') ? window.location.origin + originalSrc : originalSrc
+                    ];
+                    
+                    img.addEventListener('error', function() {
+                        attemptCount++;
+                        if (attemptCount < alternativePaths.length) {
+                            // Tentar próximo caminho
+                            this.src = alternativePaths[attemptCount];
+                        } else {
+                            // Usar placeholder se todos falharem
+                            if (this.src !== placeholderUrl) {
+                                this.src = placeholderUrl;
+                                this.style.display = 'block';
+                            }
+                        }
+                    }, { once: false });
+                }
+                
+                // Forçar verificação de carregamento
+                if (img.complete && img.naturalHeight > 0) {
+                    // Imagem já carregou
+                    img.style.display = 'block';
+                    img.style.visibility = 'visible';
+                    img.style.opacity = '1';
+                    img.style.background = 'transparent';
+                } else {
+                    // Aguardar carregamento
+                    img.onload = function() {
+                        this.style.display = 'block';
+                        this.style.visibility = 'visible';
+                        this.style.opacity = '1';
+                        this.style.background = 'transparent';
+                    };
+                }
+            }
+        });
+    }, 100);
 }
 
 async function updateVehicle(e) {
@@ -256,7 +502,8 @@ async function updateVehicle(e) {
         
         console.log('Enviando dados do veículo:', vehicleData);
         
-        const response = await fetch(`${API_URL}/vehicles?id=${vehicleId}`, {
+        const url = window.buildApiUrl(`vehicles?id=${vehicleId}`);
+        const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -316,11 +563,11 @@ async function updateVehicle(e) {
         let errorMessage = 'Erro ao atualizar veículo. Tente novamente.';
         
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
+            errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
         } else if (error.message.includes('JSON')) {
-            errorMessage = 'Erro ao processar resposta do servidor.';
+            errorMessage = 'Erro ao processar resposta do servidor. Tente novamente.';
         } else {
-            errorMessage = 'Erro: ' + error.message;
+            errorMessage = 'Erro ao atualizar veículo. Tente novamente.';
         }
         
         Toast.error(errorMessage);

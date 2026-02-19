@@ -9,1078 +9,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    <style>
-        /* Paleta de Cores - Nova Identidade Visual AutoStocks */
-        :root {
-            --primary: #2563EB; /* Azul confiança */
-            --primary-dark: #1E40AF; /* Azul escuro / Primária escura */
-            --success-cta: #16A34A; /* Verde CTA / Sucesso */
-            --text-primary: #0F172A; /* Texto principal */
-            --text-secondary: #64748B; /* Texto secundário */
-            --bg-page: #F5F7FA; /* Background geral */
-            --bg-card: #FFFFFF; /* Cards */
-            --bg-section: #FFFFFF; /* Seções */
-            --border-light: #E5E7EB; /* Bordas suaves */
-        }
-
-        /* REQ-FR-LP-001: Design moderno e clean - REESTRUTURADO */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-page);
-            color: var(--text-primary);
-            line-height: 1.6; /* Line-height confortável */
-        }
-
-        /* Tipografia melhorada */
-        p {
-            line-height: 1.75;
-            color: var(--text-primary);
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            line-height: 1.3;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* Header Clean - REQ-FR-LP-001 4.1 - REESTRUTURADO */
-        .main-header {
-            background: var(--bg-card);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            position: sticky;
-            top: 0;
-            z-index: 1050;
-            height: 72px; /* Altura fixa - independente da logo */
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .header-container {
-            width: 100%;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
-        }
-
-        /* Logo isolada do header - controle independente */
-        .logo-wrapper {
-            display: flex;
-            align-items: center;
-            height: 100%;
-            flex-shrink: 0;
-        }
-
-        .header-logo-wrapper {
-            display: flex;
-            align-items: center;
-            padding: 0;
-        }
-
-        .header-logo {
-            height: 150px; /* Tamanho controlado independentemente do header */
-            width: auto;
-            max-width: 200px;
-            object-fit: contain;
-            display: block;
-        }
-        
-        .header-logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 0;
-            height: 44px; /* Altura fixa para a logo */
-        }
-
-        #storeNameHeaderFallback {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .header-nav {
-            gap: 2rem;
-        }
-
-        .header-nav a:not(.header-whatsapp-btn) {
-            color: var(--text-primary);
-            text-decoration: none;
-            font-weight: 400;
-            font-size: 0.9375rem;
-            transition: color 0.2s ease;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-        }
-
-        .header-nav a:not(.header-whatsapp-btn):hover {
-            color: var(--primary);
-            background-color: rgba(37, 99, 235, 0.05);
-        }
-
-        /* WhatsApp button - REQ-FR-LP-001 */
-        .header-whatsapp-btn {
-            background: var(--success-cta);
-            color: white !important;
-            padding: 0.625rem 1.25rem;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            min-height: 44px;
-            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
-        }
-
-        .header-whatsapp-btn:hover {
-            background: #15803d;
-            color: white !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
-        }
-
-        /* Barra de Busca - REQ-FR-LP-001 4.2 */
-        .search-bar-container {
-            background: white;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .search-input-large {
-            padding: 1rem 1.5rem;
-            font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            transition: all 0.2s;
-        }
-
-        .search-input-large:focus {
-            border-color: #1A73E8;
-            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-        }
-
-        /* Filtros Laterais - REQ-FR-LP-001 4.3 */
-        .filters-sidebar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            width: 100%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-
-        .filters-sidebar h5 {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 1.125rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border-light);
-        }
-
-        .filter-accordion {
-            border: none;
-            border-bottom: 1px solid #e0e0e0;
-            margin-bottom: 0;
-        }
-
-        .filter-accordion:last-child {
-            border-bottom: none;
-        }
-
-        .filter-accordion-button {
-            background: transparent;
-            border: none;
-            padding: 1rem 0;
-            font-weight: 500;
-            color: var(--text-primary);
-            width: 100%;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: color 0.2s ease, background-color 0.2s ease;
-            border-radius: 6px;
-            margin: 0.25rem 0;
-        }
-
-        .filter-accordion-button:hover {
-            color: var(--primary);
-            background-color: rgba(37, 99, 235, 0.05);
-        }
-
-        .filter-accordion-button:focus {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-
-        .filter-accordion-button.active {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .filter-input-group label {
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .filter-input-group input,
-        .filter-input-group select,
-        .form-control,
-        .form-select {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-light);
-            color: var(--text-primary);
-        }
-
-        .filter-input-group input:focus,
-        .filter-input-group select:focus,
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            outline: none;
-        }
-
-        .filter-accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .filter-accordion-content.active {
-            max-height: 500px;
-            padding-bottom: 1rem;
-        }
-
-        .filter-input-group {
-            margin-bottom: 0.5rem;
-        }
-
-        .filter-input-group input,
-        .filter-input-group select {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        /* Container Principal - REESTRUTURADO */
-        main.container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* Área de Resultados - REQ-FR-LP-001 4.4 */
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .results-count {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* Mobile: contador menor e cor secundária */
-        @media (max-width: 768px) {
-            .results-count {
-                font-size: 0.875rem;
-                font-weight: 400;
-                color: var(--text-secondary);
-            }
-        }
-
-        .sort-select {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
-            font-size: 0.9rem;
-            background-color: var(--bg-card);
-            color: var(--text-primary);
-        }
-
-        .sort-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            outline: none;
-        }
-
-        /* Card do Veículo - REQ-FR-LP-001 4.5 - REESTRUTURADO */
-        .vehicle-card-modern {
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: 14px; /* Bordas mais arredondadas */
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Sombra elegante */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-            margin: 0;
-        }
-
-        .vehicle-card-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 40px rgba(0,0,0,0.12); /* Sombra mais forte no hover */
-            border-color: var(--primary);
-        }
-
-        .vehicle-card-image {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* Proporção 16:9 */
-            min-height: 120px; /* Altura mínima para todas as resoluções */
-            overflow: hidden;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e5e7eb 100%);
-        }
-
-        .vehicle-card-image img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-<<<<<<< HEAD
-            transition: transform 0.2s ease, opacity 0.3s;
-            z-index: 1;
-        }
-
-        /* Garantir que imagens sejam sempre visíveis quando carregadas */
-        .vehicle-card-image:not(.no-image) img {
-            opacity: 1 !important;
-            visibility: visible !important;
-            display: block !important;
-=======
-            transition: transform 0.2s ease;
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
-        }
-
-        .vehicle-card-image.no-image::before {
-            content: "\F1C5";
-            font-family: "Bootstrap Icons";
-            font-size: 3rem;
-            color: var(--text-secondary);
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-<<<<<<< HEAD
-            z-index: 0;
-=======
-            z-index: 1;
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
-            opacity: 0.3;
-        }
-
-        .vehicle-card-image.no-image::after {
-            content: "Imagem indisponível";
-            position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            white-space: nowrap;
-<<<<<<< HEAD
-            z-index: 0;
-=======
-            z-index: 1;
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
-        }
-
-        .vehicle-card-modern:hover .vehicle-card-image img {
-            transform: scale(1.05);
-        }
-
-        .vehicle-card-badge {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: var(--primary); /* Azul apenas no badge */
-            color: white;
-            padding: 0.375rem 0.75rem;
-            border-radius: 16px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-            z-index: 2;
-        }
-
-        .vehicle-card-favorite {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(255, 255, 255, 0.95);
-            border: none;
-            border-radius: 50%;
-            width: 44px; /* Área mínima de toque */
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            z-index: 2;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .vehicle-card-favorite:hover {
-            background: white;
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .vehicle-card-favorite.active {
-            color: #ff4444;
-        }
-
-        .vehicle-card-favorite i {
-            font-size: 1.125rem;
-        }
-
-        .vehicle-card-body {
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .vehicle-card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.75rem;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .vehicle-card-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-            align-items: center;
-        }
-
-        .vehicle-card-info-item {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .vehicle-card-info-item i {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .vehicle-card-price {
-            font-size: 1.5rem; /* Maior destaque */
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.75rem;
-            margin-top: auto;
-            line-height: 1.2;
-            letter-spacing: -0.02em;
-        }
-
-        .vehicle-card-location {
-            color: var(--text-secondary);
-            font-size: 0.8125rem;
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .vehicle-card-location i {
-            font-size: 0.875rem;
-        }
-
-        /* WhatsApp Float Button */
-
-        /* ============================================
-           REQ-FR-UI-002: Comportamento do Cursor
-           ============================================ */
-
-        /* RN-01: Elementos clicáveis - cursor pointer */
-        .header-nav a,
-        .header-whatsapp-btn,
-        .filter-accordion-button,
-        .vehicle-card-modern,
-        .vehicle-card-favorite,
-        .sort-select,
-        .btn,
-        button:not(:disabled),
-        a:not(.disabled):not([aria-disabled="true"]),
-        .footer a,
-        #filtersToggle,
-        [onclick] {
-            cursor: pointer;
-        }
-
-        /* RN-02: Elementos desabilitados - cursor not-allowed */
-        button:disabled,
-        .btn:disabled,
-        .btn.disabled,
-        input:disabled,
-        select:disabled,
-        a.disabled,
-        [aria-disabled="true"],
-        .disabled {
-            cursor: not-allowed !important;
-        }
-
-        /* RN-03: Estados de carregamento - cursor wait */
-        .spinner-border,
-        body.loading,
-        .loading,
-        .is-loading {
-            cursor: wait !important;
-        }
-
-        /* RN-04: Elementos informativos - cursor default */
-        .vehicle-card-title,
-        .vehicle-card-info,
-        .vehicle-card-price,
-        .vehicle-card-location,
-        .results-count,
-        .vehicle-card-badge,
-        h1, h2, h3, h4, h5, h6,
-        p,
-        span:not([onclick]),
-        .text-muted,
-        #storeAbout,
-        #footerStoreName,
-        #footerAddress,
-        #footerPhone,
-        #footerCityState {
-            cursor: default;
-        }
-
-        /* Inputs de texto - cursor text */
-        .search-input-large,
-        .filter-input-group input,
-        .filter-input-group select,
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        input[type="tel"],
-        textarea {
-            cursor: text;
-        }
-
-        /* Inputs de seleção - cursor pointer */
-        input[type="checkbox"],
-        input[type="radio"],
-        select:not(:disabled) {
-            cursor: pointer;
-        }
-
-        /* Seção Sobre a Loja - REESTRUTURADO */
-        #sobre {
-            background-color: var(--bg-section);
-            border-top: 1px solid var(--border-light);
-            border-bottom: 1px solid var(--border-light);
-            padding: 5rem 0 !important;
-        }
-
-        .sobre-loja {
-            max-width: 720px;
-            margin: 0 auto;
-            text-align: center;
-            padding: 0 24px;
-        }
-
-        .sobre-loja h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            line-height: 1.3;
-        }
-
-        .sobre-loja p {
-            font-size: 1.0625rem;
-            line-height: 1.75;
-            color: var(--text-primary);
-            margin-bottom: 0;
-        }
-
-        /* Footer Styles - REESTRUTURADO */
-        footer {
-            background-color: #111827 !important; /* Fundo escuro sólido */
-            color: #e5e7eb;
-        }
-
-        footer .text-white-50 {
-            color: rgba(229, 231, 235, 0.8) !important; /* Texto secundário mais claro */
-        }
-        
-        footer .hover-light:hover {
-            color: rgba(255, 255, 255, 0.95) !important;
-            transition: color 0.2s ease;
-        }
-        
-        footer h5 {
-            color: #ffffff !important;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        footer a {
-            transition: color 0.2s ease;
-        }
-
-        footer .btn-success {
-            background: var(--success-cta);
-            border: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        footer .btn-success:hover {
-            background: #15803d;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
-        }
-
-        /* Botão Filtrar Mobile - Fixo abaixo do header */
-        .filters-toggle-btn {
-            display: none;
-        }
-
-        /* Drawer Mobile - Estilos adicionais */
-        .offcanvas-bottom {
-            max-height: 95vh; /* Aumentado de 90vh para 95vh */
-            border-radius: 16px 16px 0 0;
-        }
-
-        .offcanvas-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .offcanvas-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .offcanvas-body {
-            padding: 1.5rem;
-            overflow-y: auto;
-            max-height: calc(95vh - 140px); /* Ajustado para corresponder ao novo max-height */
-        }
-
-        .offcanvas-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border-light);
-            background-color: var(--bg-card);
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
-        }
-
-        /* Responsive - Mobile First */
-        @media (max-width: 768px) {
-            /* Layout base mobile */
-            body {
-                padding-left: 0;
-                padding-right: 0;
-            }
-
-            .container,
-            main.container {
-                padding-left: 16px !important;
-                padding-right: 16px !important;
-                max-width: 100% !important;
-            }
-
-            /* Header Mobile - 64px - REESTRUTURADO */
-            .main-header {
-                height: 64px;
-                min-height: 64px;
-                max-height: 64px;
-                padding: 0;
-            }
-
-            .header-container {
-                padding: 0 16px;
-            }
-
-            .logo-wrapper {
-                flex-shrink: 0;
-            }
-
-            .header-logo-container {
-                max-width: 150px;
-                height: 40px;
-            }
-
-            .header-logo {
-<<<<<<< HEAD
-                max-height: 130px;
-=======
-                max-height: 40px;
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
-                height: auto;
-            }
-
-            /* Ocultar título no mobile - não compete com logo */
-            #storeNameHeaderFallback {
-                display: none !important;
-            }
-
-            /* Ocultar navegação no mobile */
-            .header-nav {
-                display: none !important;
-            }
-
-            /* WhatsApp - ação principal à direita - ÍCONE SEM FUNDO */
-            .header-actions {
-                flex-shrink: 0;
-            }
-
-            .header-whatsapp-btn {
-                padding: 0;
-                min-width: 44px;
-                min-height: 44px;
-                font-size: 0;
-                border-radius: 0;
-                background: transparent !important; /* Remover fundo verde */
-                border: none !important;
-                box-shadow: none !important;
-                display: inline-flex !important;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .header-whatsapp-btn:hover {
-                background: transparent !important;
-                transform: none;
-                box-shadow: none !important;
-            }
-
-            .header-whatsapp-btn i {
-                font-size: 1.5rem;
-                color: var(--success-cta); /* Cor verde apenas no ícone */
-            }
-
-            .header-whatsapp-btn span {
-                display: none;
-            }
-
-            /* Botão Filtrar Mobile - Fixo abaixo do header */
-            .filters-toggle-btn {
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-                width: 100%;
-                margin: 0 0 16px 0;
-                min-height: 48px;
-                background: var(--primary);
-                color: white !important;
-                border: none;
-                border-radius: 8px;
-                padding: 0.875rem 1rem;
-                font-weight: 600;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-                position: sticky;
-                top: 64px;
-                z-index: 1040;
-            }
-
-            .filters-toggle-btn:hover,
-            .filters-toggle-btn:active {
-                background: var(--primary-dark);
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            }
-
-            .filters-toggle-btn i {
-                margin-right: 0.5rem;
-                font-size: 1.125rem;
-            }
-
-            /* Ocultar filtros laterais em mobile */
-            aside.col-lg-3 {
-                display: none !important;
-            }
-
-            /* Garantir que resultados ocupem toda largura */
-            .col-lg-9 {
-                width: 100%;
-                padding: 0;
-            }
-
-            /* Cards Mobile - 1 por linha - MELHORADO */
-            #vehiclesGrid.lista-veiculos {
-                grid-template-columns: 1fr !important;
-                gap: 16px !important;
-            }
-
-            .vehicle-card-modern {
-                margin-bottom: 0;
-                border-radius: 12px;
-            }
-
-            /* Área de imagem maior - impacto visual */
-            .vehicle-card-image {
-                min-height: 120px; /* Altura mínima para todas as resoluções */
-                padding-bottom: 0;
-                height: 200px;
-                background: #F1F5F9;
-<<<<<<< HEAD
-                position: relative;
-                overflow: hidden;
-            }
-
-            .vehicle-card-image img {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: cover !important;
-                display: block !important;
-                position: absolute;
-                top: 0;
-                left: 0;
-                transition: opacity 0.3s;
-            }
-
-            /* Garantir que imagens carregadas sejam visíveis */
-            .vehicle-card-image:not(.no-image) img {
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
-
-            /* Quando imagem falha, mostrar placeholder */
-            .vehicle-card-image.no-image img {
-                display: none !important;
-            }
-
-            .vehicle-card-image.no-image::before {
-                content: '📷';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 3rem;
-                opacity: 0.3;
-=======
-            }
-
-            .vehicle-card-image img {
-                object-fit: cover;
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
-            }
-
-            .vehicle-card-body {
-                padding: 1.25rem;
-            }
-
-            /* Nome do veículo - maior destaque */
-            .vehicle-card-title {
-                font-size: 1.25rem;
-                font-weight: 600;
-                margin-bottom: 0.75rem;
-                color: var(--text-primary);
-            }
-
-            /* Informações técnicas - linha única */
-            .vehicle-card-info {
-                display: flex;
-                flex-wrap: nowrap;
-                gap: 1rem;
-                margin-bottom: 1rem;
-                font-size: 0.875rem;
-                color: var(--text-secondary);
-                overflow-x: auto;
-            }
-
-            .vehicle-card-info-item {
-                white-space: nowrap;
-                display: flex;
-                align-items: center;
-                gap: 0.375rem;
-            }
-
-            .vehicle-card-info-item i {
-                color: var(--text-secondary);
-            }
-
-            /* Preço - DESTAQUE MÁXIMO */
-            .vehicle-card-price {
-                font-size: 2rem;
-                font-weight: 700;
-                color: var(--primary);
-                margin-bottom: 0.5rem;
-                margin-top: 0.5rem;
-                line-height: 1.2;
-            }
-
-            /* Localização - discreta */
-            .vehicle-card-location {
-                font-size: 0.8125rem;
-                color: var(--text-secondary);
-            }
-
-            /* Drawer Mobile - Inputs touch-friendly */
-            .filter-input-group input,
-            .filter-input-group select,
-            .form-control,
-            .form-select {
-                min-height: 48px;
-                font-size: 1rem;
-                padding: 0.75rem 1rem;
-            }
-
-            .filter-input-group label {
-                font-size: 0.9375rem;
-                font-weight: 600;
-                margin-bottom: 0.75rem;
-                color: var(--text-primary);
-            }
-
-            .filter-accordion-button {
-                min-height: 48px;
-                padding: 1rem 0;
-                font-size: 1rem;
-            }
-
-            /* Sobre a Loja Mobile */
-            #sobre {
-                padding: 3rem 0 !important;
-            }
-
-            .sobre-loja {
-                padding: 0 16px;
-            }
-
-            .sobre-loja h2 {
-                font-size: 1.75rem;
-                margin-bottom: 1.25rem;
-            }
-
-            .sobre-loja p {
-                font-size: 1rem;
-                line-height: 1.75;
-            }
-
-            /* Barra de busca mobile - MELHORADA */
-            .search-bar-container {
-                padding: 1.5rem 0;
-                background: white;
-            }
-
-            .search-input-large {
-                height: 48px; /* Touch-friendly */
-                padding: 0 1.5rem;
-                font-size: 1rem;
-                border-radius: 24px;
-                border: 1px solid var(--border-light);
-            }
-
-            .search-input-large:focus {
-                border-color: var(--primary);
-                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            }
-
-            /* Results header mobile */
-            .results-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            .sort-select {
-                width: 100%;
-                min-height: 44px;
-            }
-        }
-
-        @media (max-width: 991.98px) {
-            .filters-sidebar {
-                margin-bottom: 1rem;
-            }
-
-            .header-nav {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .header-logo-wrapper {
-                padding: 0.1rem 0;
-            }
-        }
-        
-        @media (min-width: 992px) {
-            /* Em desktop, ocultar o modal de filtros */
-            #filtersModal {
-                display: none !important;
-            }
-            
-            #filtersToggle {
-                display: none !important;
-            }
-
-            .filters-toggle-btn {
-                display: none !important;
-            }
-        }
-        
-        @media (min-width: 992px) {
-            /* Em desktop, ocultar o modal de filtros */
-            #filtersModal {
-                display: none !important;
-            }
-            
-            #filtersToggle {
-                display: none !important;
-            }
-        }
-    </style>
+    <!-- Premium CSS -->
+    <link rel="stylesheet" href="assets/css/loja.css">
 </head>
 <body>
-    <!-- Header Clean - REQ-FR-LP-001 4.1 - REESTRUTURADO -->
+    <!-- Header Premium -->
     <header class="main-header">
         <div class="header-container">
             <div class="logo-wrapper">
@@ -1099,6 +32,10 @@
             </nav>
             
             <div class="header-actions">
+                <!-- Mobile Menu Toggle (Hamburger) - Apenas mobile -->
+                <button class="mobile-menu-toggle d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenuOffcanvas" aria-controls="mobileMenuOffcanvas" aria-label="Abrir menu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <a href="#" class="btn btn-success btn-sm header-whatsapp-btn d-none" id="headerWhatsAppBtn" target="_blank" rel="noopener noreferrer">
                     <i class="bi bi-whatsapp me-1"></i>WhatsApp
                 </a>
@@ -1106,9 +43,9 @@
         </div>
     </header>
 
-    <!-- Barra de Busca - REQ-FR-LP-001 4.2 -->
+    <!-- Search Bar Premium -->
     <div class="search-bar-container">
-        <div class="container">
+        <div class="container" style="max-width: 1280px; margin: 0 auto; padding: 0 24px;">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
                     <input type="text" 
@@ -1120,23 +57,17 @@
         </div>
     </div>
 
-    <!-- Conteúdo Principal -->
+    <!-- Main Content -->
     <main class="container my-5" id="veiculos">
-        <!-- Botão Filtrar Mobile - Fixo abaixo do header -->
-        <button class="filters-toggle-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#filtersOffcanvas" aria-controls="filtersOffcanvas">
-            <i class="bi bi-funnel"></i>
-            <span>Filtrar veículos</span>
-        </button>
-
         <div class="row">
-            <!-- Filtros Laterais - REQ-FR-LP-001 4.3 -->
+            <!-- Desktop Filters Sidebar -->
             <aside class="col-lg-3">
                 <div class="filters-sidebar">
                     <h5 class="fw-bold mb-3">Filtrar veículos</h5>
                     
                     <!-- Preço -->
                     <div class="filter-accordion">
-                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <button class="filter-accordion-button active" onclick="toggleAccordion(this)">
                             <span><i class="bi bi-currency-dollar me-2"></i>Preço</span>
                             <i class="bi bi-chevron-down"></i>
                         </button>
@@ -1154,7 +85,7 @@
 
                     <!-- Marca -->
                     <div class="filter-accordion">
-                        <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <button class="filter-accordion-button active" onclick="toggleAccordion(this)">
                             <span><i class="bi bi-tag me-2"></i>Marca</span>
                             <i class="bi bi-chevron-down"></i>
                         </button>
@@ -1256,149 +187,7 @@
                 </div>
             </aside>
 
-            <!-- Drawer Filtros Mobile - Bottom Sheet -->
-            <div class="offcanvas offcanvas-bottom" tabindex="-1" id="filtersOffcanvas" aria-labelledby="filtersOffcanvasLabel" style="max-height: 95vh;">
-                <div class="offcanvas-header border-bottom">
-                    <h5 class="offcanvas-title fw-bold mb-0" id="filtersOffcanvasLabel">Filtrar veículos</h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearFiltersBtn" onclick="clearAllFilters()" style="min-height: 36px; font-size: 0.875rem;">
-                            Limpar
-                        </button>
-                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
-                    </div>
-                </div>
-                <div class="offcanvas-body">
-                    <div class="filters-sidebar" style="margin-bottom: 0; padding: 0; border: none; box-shadow: none;">
-                        <!-- Preço -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-currency-dollar me-2"></i>Preço</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content active">
-                                <div class="filter-input-group">
-                                    <label class="small text-muted">Mínimo</label>
-                                    <input type="number" class="form-control" id="minPriceMobile" placeholder="R$ 0">
-                                </div>
-                                <div class="filter-input-group">
-                                    <label class="small text-muted">Máximo</label>
-                                    <input type="number" class="form-control" id="maxPriceMobile" placeholder="R$ 500.000">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Marca -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-tag me-2"></i>Marca</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content active">
-                                <select class="form-select" id="brandFilterMobile">
-                                    <option value="">Todas as marcas</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Modelo -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-car-front me-2"></i>Modelo</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <select class="form-select" id="modelFilterMobile">
-                                    <option value="">Todos os modelos</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Ano -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-calendar me-2"></i>Ano</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <div class="filter-input-group">
-                                    <label class="small text-muted">Mínimo</label>
-                                    <input type="number" class="form-control" id="minYearMobile" placeholder="2000">
-                                </div>
-                                <div class="filter-input-group">
-                                    <label class="small text-muted">Máximo</label>
-                                    <input type="number" class="form-control" id="maxYearMobile" placeholder="2024">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Quilometragem -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-speedometer2 me-2"></i>Quilometragem</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <div class="filter-input-group">
-                                    <label class="small text-muted">Máximo</label>
-                                    <input type="number" class="form-control" id="maxMileageMobile" placeholder="100.000 km">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tipo de Carro -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-car-front me-2"></i>Tipo de carro</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <select class="form-select" id="bodyTypeFilterMobile">
-                                    <option value="">Todos</option>
-                                    <option value="Sedan">Sedan</option>
-                                    <option value="Hatch">Hatch</option>
-                                    <option value="SUV">SUV</option>
-                                    <option value="Pickup">Pickup</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Câmbio -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-gear me-2"></i>Câmbio</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <select class="form-select" id="transmissionFilterMobile">
-                                    <option value="">Todos</option>
-                                    <option value="Manual">Manual</option>
-                                    <option value="Automático">Automático</option>
-                                    <option value="CVT">CVT</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Cor -->
-                        <div class="filter-accordion">
-                            <button class="filter-accordion-button" onclick="toggleAccordion(this)">
-                                <span><i class="bi bi-palette me-2"></i>Cor</span>
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                            <div class="filter-accordion-content">
-                                <input type="text" class="form-control" id="colorFilterMobile" placeholder="Digite a cor (ex: Branco, Preto, Prata)">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Botão Aplicar Filtros - Fixo no rodapé do drawer -->
-                <div class="offcanvas-footer">
-                    <button type="button" class="btn btn-primary w-100" id="applyFiltersBtn" onclick="applyFiltersAndClose()" style="min-height: 48px; font-weight: 600; font-size: 1rem;">
-                        Aplicar filtros
-                    </button>
-                </div>
-            </div>
-
-            <!-- Área de Resultados - REQ-FR-LP-001 4.4 e 4.5 -->
+            <!-- Results Area -->
             <div class="col-lg-9">
                 <div class="results-header">
                     <div class="results-count" id="resultsCount">Carregando veículos...</div>
@@ -1412,7 +201,7 @@
                     </div>
                 </div>
 
-                <div id="vehiclesGrid" class="lista-veiculos row g-3">
+                <div id="vehiclesGrid" class="lista-veiculos">
                     <div class="col-12 text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Carregando...</span>
@@ -1423,18 +212,204 @@
         </div>
     </main>
 
-    <!-- Seção Sobre - REQ-FR-LP-001 - REESTRUTURADO -->
-    <section id="sobre">
-        <div class="container" style="max-width: 1280px; margin: 0 auto; padding: 0 24px;">
-            <div class="sobre-loja">
+    <!-- Mobile Menu Unificado (Menu Lateral - Fora do main para evitar problemas estruturais) -->
+    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileMenuOffcanvas" aria-labelledby="mobileMenuOffcanvasLabel" aria-hidden="true">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold mb-0" id="mobileMenuOffcanvasLabel">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+        </div>
+        <div class="offcanvas-body mobile-menu-body d-flex flex-column">
+            <!-- Seção 1: Institucional -->
+            <div class="mobile-menu-section">
+                <h6 class="mobile-menu-section-title">
+                    <i class="bi bi-info-circle me-2"></i>Institucional
+                </h6>
+                <div class="mobile-menu-links">
+                    <a href="#veiculos" class="mobile-menu-link" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-car-front me-2"></i>Comprar carros
+                    </a>
+                    <a href="#sobre" class="mobile-menu-link" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-building me-2"></i>Sobre a loja
+                    </a>
+                    <a href="#contato" class="mobile-menu-link" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-envelope me-2"></i>Contato
+                    </a>
+                </div>
+            </div>
+
+            <!-- Seção 2: Filtros -->
+            <div class="mobile-menu-section mobile-menu-filters">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mobile-menu-section-title mb-0">
+                        <i class="bi bi-funnel me-2"></i>Filtros
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearFiltersBtnMobile" onclick="clearAllFilters()" style="min-height: 32px; font-size: 0.75rem; padding: 4px 12px;">
+                        Limpar
+                    </button>
+                </div>
+                <div class="filters-sidebar" style="margin-bottom: 0; padding: 0; border: none; box-shadow: none;">
+                <!-- Preço -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button active" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-currency-dollar me-2"></i>Preço</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content active">
+                        <div class="filter-input-group">
+                            <label class="small text-muted">Mínimo</label>
+                            <input type="number" class="form-control" id="minPriceMobile" placeholder="R$ 0">
+                        </div>
+                        <div class="filter-input-group">
+                            <label class="small text-muted">Máximo</label>
+                            <input type="number" class="form-control" id="maxPriceMobile" placeholder="R$ 500.000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marca -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button active" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-tag me-2"></i>Marca</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content active">
+                        <select class="form-select" id="brandFilterMobile">
+                            <option value="">Todas as marcas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Modelo -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-car-front me-2"></i>Modelo</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <select class="form-select" id="modelFilterMobile">
+                            <option value="">Todos os modelos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ano -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-calendar me-2"></i>Ano</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <div class="filter-input-group">
+                            <label class="small text-muted">Mínimo</label>
+                            <input type="number" class="form-control" id="minYearMobile" placeholder="2000">
+                        </div>
+                        <div class="filter-input-group">
+                            <label class="small text-muted">Máximo</label>
+                            <input type="number" class="form-control" id="maxYearMobile" placeholder="2024">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quilometragem -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-speedometer2 me-2"></i>Quilometragem</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <div class="filter-input-group">
+                            <label class="small text-muted">Máximo</label>
+                            <input type="number" class="form-control" id="maxMileageMobile" placeholder="100.000 km">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tipo de Carro -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-car-front me-2"></i>Tipo de carro</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <select class="form-select" id="bodyTypeFilterMobile">
+                            <option value="">Todos</option>
+                            <option value="Sedan">Sedan</option>
+                            <option value="Hatch">Hatch</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Pickup">Pickup</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Câmbio -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-gear me-2"></i>Câmbio</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <select class="form-select" id="transmissionFilterMobile">
+                            <option value="">Todos</option>
+                            <option value="Manual">Manual</option>
+                            <option value="Automático">Automático</option>
+                            <option value="CVT">CVT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cor -->
+                <div class="filter-accordion">
+                    <button class="filter-accordion-button" onclick="toggleAccordion(this)">
+                        <span><i class="bi bi-palette me-2"></i>Cor</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="filter-accordion-content">
+                        <input type="text" class="form-control" id="colorFilterMobile" placeholder="Digite a cor (ex: Branco, Preto, Prata)">
+                    </div>
+                </div>
+                </div>
+                
+                <!-- Botão Aplicar Filtros - Dentro da seção de filtros -->
+                <div class="mobile-menu-apply-filters">
+                    <button type="button" class="btn btn-primary w-100" id="applyFiltersBtn" onclick="applyFiltersAndClose()" style="min-height: 48px; font-weight: 600; font-size: 1rem;">
+                        Aplicar filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seção 3: Categorias -->
+            <div class="mobile-menu-section">
+                <h6 class="mobile-menu-section-title">
+                    <i class="bi bi-grid me-2"></i>Categorias
+                </h6>
+                <div class="mobile-menu-links" id="categoriesSection">
+                    <a href="#veiculos" class="mobile-menu-link" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-car-front me-2"></i>Todos os veículos
+                    </a>
+                    <!-- Categorias podem ser adicionadas dinamicamente aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <section id="sobre" class="about-store-section">
+        <div class="about-container">
+            <div class="about-text">
+                <span class="about-badge">Conheça nossa história</span>
                 <h2>Sobre a Loja</h2>
+                <div class="about-title-line"></div>
                 <p id="storeAbout">Carregando informações...</p>
+            </div>
+            <div class="about-image">
+                <!-- Cliente pode substituir essa imagem pela foto da loja -->
+                <img src="assets/img/loja-placeholder.jpg" alt="Imagem da Loja" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23F8FAFC%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%232563EB%22 font-size=%2224%22 font-weight=%22bold%22%3EImagem da Loja%3C/text%3E%3C/svg%3E'">
             </div>
         </div>
     </section>
 
-    <!-- Footer - REQ-FR-LP-001 - REESTRUTURADO -->
-    <footer class="bg-dark text-white py-5 mt-5" id="contato">
+    <!-- Footer Premium -->
+    <footer class="text-white py-5 mt-5" id="contato">
         <div class="container" style="max-width: 1280px; margin: 0 auto; padding: 0 24px;">
             <div class="row g-4">
                 <div class="col-md-4">
@@ -1467,7 +442,6 @@
             </div>
         </div>
     </footer>
-
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1603,12 +577,10 @@
         
         // Aplicar filtros e fechar drawer mobile
         function applyFiltersAndClose() {
-            // Chamar função de filtro existente
             if (typeof filterVehicles === 'function') {
                 filterVehicles();
             }
-            // Fechar drawer
-            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('filtersOffcanvas'));
+            const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('mobileMenuOffcanvas'));
             if (offcanvas) {
                 offcanvas.hide();
             }
@@ -1630,7 +602,6 @@
                 if (el) el.value = '';
             });
             
-            // Aplicar filtros vazios
             if (typeof filterVehicles === 'function') {
                 filterVehicles();
             }
@@ -1641,17 +612,14 @@
             const content = button.nextElementSibling;
             const isActive = content.classList.contains('active');
             
-            // Fechar todos os outros
             document.querySelectorAll('.filter-accordion-content').forEach(item => {
                 if (item !== content) {
                     item.classList.remove('active');
                 }
             });
             
-            // Toggle atual
             content.classList.toggle('active');
             
-            // Rotacionar ícone
             const icon = button.querySelector('.bi-chevron-down');
             if (icon) {
                 icon.style.transform = content.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
@@ -1665,12 +633,11 @@
     </script>
 
     <script>
-        // Toggle accordion - REQ-FR-LP-001 4.3
+        // Toggle accordion
         function toggleAccordion(button) {
             const content = button.nextElementSibling;
             const icon = button.querySelector('.bi-chevron-down');
             
-            // Fechar todos os outros no mesmo container
             const container = button.closest('.filters-sidebar');
             if (container) {
                 container.querySelectorAll('.filter-accordion-content').forEach(item => {
@@ -1684,7 +651,6 @@
                 });
             }
             
-            // Toggle atual
             if (content.classList.contains('active')) {
                 content.classList.remove('active');
                 if (icon) icon.style.transform = 'rotate(0deg)';
@@ -1694,15 +660,12 @@
             }
         }
 
-        // Smooth scroll para âncoras (apenas links internos, não links externos como WhatsApp)
-        // Usar event delegation para evitar problemas com links atualizados dinamicamente
+        // Smooth scroll para âncoras
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
             if (!link) return;
             
             const href = link.getAttribute('href');
-            // Verificar se é realmente uma âncora válida (começa com # e não é apenas #)
-            // Ignorar links externos (http, https, wa.me, etc)
             if (href && href.startsWith('#') && href !== '#' && 
                 !href.includes('http') && !href.includes('https') && 
                 !href.includes('wa.me') && !href.includes('mailto:') && !href.includes('tel:')) {
@@ -1710,17 +673,24 @@
                 try {
                     const target = document.querySelector(href);
                     if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
+                        // Fechar menu mobile se estiver aberto
+                        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('mobileMenuOffcanvas'));
+                        if (offcanvas) {
+                            offcanvas.hide();
+                        }
+                        
+                        // Aguardar um pouco para o menu fechar antes de fazer scroll
+                        setTimeout(function() {
+                            target.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                        }, 300);
                     }
                 } catch (error) {
-                    // Se houver erro ao fazer querySelector, deixar o comportamento padrão
                     console.warn('Erro ao fazer smooth scroll:', error);
                 }
             }
-            // Se não for uma âncora válida, deixar o comportamento padrão (não fazer preventDefault)
         });
     </script>
 </body>

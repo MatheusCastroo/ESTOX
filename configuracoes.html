@@ -178,6 +178,38 @@
                         </div>
                     </div>
 
+                    <!-- About Store Image -->
+                    <div class="card mb-4 about-image-upload">
+                        <div class="card-header bg-white">
+                            <h5 class="fw-bold mb-0">Imagem da Loja (Seção Sobre)</h5>
+                            <small class="text-muted">Adicione uma imagem institucional da sua loja para aparecer na seção "Sobre a Loja"</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="upload-container">
+                                <div class="image-preview" id="aboutImagePreview">
+                                    <img id="aboutImagePreviewImg" src="" alt="Preview da imagem da loja" style="display: none;">
+                                    <div class="placeholder-text">
+                                        <i class="bi bi-image fs-1 text-muted mb-2"></i>
+                                        <p class="mb-0">Nenhuma imagem selecionada</p>
+                                    </div>
+                                </div>
+                                <div class="upload-actions">
+                                    <input type="file" id="aboutImageInput" accept="image/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" id="uploadAboutImageBtn">
+                                        <i class="bi bi-upload me-2"></i>Enviar Imagem
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" id="removeAboutImageBtn" style="display: none;">
+                                        <i class="bi bi-trash me-2"></i>Remover Imagem
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-3">
+                                <strong>Tamanho máximo:</strong> 5MB | <strong>Formatos:</strong> JPEG, PNG, WebP
+                            </small>
+                            <div id="aboutImageError" class="alert alert-danger d-none mt-2" role="alert"></div>
+                        </div>
+                    </div>
+
                     <!-- Contact -->
                     <div class="card mb-4">
                         <div class="card-header bg-white">

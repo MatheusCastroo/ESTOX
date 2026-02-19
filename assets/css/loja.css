@@ -1,0 +1,1738 @@
+/* ============================================
+   🚀 ESTOCX - MARKETPLACE PREMIUM 2026
+   Design System Ultra Moderno
+   Fintech/SaaS Style com Glassmorphism
+   ============================================ */
+
+/* ============================================
+   DESIGN SYSTEM - LIGHT MODE (ALINHADO COM INDEX.HTML)
+   ============================================ */
+:root {
+    /* Cores Principais - EXATAMENTE IGUAIS AO INDEX */
+    --primary: #2563EB;
+    --secondary: #0F172A;
+    --accent: #10B981;
+    --bg: #F8FAFC;
+    --text-main: #1E293B;
+    --text-secondary: #64748B;
+    --whatsapp: #25d366;
+    
+    /* Variáveis derivadas */
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.1);
+    --accent-hover: #059669;
+    --accent-light: rgba(16, 185, 129, 0.1);
+    
+    /* Gradiente Principal - IGUAL AO INDEX */
+    --gradient-primary: linear-gradient(135deg, #2563EB 0%, #0F172A 100%);
+    --gradient-primary-hover: linear-gradient(135deg, #1d4ed8 0%, #0A1220 100%);
+    --gradient-icon: linear-gradient(135deg, #2563EB, #3B82F6);
+    
+    /* Backgrounds */
+    --background: var(--bg);
+    --card: #FFFFFF;
+    --card-glass: rgba(255, 255, 255, 0.95);
+    --border: rgba(0, 0, 0, 0.1);
+    --border-light: rgba(0, 0, 0, 0.06);
+    
+    /* Texto */
+    --text-primary: var(--text-main);
+    --text-tertiary: #94A3B8;
+    
+    /* Status */
+    --success: var(--accent);
+    --success-light: rgba(16, 185, 129, 0.1);
+    --danger: #F43F5E;
+    --danger-light: rgba(244, 63, 94, 0.1);
+    
+    /* Sombras Premium */
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+    --shadow-xl: 0 20px 50px rgba(15, 23, 42, 0.08);
+    --shadow-2xl: 0 25px 50px -12px rgba(91, 95, 239, 0.25);
+    
+    /* Glow Effects */
+    --glow-primary: 0 0 20px rgba(91, 95, 239, 0.3);
+    --glow-accent: 0 0 25px rgba(236, 72, 153, 0.3);
+    --glow-success: 0 0 20px rgba(16, 185, 129, 0.3);
+    
+    /* Border Radius */
+    --radius-sm: 12px;
+    --radius: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+    --radius-full: 999px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   DESIGN SYSTEM - DARK MODE (ALINHADO COM INDEX)
+   ============================================ */
+body.dark-mode {
+    /* Background principal - #0F172A */
+    background: #0F172A !important;
+    
+    /* Cores Principais - Mantendo coerência com --secondary */
+    --primary: #3B82F6;
+    --primary-hover: #2563EB;
+    --primary-light: rgba(59, 130, 246, 0.15);
+    --accent: #10B981;
+    --accent-hover: #059669;
+    --accent-light: rgba(16, 185, 129, 0.15);
+    
+    /* Gradiente Principal - Adaptado para dark */
+    --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #0F172A 100%);
+    --gradient-primary-hover: linear-gradient(135deg, #2563EB 0%, #0A1220 100%);
+    --gradient-icon: linear-gradient(135deg, #3B82F6, #60A5FA);
+    
+    /* Backgrounds - Usando --secondary como base */
+    --background: #0F172A;
+    --card: #1E293B;
+    --card-glass: rgba(30, 41, 59, 0.7);
+    --card-elevated: #334155;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-light: rgba(255, 255, 255, 0.06);
+    
+    /* Texto */
+    --text-primary: #FFFFFF;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #64748B;
+    
+    /* Sombras Premium */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgba(129, 140, 248, 0.4);
+    
+    /* Glow Effects */
+    --glow-primary: 0 0 30px rgba(129, 140, 248, 0.4);
+    --glow-accent: 0 0 35px rgba(192, 132, 252, 0.4);
+    --glow-success: 0 0 25px rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   HEADER PREMIUM (ALINHADO COM INDEX)
+   ============================================ */
+.main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .main-header {
+    background: rgba(15, 23, 42, 0.98);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.header-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    gap: 2rem;
+}
+
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.header-logo-container {
+    height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    max-height: 44px;
+    width: auto;
+    object-fit: contain;
+}
+
+#storeNameHeaderFallback {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.header-nav a:not(.header-whatsapp-btn) {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.header-nav a:not(.header-whatsapp-btn):hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+body.dark-mode .header-nav a:not(.header-whatsapp-btn) {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .header-nav a:not(.header-whatsapp-btn):hover {
+    color: var(--accent);
+}
+
+.header-nav a:not(.header-whatsapp-btn)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 80%;
+    height: 2px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    transition: transform var(--transition-fast);
+}
+
+.header-nav a:not(.header-whatsapp-btn):hover::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-whatsapp-btn {
+    background: var(--whatsapp);
+    color: white !important;
+    padding: 0.625rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 10px rgba(37, 211, 102, 0.3);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.header-whatsapp-btn:hover {
+    background: #20ba5a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    color: white !important;
+}
+
+/* ============================================
+   SEARCH BAR PREMIUM (ALINHADO COM INDEX)
+   ============================================ */
+.search-bar-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 0;
+}
+
+body.dark-mode .search-bar-container {
+    background: rgba(15, 23, 42, 0.98);
+}
+
+.search-input-large {
+    width: 100%;
+    padding: 18px 28px;
+    font-size: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text-main);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.search-input-large::placeholder {
+    color: var(--text-secondary);
+}
+
+#searchInput:focus,
+.search-input-large:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    background: var(--card);
+}
+
+body.dark-mode .search-input-large {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+body.dark-mode #searchInput:focus,
+body.dark-mode .search-input-large:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+main.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 80px 24px;
+}
+
+/* ============================================
+   FILTERS PREMIUM (ALINHADO COM INDEX)
+   ============================================ */
+.filters-sidebar {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 100px;
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .filters-sidebar {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Garantir que sidebar dentro do offcanvas não tenha position sticky */
+.offcanvas-body .filters-sidebar {
+    position: static !important;
+    top: auto !important;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+body.dark-mode .filters-sidebar {
+    background: var(--card);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.filters-sidebar h5 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--secondary);
+    margin: 0 0 28px 0;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    letter-spacing: -0.02em;
+}
+
+body.dark-mode .filters-sidebar h5 {
+    color: var(--text-primary);
+}
+
+.filter-accordion {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+}
+
+.filter-accordion:last-child {
+    border-bottom: none;
+}
+
+.filter-accordion-button {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 18px 0;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+    margin: 4px 0;
+    font-size: 0.9375rem;
+}
+
+.filter-accordion-button:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+    padding-left: 8px;
+}
+
+.filter-accordion-button.active {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.filter-accordion-button .bi-chevron-down {
+    transition: transform var(--transition-base);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.filter-accordion-button.active .bi-chevron-down {
+    transform: rotate(180deg);
+    color: var(--primary);
+}
+
+.filter-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-base), padding var(--transition-base);
+}
+
+.filter-accordion-content.active {
+    max-height: 500px;
+    padding-bottom: 20px;
+}
+
+.filter-input-group {
+    margin-bottom: 20px;
+}
+
+.filter-input-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-input-group label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-input-group input,
+.filter-input-group select,
+.form-control,
+.form-select {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+}
+
+.filter-input-group input:focus,
+.filter-input-group select:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    background: var(--card);
+}
+
+body.dark-mode .filter-input-group input:focus,
+body.dark-mode .filter-input-group select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================
+   RESULTS HEADER
+   ============================================ */
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.results-count {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.sort-select {
+    padding: 14px 20px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+    min-width: 180px;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+body.dark-mode .sort-select:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================
+   VEHICLE CARDS PREMIUM
+   ============================================ */
+.lista-veiculos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+}
+
+.lista-veiculos > .col-md-6,
+.lista-veiculos > .col-lg-4 {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+@media (min-width: 768px) {
+    .lista-veiculos {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px;
+    }
+}
+
+@media (min-width: 992px) {
+    .lista-veiculos {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+}
+
+@media (min-width: 1280px) {
+    .lista-veiculos {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 32px;
+    }
+}
+
+.vehicle-card-modern {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition-slow);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.6s ease-out forwards;
+    position: relative;
+}
+
+.vehicle-card-modern:nth-child(1) { animation-delay: 0.05s; }
+.vehicle-card-modern:nth-child(2) { animation-delay: 0.1s; }
+.vehicle-card-modern:nth-child(3) { animation-delay: 0.15s; }
+.vehicle-card-modern:nth-child(4) { animation-delay: 0.2s; }
+.vehicle-card-modern:nth-child(5) { animation-delay: 0.25s; }
+.vehicle-card-modern:nth-child(6) { animation-delay: 0.3s; }
+.vehicle-card-modern:nth-child(n+7) { animation-delay: 0.35s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.vehicle-card-modern:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
+}
+
+/* Garantir que cards tenham fundo branco */
+.vehicle-card-modern {
+    background: #FFFFFF;
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .vehicle-card-modern {
+    background: #1E293B;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .vehicle-card-modern:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.vehicle-card-image {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 */
+    overflow: hidden;
+    background: var(--gradient-primary);
+}
+
+body.dark-mode .vehicle-card-image {
+    background: var(--gradient-primary);
+}
+
+.vehicle-card-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+    will-change: transform;
+}
+
+.vehicle-card-modern:hover .vehicle-card-image img {
+    transform: scale(1.05);
+}
+
+.vehicle-card-image.no-image::before {
+    content: "🚗";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+.vehicle-card-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: var(--accent);
+    color: #FFF;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md), var(--glow-success);
+    z-index: 2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vehicle-card-badge[data-status="sold"] {
+    background: var(--danger);
+    box-shadow: var(--shadow-md), 0 0 20px rgba(244, 63, 94, 0.3);
+}
+
+.vehicle-card-badge[data-status="featured"] {
+    background: var(--accent);
+    box-shadow: var(--shadow-md), var(--glow-accent);
+}
+
+.vehicle-card-favorite {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--card-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 2;
+    box-shadow: var(--shadow);
+}
+
+body.dark-mode .vehicle-card-favorite {
+    background: var(--card-glass);
+}
+
+.vehicle-card-favorite:hover {
+    transform: scale(1.15);
+    box-shadow: var(--shadow-lg);
+    background: var(--danger-light);
+    border-color: var(--danger);
+}
+
+.vehicle-card-favorite.active {
+    color: #EF4444;
+    background: var(--danger-light);
+    border-color: var(--danger);
+}
+
+.vehicle-card-favorite i {
+    font-size: 1.25rem;
+}
+
+.vehicle-card-body {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+
+.vehicle-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    letter-spacing: -0.02em;
+}
+
+.vehicle-card-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+}
+
+.vehicle-card-title {
+    color: var(--secondary);
+}
+
+body.dark-mode .vehicle-card-title {
+    color: var(--text-primary);
+}
+
+.vehicle-card-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.vehicle-card-info-item i {
+    font-size: 1rem;
+    color: var(--text-tertiary);
+}
+
+.vehicle-card-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: auto 0 16px 0;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+body.dark-mode .vehicle-card-price {
+    color: var(--primary);
+}
+
+.vehicle-card-location {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+/* ============================================
+   SKELETON LOADER
+   ============================================ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--card) 0%,
+        rgba(15, 23, 42, 0.05) 50%,
+        var(--card) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+body.dark-mode .skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--card) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        var(--card) 100%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 24px;
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   MOBILE MENU TOGGLE (HAMBURGER BUTTON)
+   ============================================ */
+.mobile-menu-toggle {
+    display: none;
+    background: transparent;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: scale(1.05);
+}
+
+body.dark-mode .mobile-menu-toggle {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+body.dark-mode .mobile-menu-toggle:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+/* Ocultar completamente em desktop */
+@media (min-width: 992px) {
+    .mobile-menu-toggle {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: none !important;
+    }
+}
+
+/* Mostrar apenas em mobile */
+@media (max-width: 991.98px) {
+    .mobile-menu-toggle {
+        display: flex !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 8px 12px !important;
+        margin: 0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* ============================================
+   OFFCANVAS (MOBILE DRAWER - LATERAL ESQUERDA)
+   ============================================ */
+.offcanvas-start {
+    width: 80vw !important;
+    max-width: 320px;
+    min-width: 280px;
+    background: #FFFFFF;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    z-index: 1055;
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+body.dark-mode .offcanvas-start {
+    background: var(--card);
+    border-right-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Overlay do offcanvas */
+.offcanvas-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+/* Garantir que o header fique acima do backdrop do offcanvas */
+.main-header {
+    z-index: 1056 !important;
+}
+
+/* Backdrop do offcanvas não deve afetar o header */
+.offcanvas-backdrop {
+    z-index: 1054 !important;
+}
+
+/* ============================================
+   MENU MOBILE UNIFICADO
+   ============================================ */
+.mobile-menu-body {
+    padding: 0;
+    overflow: visible;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+}
+
+.mobile-menu-section {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.mobile-menu-section:last-child {
+    border-bottom: none;
+}
+
+.mobile-menu-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+}
+
+body.dark-mode .mobile-menu-section-title {
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-menu-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mobile-menu-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.9375rem;
+}
+
+.mobile-menu-link:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+.mobile-menu-link i {
+    font-size: 1.125rem;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark-mode .mobile-menu-link {
+    color: var(--text-primary);
+}
+
+body.dark-mode .mobile-menu-link:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+/* Seção de filtros - sem scroll interno, o scroll é no body */
+.mobile-menu-filters {
+    padding: 24px 20px;
+    padding-bottom: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-menu-filters .filters-sidebar {
+    overflow: visible;
+    padding: 0 4px;
+    margin-bottom: 20px;
+}
+
+/* Botão Aplicar Filtros dentro da seção de filtros */
+.mobile-menu-apply-filters {
+    padding: 20px 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    width: 100%;
+    background: #FFFFFF;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .mobile-menu-apply-filters {
+    background: var(--card);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu-apply-filters .btn {
+    width: 100%;
+    min-height: 48px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Garantir que o botão apareça apenas no mobile quando o menu estiver aberto */
+@media (max-width: 991.98px) {
+    .offcanvas.show .mobile-menu-apply-filters,
+    #mobileMenuOffcanvas.show .mobile-menu-apply-filters {
+        display: block !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .mobile-menu-apply-filters {
+        display: none !important;
+    }
+}
+
+/* Ajustar espaçamento dos filtros no menu mobile */
+.mobile-menu-filters .filter-accordion {
+    margin-bottom: 8px;
+}
+
+.mobile-menu-filters .filter-accordion-button {
+    padding: 14px 0;
+    font-size: 0.875rem;
+}
+
+.mobile-menu-filters .filter-accordion-content {
+    padding-top: 12px;
+}
+
+/* Smooth scroll para links internos */
+.mobile-menu-link[href^="#"] {
+    cursor: pointer;
+}
+
+/* Garantir que offcanvas não apareça em desktop */
+@media (min-width: 992px) {
+    .offcanvas-start.d-lg-none,
+    #mobileMenuOffcanvas,
+    #mobileMenuOffcanvas .offcanvas-footer {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+}
+
+/* Garantir que o footer nunca apareça fora do offcanvas */
+#mobileMenuOffcanvas:not(.show) .offcanvas-footer,
+.offcanvas:not(.show) .offcanvas-footer {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+.offcanvas-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    background: #FFFFFF;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+body.dark-mode .offcanvas-header {
+    background: var(--card);
+}
+
+.offcanvas-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.offcanvas-body {
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+    position: relative;
+}
+
+/* Scrollbar personalizada para webkit */
+.offcanvas-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.offcanvas-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.offcanvas-body::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.offcanvas-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+}
+
+/* Footer do offcanvas - Não usado mais, botão está dentro da seção de filtros */
+.offcanvas-footer {
+    display: none !important;
+}
+
+/* Garantir que o offcanvas tenha estrutura flex para o footer ficar no final */
+.offcanvas-start {
+    display: flex;
+    flex-direction: column;
+}
+
+/* GARANTIR que footer NUNCA apareça em desktop */
+@media (min-width: 992px) {
+    .offcanvas-footer,
+    #mobileMenuOffcanvas .offcanvas-footer,
+    .offcanvas .offcanvas-footer {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
+/* MOSTRAR footer APENAS quando offcanvas estiver aberto E for mobile */
+@media (max-width: 991.98px) {
+    /* Por padrão, oculto quando menu não está aberto */
+    .offcanvas:not(.show) .offcanvas-footer,
+    .offcanvas[aria-hidden="true"] .offcanvas-footer,
+    #mobileMenuOffcanvas:not(.show) .offcanvas-footer,
+    #mobileMenuOffcanvas[aria-hidden="true"] .offcanvas-footer {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    /* Mostrar quando menu estiver aberto - FIXO NA PARTE INFERIOR */
+    .offcanvas.show .offcanvas-footer,
+    .offcanvas[aria-hidden="false"] .offcanvas-footer,
+    #mobileMenuOffcanvas.show .offcanvas-footer,
+    #mobileMenuOffcanvas[aria-hidden="false"] .offcanvas-footer {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 16px 20px !important;
+        margin: 0 !important;
+    }
+    
+    /* Garantir que o botão dentro do footer também apareça */
+    #mobileMenuOffcanvas.show .offcanvas-footer .btn,
+    #mobileMenuOffcanvas[aria-hidden="false"] .offcanvas-footer .btn,
+    .offcanvas.show .offcanvas-footer .btn {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
+.offcanvas-footer .btn {
+    width: 100%;
+    min-height: 48px;
+    font-weight: 600;
+    font-size: 1rem;
+    background: var(--primary);
+    border: none;
+    border-radius: 12px;
+    color: #FFF;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.offcanvas-footer .btn:hover {
+    transform: scale(1.05);
+    filter: brightness(0.9);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+}
+
+/* ============================================
+   ABOUT SECTION - MODERNIZADA
+   ============================================ */
+.about-store-section {
+    background: var(--bg);
+    padding: 100px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+body.dark-mode .about-store-section {
+    background: #0F172A;
+}
+
+.about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.about-text {
+    flex: 1;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.about-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #FFF;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.about-text h2 {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--secondary);
+    margin-bottom: 24px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+body.dark-mode .about-text h2 {
+    color: #FFFFFF;
+}
+
+.about-title-line {
+    width: 60px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 2px;
+    margin-bottom: 32px;
+}
+
+.about-text p {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+body.dark-mode .about-text p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.about-image {
+    flex: 1;
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.about-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    object-fit: cover;
+    aspect-ratio: 16 / 9;
+}
+
+.about-image img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .about-image img {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .about-image img:hover {
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   FOOTER PREMIUM (ALINHADO COM INDEX)
+   ============================================ */
+footer {
+    background: var(--secondary) !important;
+    color: #FFF;
+    padding: 100px 0 48px;
+}
+
+body.dark-mode footer {
+    background: var(--secondary) !important;
+    color: #FFF;
+}
+
+footer h5 {
+    color: #FFFFFF !important;
+    font-weight: 700;
+    margin-bottom: 28px;
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+}
+
+footer .text-white-50 {
+    color: rgba(229, 231, 235, 0.8) !important;
+}
+
+footer a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    font-weight: 500;
+}
+
+footer a:hover {
+    opacity: 1;
+}
+
+footer .btn-success {
+    background: var(--whatsapp);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(37, 211, 102, 0.3);
+    border-radius: 12px;
+    padding: 14px 24px;
+}
+
+footer .btn-success:hover {
+    background: #20ba5a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
+/* ============================================
+   RESPONSIVE - ABOUT SECTION
+   ============================================ */
+@media (max-width: 991.98px) {
+    .about-container {
+        flex-direction: column;
+        gap: 40px;
+    }
+
+    .about-text {
+        text-align: center;
+    }
+
+    .about-title-line {
+        margin: 0 auto 32px auto;
+    }
+
+    .about-image {
+        order: 2;
+    }
+
+    .about-image img {
+        aspect-ratio: 4 / 3;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    main.container {
+        padding: 32px 16px;
+    }
+
+    .header-container {
+        padding: 0 16px;
+        height: 64px;
+    }
+
+    .header-nav {
+        display: none;
+    }
+
+    .header-actions {
+        gap: 0.75rem;
+    }
+
+    .header-whatsapp-btn {
+        padding: 0;
+        min-width: 48px;
+        min-height: 48px;
+        font-size: 0;
+        border-radius: 50%;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .header-whatsapp-btn i {
+        font-size: 1.5rem;
+        color: #25D366;
+    }
+
+
+    /* Garantir que sidebar desktop não apareça em mobile */
+    aside.col-lg-3 {
+        display: none !important;
+    }
+
+    .filters-sidebar {
+        position: static;
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sort-select {
+        width: 100%;
+    }
+
+    .lista-veiculos {
+        grid-template-columns: 1fr !important;
+        gap: 24px;
+    }
+    
+    .lista-veiculos > .col-md-6,
+    .lista-veiculos > .col-lg-4 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .vehicle-card-image {
+        padding-bottom: 0;
+        height: 220px;
+    }
+
+    .vehicle-card-body {
+        padding: 24px;
+    }
+
+    .vehicle-card-price {
+        font-size: 1.75rem;
+    }
+
+    .about-store-section {
+        padding: 60px 0;
+    }
+
+    .about-text h2 {
+        font-size: 2rem;
+    }
+
+    .search-bar-container {
+        padding: 24px 0;
+    }
+}
+
+/* ============================================
+   DESKTOP - Esconder filtros mobile
+   ============================================ */
+@media (min-width: 992px) {
+    /* Ocultar completamente o offcanvas em desktop */
+    #mobileMenuOffcanvas {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    
+    /* Garantir que sidebar desktop apareça */
+    aside.col-lg-3 {
+        display: block !important;
+    }
+}
+
+/* ============================================
+   MOBILE - Esconder sidebar desktop
+   ============================================ */
+@media (max-width: 991.98px) {
+    /* Ocultar sidebar desktop em mobile */
+    aside.col-lg-3 {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Offcanvas lateral - comportamento padrão do Bootstrap */
+    #mobileMenuOffcanvas {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1055 !important;
+    }
+    
+    /* Garantir que header-nav esteja oculto em mobile */
+    .header-nav {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   BUTTONS PRIMARY (ALINHADO COM INDEX)
+   ============================================ */
+.btn-primary {
+    background: var(--primary);
+    color: #FFF;
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    filter: brightness(0.9);
+}
+
+.btn-success {
+    background: var(--whatsapp);
+    color: #FFF;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #20ba5a;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.d-none {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Smooth transitions globais */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Selection */
+::selection {
+    background: var(--primary);
+    color: white;
+}
+
+/* ============================================
+   OFFCANVAS LATERAL - COMPORTAMENTO PADRÃO BOOTSTRAP
+   ============================================ */
+/* O Bootstrap já gerencia o comportamento do offcanvas-start */
+/* Não precisamos forçar ocultação, o Bootstrap faz isso automaticamente */
+
+/* Garantir que modal de filtros customizado também não apareça abaixo do footer */
+#filtersModal {
+    position: fixed !important;
+    z-index: 1050 !important;
+}
+
+#filtersModal:not(.show) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+::-moz-selection {
+    background: var(--primary);
+    color: white;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card-glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadVehicleDetail(storeSlug, vehicleId) {
     try {
-        const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&vehicle_id=${vehicleId}`);
+        const response = await fetch(window.buildApiUrl(`vehicles?public=true&store_slug=${storeSlug}&vehicle_id=${vehicleId}`));
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicle && data.data.store) {

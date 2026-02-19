@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Save, Upload, MessageCircle } from "lucide-react"
+import { Save, Upload, MessageCircle, Moon, Sun } from "lucide-react"
 import { getUserStore } from "@/lib/actions/stores"
+import { useThemeToggle } from "@/hooks/use-theme"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export default function SettingsPage() {
   const [store, setStore] = useState<any>(null)
@@ -130,7 +132,7 @@ export default function SettingsPage() {
         {/* Contact */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[#424242]">Contato</CardTitle>
+            <CardTitle className="text-foreground">Contato</CardTitle>
             <CardDescription>Informações de contato para seus clientes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -171,33 +173,50 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Appearance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-foreground">Aparência</CardTitle>
+            <CardDescription>Personalize a aparência da interface</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">Tema</p>
+                <p className="text-sm text-muted-foreground">Escolha entre tema claro, escuro ou seguir o sistema</p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-[#424242]">Notificações</CardTitle>
+            <CardTitle className="text-foreground">Notificações</CardTitle>
             <CardDescription>Configure como você recebe alertas</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-[#424242]">Novos leads por e-mail</p>
-                <p className="text-sm text-[#424242]/70">Receba um e-mail quando alguém entrar em contato</p>
+                <p className="font-medium text-foreground">Novos leads por e-mail</p>
+                <p className="text-sm text-muted-foreground">Receba um e-mail quando alguém entrar em contato</p>
               </div>
               <Switch defaultChecked />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-[#424242]">Relatório semanal</p>
-                <p className="text-sm text-[#424242]/70">Resumo semanal de views e leads</p>
+                <p className="font-medium text-foreground">Relatório semanal</p>
+                <p className="text-sm text-muted-foreground">Resumo semanal de views e leads</p>
               </div>
               <Switch defaultChecked />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-[#424242]">Novidades do Estocx</p>
-                <p className="text-sm text-[#424242]/70">Atualizações e novos recursos da plataforma</p>
+                <p className="font-medium text-foreground">Novidades do Estocx</p>
+                <p className="text-sm text-muted-foreground">Atualizações e novos recursos da plataforma</p>
               </div>
               <Switch />
             </div>
@@ -205,7 +224,7 @@ export default function SettingsPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button className="bg-[#1A73E8] hover:bg-[#0D47A1]">
+          <Button className="bg-primary hover:bg-primary/90">
             <Save className="h-4 w-4 mr-2" />
             Salvar Configurações
           </Button>

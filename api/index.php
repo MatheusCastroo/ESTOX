@@ -153,6 +153,9 @@ switch ($endpoint) {
         break;
         
     case 'vehicles':
+        // #region agent log
+        file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location'=>'api/index.php:152','message'=>'Roteamento para vehicles','data'=>['endpoint'=>$endpoint,'pathSegments'=>$pathSegments,'requestUri'=>$_SERVER['REQUEST_URI']??'','method'=>$_SERVER['REQUEST_METHOD']??''],'timestamp'=>time()*1000,'runId'=>'run1','hypothesisId'=>'B'])."\n", FILE_APPEND);
+        // #endregion
         require_once __DIR__ . '/endpoints/vehicles.php';
         break;
         

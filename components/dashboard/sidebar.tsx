@@ -1,12 +1,23 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Car, LayoutDashboard, Plus, BarChart3, Settings, LogOut, ExternalLink, Menu, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  Car,
+  LayoutDashboard,
+  Plus,
+  BarChart3,
+  Settings,
+  LogOut,
+  ExternalLink,
+  Menu,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -22,8 +33,10 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+    }
     router.push("/login")
     router.refresh()
   }
@@ -31,15 +44,17 @@ export function Sidebar() {
   const SidebarContent = () => (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
-        <Car className="h-8 w-8 text-white" />
-        <span className="text-xl font-bold text-white">Estocx</span>
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
+        <Car className="h-5 w-5 text-foreground" />
+        <span className="text-lg font-medium text-foreground">Estocx</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/dashboard" && pathname.startsWith(item.href))
 
           return (
             <Link
@@ -47,11 +62,13 @@ export function Sidebar() {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                isActive ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10 hover:text-white",
+                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:bg-card hover:text-foreground"
               )}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-4 w-4" />
               {item.name}
             </Link>
           )
@@ -59,20 +76,20 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-4 border-t border-white/10 space-y-2">
+      <div className="px-4 py-4 border-t border-border space-y-1">
         <Link
-          href="/catalogo/auto-prime"
+          href="/catalogo/demo"
           target="_blank"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
         >
-          <ExternalLink className="h-5 w-5" />
+          <ExternalLink className="h-4 w-4" />
           Ver Catálogo
         </Link>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-card hover:text-foreground transition-colors w-full"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-4 w-4" />
           Sair
         </button>
       </div>
@@ -82,33 +99,48 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0D47A1] px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Car className="h-7 w-7 text-white" />
-          <span className="text-lg font-bold text-white">Estocx</span>
+          <Car className="h-5 w-5 text-foreground" />
+          <span className="text-base font-medium text-foreground">Estocx</span>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-white hover:bg-white/10"
         >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
       {/* Mobile sidebar */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-30">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-[#0D47A1] flex flex-col pt-16">
-            <SidebarContent />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 z-30"
+              onClick={() => setMobileOpen(false)}
+            >
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+            </motion.div>
+            <motion.div
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-border flex flex-col pt-16 shadow-lg z-40"
+            >
+              <SidebarContent />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-[#0D47A1]">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-background border-r border-border">
         <SidebarContent />
       </aside>
     </>

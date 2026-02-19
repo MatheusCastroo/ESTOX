@@ -1,5 +1,14 @@
 // Vehicles JavaScript
-// API_URL is defined in config.js
+// API_URL and buildApiUrl are defined in config.js
+// Ensure buildApiUrl is available (fallback if config.js didn't load)
+if (typeof window.buildApiUrl !== 'function') {
+    // Fallback: define buildApiUrl if config.js didn't load
+    window.buildApiUrl = function(endpoint) {
+        const apiBase = (window.API_URL || 'http://localhost/ESTOX/api/index.php').replace(/\/$/, '');
+        const base = apiBase.endsWith('/index.php') ? apiBase : apiBase + '/index.php';
+        return `${base}/${endpoint.replace(/^\//, '')}`;
+    };
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAuth()) return;
@@ -39,13 +48,30 @@ function normalizeImageUrl(url) {
     // Caminho relativo - construir URL completa baseada na API
     // Se a imagem está na pasta de uploads da API
     if (url.includes('uploads') || url.includes('vehicles')) {
-        const apiBase = API_URL.replace('/api/index.php', '').replace('/api', '');
-        return apiBase + '/' + url.replace(/^\.\//, '');
+        // Tentar múltiplas formas de construir a URL base
+        let apiBase = '';
+        
+        // Método 1: Remover /api/index.php ou /api
+        if (API_URL) {
+            apiBase = API_URL.replace('/api/index.php', '').replace('/api', '');
+        }
+        
+        // Método 2: Se não funcionou, usar origin
+        if (!apiBase || apiBase === API_URL) {
+            apiBase = window.location.origin;
+        }
+        
+        // Limpar barras duplas e construir URL
+        const cleanUrl = url.replace(/^\.\//, '').replace(/^\//, '');
+        const finalUrl = apiBase + '/' + cleanUrl;
+        
+        return finalUrl;
     }
     
     // Caso padrão: construir URL relativa ao diretório atual
     const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-    return baseUrl + '/' + url.replace(/^\.\//, '');
+    const cleanUrl = url.replace(/^\.\//, '').replace(/^\//, '');
+    return baseUrl + '/' + cleanUrl;
 }
 
 // Get placeholder image
@@ -77,17 +103,35 @@ async function loadVehicles() {
             return;
         }
         
-        const response = await fetch(`${API_URL}/vehicles?${params.toString()}`, {
+        // #region agent log
+        const url = window.buildApiUrl(`vehicles?${params.toString()}`);
+        console.log('🔍 DEBUG vehicles.js - URL construída:', url);
+        console.log('🔍 DEBUG vehicles.js - API_URL:', window.API_URL);
+        console.log('🔍 DEBUG vehicles.js - buildApiUrl disponível:', typeof window.buildApiUrl);
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vehicles.js:107',message:'URL construída para carregar veículos',data:{url:url,apiUrl:window.API_URL,params:params.toString(),hasToken:!!token},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
+        // #region agent log
+        console.log('🔍 DEBUG vehicles.js - Resposta recebida:', response.status, response.statusText, response.url);
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vehicles.js:116',message:'Resposta da requisição de veículos',data:{status:response.status,statusText:response.statusText,ok:response.ok,url:response.url},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
         if (!response.ok) {
+            // #region agent log
+            const errorText = await response.text().catch(() => '');
+            fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vehicles.js:120',message:'Erro na resposta HTTP','data':{status:response.status,statusText:response.statusText,url:response.url,errorText:errorText.substring(0,200)},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vehicles.js:125',message:'Dados recebidos','data':{success:data.success,vehicleCount:data.data?.vehicles?.length||0,hasData:!!data.data},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
         if (data.success && data.data && data.data.vehicles) {
             displayVehicles(data.data.vehicles);
@@ -188,9 +232,10 @@ function displayVehicles(vehicles) {
                         <img src="${imageUrl}" 
                              alt="${vehicle.model}" 
                              class="rounded vehicle-thumbnail" 
-                             style="width: 64px; height: 48px; object-fit: cover; flex-shrink: 0;" 
-                             loading="lazy"
-                             onerror="this.onerror=null; this.src='${placeholderUrl}';">
+                             style="width: 64px; height: 48px; object-fit: cover; flex-shrink: 0; display: block;" 
+                             loading="eager"
+                             onerror="this.onerror=null; this.src='${placeholderUrl}'; this.style.display='block';"
+                             onload="this.style.display='block';">
                         <div style="min-width: 0; flex: 1;">
                             <p class="fw-medium mb-0">${vehicle.model || 'N/A'}</p>
                             <p class="text-muted small mb-0">${vehicle.brand || 'N/A'}</p>
@@ -225,11 +270,45 @@ function displayVehicles(vehicles) {
             // Adicionar tratamento de erro se não tiver
             if (!img.hasAttribute('data-error-handled')) {
                 img.setAttribute('data-error-handled', 'true');
+                
+                // Garantir que a imagem seja visível
+                img.style.display = 'block';
+                img.style.visibility = 'visible';
+                img.style.opacity = '1';
+                
+                // Tentar múltiplos caminhos se a imagem falhar
+                const originalSrc = img.src;
+                let attemptCount = 0;
+                const alternativePaths = [
+                    originalSrc,
+                    originalSrc.replace(/^\.\//, ''),
+                    window.location.origin + '/' + originalSrc.replace(window.location.origin, '').replace(/^\//, ''),
+                    originalSrc.startsWith('/') ? window.location.origin + originalSrc : originalSrc
+                ];
+                
                 img.addEventListener('error', function() {
-                    if (this.src !== placeholderUrl) {
-                        this.src = placeholderUrl;
+                    attemptCount++;
+                    if (attemptCount < alternativePaths.length) {
+                        // Tentar próximo caminho
+                        this.src = alternativePaths[attemptCount];
+                    } else {
+                        // Usar placeholder se todos falharem
+                        if (this.src !== placeholderUrl) {
+                            this.src = placeholderUrl;
+                            this.style.display = 'block';
+                        }
                     }
-                }, { once: true });
+                }, { once: false });
+                
+                // Forçar reload se não carregou após 1 segundo
+                setTimeout(() => {
+                    if (!img.complete || img.naturalHeight === 0) {
+                        if (img.src !== placeholderUrl && attemptCount === 0) {
+                            attemptCount++;
+                            img.src = alternativePaths[1] || placeholderUrl;
+                        }
+                    }
+                }, 1000);
             }
         });
     }, 50);
@@ -239,7 +318,8 @@ async function deleteVehicle(id) {
     if (!confirm('Tem certeza que deseja excluir este veículo?')) return;
     
     try {
-        const response = await fetch(`${API_URL}/vehicles?id=${id}`, {
+        const url = window.buildApiUrl(`vehicles?id=${id}`);
+        const response = await fetch(url, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`

@@ -1,83 +1,126 @@
-import { Button } from "@/components/ui/button"
-import { ArrowRight, CheckCircle } from "lucide-react"
+"use client"
+
+import * as React from "react"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import { ArrowRight, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+}
 
 export function Hero() {
+  const features = [
+    "Sem taxa de setup",
+    "Suporte dedicado",
+    "Cancele quando quiser",
+  ]
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#0D47A1] via-[#1A73E8] to-[#0D47A1] text-white">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <section className="relative min-h-[85vh] flex items-center justify-center pt-20 pb-32">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center"
+        >
           {/* Content */}
-          <div className="text-center lg:text-left">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-              Gerencie seu estoque de veículos com facilidade
+          <motion.div variants={itemVariants} className="text-center lg:text-left">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight text-foreground mb-6 leading-[1.1]">
+              Gerencie seu estoque de veículos
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-white/90 max-w-2xl mx-auto lg:mx-0 text-pretty">
-              A plataforma completa para lojas de veículos. Cadastre, organize e publique seu catálogo online em
-              minutos.
-            </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <motion.p
+              variants={itemVariants}
+              className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed"
+            >
+              A plataforma completa para lojas de veículos. Cadastre, organize e
+              publique seu catálogo online em minutos.
+            </motion.p>
+
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
+            >
               <Link href="/cadastro">
-                <Button size="lg" className="w-full sm:w-auto bg-white text-[#0D47A1] hover:bg-white/90 text-lg px-8">
+                <Button
+                  size="lg"
+                  className="group text-base px-8 py-6 h-auto bg-foreground text-background hover:bg-foreground/90"
+                >
                   Criar Conta Grátis
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link href="/catalogo/demo">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent"
+                  className="text-base px-8 py-6 h-auto"
                 >
                   Ver Demonstração
                 </Button>
               </Link>
-            </div>
+            </motion.div>
 
-            <div className="mt-10 flex flex-wrap gap-6 justify-center lg:justify-start">
-              {["Sem taxa de setup", "Suporte dedicado", "Cancele quando quiser"].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-[#E3F2FD]" />
-                  <span className="text-white/90">{item}</span>
-                </div>
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-wrap gap-8 justify-center lg:justify-start text-sm text-muted-foreground"
+            >
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+                  className="flex items-center gap-2"
+                >
+                  <Check className="h-4 w-4 text-foreground" />
+                  <span>{feature}</span>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Hero Image */}
-          <div className="relative">
-            <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 shadow-2xl">
+          <motion.div
+            variants={itemVariants}
+            className="relative"
+          >
+            <motion.div
+              className="relative rounded-lg overflow-hidden border border-border"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <img
                 src="/imageReal.png"
                 alt="Dashboard de gestão de veículos"
-                className="rounded-lg w-full"
+                className="w-full h-auto"
               />
-            </div>
-            {/* Floating stats card */}
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-[#E3F2FD] flex items-center justify-center">
-                  <span className="text-2xl font-bold text-[#1A73E8]">+</span>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[#424242]">500+</p>
-                  <p className="text-sm text-[#424242]/70">Lojas cadastradas</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )

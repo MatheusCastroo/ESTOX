@@ -1,12 +1,20 @@
 "use client"
 
+import * as React from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, SlidersHorizontal, X } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Search, SlidersHorizontal, X, Filter } from "lucide-react"
 import { brands } from "@/lib/mock-data"
-import { useState } from "react"
+import { Card } from "@/components/ui/card"
 
 interface VehicleFiltersProps {
   onFilterChange: (filters: FilterState) => void
@@ -33,8 +41,11 @@ export const initialFilters: FilterState = {
   transmission: "",
 }
 
-export function VehicleFilters({ onFilterChange, filters }: VehicleFiltersProps) {
-  const [showFilters, setShowFilters] = useState(false)
+export function VehicleFilters({
+  onFilterChange,
+  filters,
+}: VehicleFiltersProps) {
+  const [showFilters, setShowFilters] = React.useState(false)
 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 20 }, (_, i) => currentYear - i)
@@ -47,109 +58,151 @@ export function VehicleFilters({ onFilterChange, filters }: VehicleFiltersProps)
     onFilterChange(initialFilters)
   }
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== "")
+  const hasActiveFilters = Object.values(filters).some((v) => v !== "" && v !== "all")
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <Card variant="default" padding="md" className="mb-8">
       {/* Search bar */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#424242]/50" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Buscar por marca, modelo..."
             value={filters.search}
             onChange={(e) => handleChange("search", e.target.value)}
-            className="pl-10"
+            className="pl-12 h-12"
           />
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className={showFilters ? "bg-[#E3F2FD] border-[#1A73E8]" : ""}
-        >
-          <SlidersHorizontal className="h-4 w-4 mr-2" />
-          Filtros
-        </Button>
-        {hasActiveFilters && (
-          <Button variant="ghost" onClick={clearFilters} className="text-[#1A73E8]">
-            <X className="h-4 w-4 mr-1" />
-            Limpar
+        <div className="flex gap-2">
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="gap-2"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtros
+            {hasActiveFilters && (
+              <span className="ml-1 px-2 py-0.5 bg-primary/20 rounded-full text-xs font-semibold">
+                {Object.values(filters).filter((v) => v !== "" && v !== "all").length}
+              </span>
+            )}
           </Button>
-        )}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              onClick={clearFilters}
+              className="text-primary hover:text-primary-hover"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Limpar
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Advanced filters */}
-      {showFilters && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4 pt-4 border-t border-[#E0E0E0]">
-          <div>
-            <Label className="text-[#424242] mb-1.5 block">Marca</Label>
-            <Select value={filters.brand} onValueChange={(v) => handleChange("brand", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {brands.map((brand) => (
-                  <SelectItem key={brand} value={brand}>
-                    {brand}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mt-6 pt-6 border-t border-border">
+              <div>
+                <Label className="text-foreground mb-2 block font-medium">
+                  Marca
+                </Label>
+                <Select
+                  value={filters.brand || "all"}
+                  onValueChange={(v) => handleChange("brand", v === "all" ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand} value={brand}>
+                        {brand}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label className="text-[#424242] mb-1.5 block">Preço Mínimo</Label>
-            <Input
-              type="number"
-              placeholder="R$ 0"
-              value={filters.minPrice}
-              onChange={(e) => handleChange("minPrice", e.target.value)}
-            />
-          </div>
+              <div>
+                <Label className="text-foreground mb-2 block font-medium">
+                  Preço Mínimo
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="R$ 0"
+                  value={filters.minPrice}
+                  onChange={(e) => handleChange("minPrice", e.target.value)}
+                />
+              </div>
 
-          <div>
-            <Label className="text-[#424242] mb-1.5 block">Preço Máximo</Label>
-            <Input
-              type="number"
-              placeholder="R$ 999.999"
-              value={filters.maxPrice}
-              onChange={(e) => handleChange("maxPrice", e.target.value)}
-            />
-          </div>
+              <div>
+                <Label className="text-foreground mb-2 block font-medium">
+                  Preço Máximo
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="R$ 999.999"
+                  value={filters.maxPrice}
+                  onChange={(e) => handleChange("maxPrice", e.target.value)}
+                />
+              </div>
 
-          <div>
-            <Label className="text-[#424242] mb-1.5 block">Ano Mínimo</Label>
-            <Select value={filters.minYear} onValueChange={(v) => handleChange("minYear", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <Label className="text-foreground mb-2 block font-medium">
+                  Ano Mínimo
+                </Label>
+                <Select
+                  value={filters.minYear || "all"}
+                  onValueChange={(v) => handleChange("minYear", v === "all" ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label className="text-[#424242] mb-1.5 block">Câmbio</Label>
-            <Select value={filters.transmission} onValueChange={(v) => handleChange("transmission", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="Automático">Automático</SelectItem>
-                <SelectItem value="Manual">Manual</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-    </div>
+              <div>
+                <Label className="text-foreground mb-2 block font-medium">
+                  Câmbio
+                </Label>
+                <Select
+                  value={filters.transmission || "all"}
+                  onValueChange={(v) =>
+                    handleChange("transmission", v === "all" ? "" : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="Automático">Automático</SelectItem>
+                    <SelectItem value="Manual">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
   )
 }

@@ -3,6 +3,8 @@
 
 let logoFile = null;
 let logoUrl = null;
+let aboutImageFile = null;
+let aboutImageUrl = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAuth()) return;
@@ -24,10 +26,22 @@ document.addEventListener('DOMContentLoaded', function() {
             handleLogoUpload(file, this);
         }
     });
+    
+    // About image upload handler
+    setupAboutImageUpload();
 });
 
 function getAuthToken() {
     return localStorage.getItem('token');
+}
+
+// Use window.buildApiUrl from config.js (fallback if not available)
+if (typeof window.buildApiUrl !== 'function') {
+    window.buildApiUrl = function(endpoint) {
+        const apiBase = (window.API_URL || API_URL || 'http://localhost/ESTOX/api/index.php').replace(/\/$/, '');
+        const base = apiBase.endsWith('/index.php') ? apiBase : apiBase + '/index.php';
+        return `${base}/${endpoint.replace(/^\//, '')}`;
+    };
 }
 
 function updateCatalogLink(slug) {
@@ -39,7 +53,7 @@ function updateCatalogLink(slug) {
 
 async function loadStoreSettings() {
     try {
-        const response = await fetch(`${API_URL}/stores`, {
+        const response = await fetch(window.buildApiUrl('stores'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -58,6 +72,27 @@ async function loadStoreSettings() {
             document.getElementById('address').value = store.address || '';
             document.getElementById('city').value = store.city || '';
             document.getElementById('state').value = store.state || '';
+            
+            // Load about image if exists (from API)
+            if (store.about_image && store.about_image.trim() !== '') {
+                aboutImageUrl = store.about_image;
+                localStorage.setItem('store_about_image', aboutImageUrl);
+                console.log('About image loaded from API');
+            }
+            
+            // Always try to load from localStorage after a short delay
+            // This ensures the preview is shown even if API doesn't have the field
+            setTimeout(() => {
+                const savedImage = localStorage.getItem('store_about_image');
+                if (savedImage && savedImage.trim() !== '') {
+                    aboutImageUrl = savedImage;
+                    console.log('About image loaded from localStorage, showing preview');
+                    showAboutImagePreview(savedImage);
+                } else {
+                    console.log('No about image found, showing placeholder');
+                    showAboutImagePreview(null);
+                }
+            }, 500);
             
             // Load logo if exists
             if (store.logo_url && store.logo_url.trim() !== '') {
@@ -103,7 +138,7 @@ async function loadStoreSettings() {
 
 async function loadNotificationSettings() {
     try {
-        const response = await fetch(`${API_URL}/notifications`, {
+        const response = await fetch(window.buildApiUrl('notifications'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -255,18 +290,83 @@ async function saveSettings(e) {
             storeData.logo_url = null;
         }
         
+        // Handle about image - NÃO enviar para API por enquanto
+        // A imagem fica apenas no localStorage para uso na loja.html
+        // Se a API não suportar o campo, não causará erro
+        // Comentado para evitar erros na API:
+        /*
+        if (aboutImageFile) {
+            try {
+                const base64AboutImage = await fileToBase64(aboutImageFile);
+                if (base64AboutImage && base64AboutImage.length < 7000000) {
+                    storeData.about_image = base64AboutImage;
+                }
+            } catch (error) {
+                console.error('Error converting about image to base64:', error);
+            }
+        } else if (aboutImageUrl && aboutImageUrl.trim() !== '') {
+            if (aboutImageUrl.startsWith('data:')) {
+                if (aboutImageUrl.length < 7000000) {
+                    storeData.about_image = aboutImageUrl;
+                }
+            } else if (aboutImageUrl.startsWith('http://') || aboutImageUrl.startsWith('https://')) {
+                storeData.about_image = aboutImageUrl;
+            }
+        }
+        */
+        
+        console.log('Salvando configurações da loja...');
+        console.log('Store data keys:', Object.keys(storeData));
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'assets/js/settings.js:saveSettings:beforeStoreRequest',message:'Enviando requisição PUT /stores',data:{dataKeys:Object.keys(storeData),hasLogoUrl:!!storeData.logo_url,logoUrlLength:storeData.logo_url?storeData.logo_url.length:0},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         // Save store settings
-        const storeResponse = await fetch(`${API_URL}/stores`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAuthToken()}`
-            },
-            body: JSON.stringify(storeData)
-        });
+        let storeResponse;
+        try {
+            storeResponse = await fetch(window.buildApiUrl('stores'), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
+                body: JSON.stringify(storeData)
+            });
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'assets/js/settings.js:saveSettings:afterStoreRequest',message:'Resposta recebida de PUT /stores',data:{status:storeResponse.status,statusText:storeResponse.statusText,ok:storeResponse.ok},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+        } catch (networkError) {
+            // Network error (no internet, CORS, server down, etc.)
+            console.error('Network error:', networkError);
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'assets/js/settings.js:saveSettings:storeNetworkError',message:'Erro de rede na requisição PUT /stores',data:{error:networkError.message},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
+            throw new Error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
+        }
+        
+        console.log('Resposta da loja:', storeResponse.status, storeResponse.statusText);
+        
+        if (!storeResponse.ok) {
+            let errorMessage = `Erro HTTP ${storeResponse.status}: ${storeResponse.statusText}`;
+            try {
+                const errorData = await storeResponse.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (parseError) {
+                // Se não conseguir parsear, usar mensagem padrão
+            }
+            throw new Error(errorMessage);
+        }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'assets/js/settings.js:saveSettings:beforeNotificationRequest',message:'Enviando requisição PUT /notifications',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         
         // Save notification settings
-        const notificationResponse = await fetch(`${API_URL}/notifications`, {
+        const notificationResponse = await fetch(window.buildApiUrl('notifications'), {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -279,17 +379,34 @@ async function saveSettings(e) {
             })
         });
         
-        if (storeResponse.ok && notificationResponse.ok) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/26790cf9-263c-4d19-9e85-a571eedf06cf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'assets/js/settings.js:saveSettings:afterNotificationRequest',message:'Resposta recebida de PUT /notifications',data:{status:notificationResponse.status,statusText:notificationResponse.statusText,ok:notificationResponse.ok},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
+        console.log('Resposta das notificações:', notificationResponse.status, notificationResponse.statusText);
+        
+        if (!notificationResponse.ok) {
+            const errorData = await notificationResponse.json().catch(() => ({ error: 'Erro desconhecido' }));
+            throw new Error(errorData.error || `Erro HTTP ${notificationResponse.status}: ${notificationResponse.statusText}`);
+        }
+        
+        // Both requests succeeded
+        const storeResponseData = await storeResponse.json();
+        const notificationData = await notificationResponse.json();
+        
+        if (storeResponseData.success && notificationData.success) {
             // Update catalog link with new slug
             const slug = document.getElementById('slug').value;
             updateCatalogLink(slug);
             alert('Configurações salvas com sucesso!');
         } else {
-            alert('Erro ao salvar configurações');
+            const errorMsg = storeResponseData.error || notificationData.error || 'Erro ao salvar configurações';
+            alert(errorMsg);
         }
     } catch (error) {
         console.error('Error saving settings:', error);
-        alert('Erro ao salvar configurações');
+        const errorMsg = error.message || 'Erro ao salvar configurações. Verifique sua conexão e tente novamente.';
+        alert(errorMsg);
     }
 }
 
@@ -368,6 +485,193 @@ function fileToBase64(file) {
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
+}
+
+/* ============================================
+   ABOUT IMAGE UPLOAD FUNCTIONALITY
+   ============================================ */
+
+// Setup about image upload handlers
+function setupAboutImageUpload() {
+    // Wait a bit to ensure DOM is fully ready
+    setTimeout(() => {
+        const uploadBtn = document.getElementById('uploadAboutImageBtn');
+        const input = document.getElementById('aboutImageInput');
+        const removeBtn = document.getElementById('removeAboutImageBtn');
+        
+        if (!uploadBtn || !input || !removeBtn) {
+            console.warn('About image upload elements not found, retrying...');
+            // Retry after a longer delay
+            setTimeout(setupAboutImageUpload, 500);
+            return;
+        }
+        
+        console.log('About image upload elements found, setting up...');
+        
+        // Load saved image first
+        loadAboutImage();
+        
+        // Upload button click
+        uploadBtn.addEventListener('click', function() {
+            input.click();
+        });
+        
+        // File input change
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleAboutImageUpload(file, this);
+            }
+        });
+        
+        // Remove button click
+        removeBtn.addEventListener('click', function() {
+            removeAboutImage();
+        });
+    }, 100);
+}
+
+// Load about image from localStorage
+function loadAboutImage() {
+    const savedImage = localStorage.getItem('store_about_image');
+    console.log('Loading about image from localStorage:', savedImage ? 'Found' : 'Not found');
+    
+    if (savedImage && savedImage.trim() !== '') {
+        aboutImageUrl = savedImage;
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            console.log('Showing about image preview');
+            showAboutImagePreview(savedImage);
+        }, 200);
+    } else {
+        console.log('No saved image, showing placeholder');
+        setTimeout(() => {
+            showAboutImagePreview(null);
+        }, 200);
+    }
+}
+
+// Handle about image upload
+async function handleAboutImageUpload(file, inputElement) {
+    hideAboutImageError();
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showAboutImageError('Formato inválido. Use apenas JPEG, PNG ou WebP.');
+        inputElement.value = '';
+        return;
+    }
+    
+    // Validate file size (5MB max)
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE) {
+        showAboutImageError('Arquivo muito grande. Tamanho máximo: 5MB.');
+        inputElement.value = '';
+        return;
+    }
+    
+    // Read file as base64
+    aboutImageFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        aboutImageUrl = e.target.result;
+        showAboutImagePreview(aboutImageUrl);
+        // Save to localStorage
+        localStorage.setItem('store_about_image', aboutImageUrl);
+        hideAboutImageError();
+    };
+    reader.onerror = function() {
+        showAboutImageError('Erro ao ler arquivo de imagem.');
+        inputElement.value = '';
+    };
+    reader.readAsDataURL(file);
+}
+
+// Show about image preview
+function showAboutImagePreview(url) {
+    const preview = document.getElementById('aboutImagePreview');
+    const previewImg = document.getElementById('aboutImagePreviewImg');
+    const placeholder = preview?.querySelector('.placeholder-text');
+    const removeBtn = document.getElementById('removeAboutImageBtn');
+    
+    if (!preview || !previewImg) {
+        console.warn('About image preview elements not found');
+        return;
+    }
+    
+    if (url && url.trim() !== '') {
+        // Set up error handler
+        previewImg.onerror = function() {
+            console.error('Error loading about image preview');
+            previewImg.src = '';
+            previewImg.classList.remove('show');
+            preview.classList.remove('has-image');
+            if (placeholder) {
+                placeholder.classList.remove('hidden');
+            }
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+        };
+        
+        // Set up load handler
+        previewImg.onload = function() {
+            previewImg.classList.add('show');
+            preview.classList.add('has-image');
+            if (placeholder) {
+                placeholder.classList.add('hidden');
+            }
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+            }
+        };
+        
+        // Set the source (this will trigger onload or onerror)
+        previewImg.src = url;
+    } else {
+        previewImg.src = '';
+        previewImg.classList.remove('show');
+        preview.classList.remove('has-image');
+        previewImg.onerror = null;
+        previewImg.onload = null;
+        
+        if (placeholder) {
+            placeholder.classList.remove('hidden');
+        }
+        
+        if (removeBtn) {
+            removeBtn.style.display = 'none';
+        }
+    }
+}
+
+// Remove about image
+function removeAboutImage() {
+    aboutImageFile = null;
+    aboutImageUrl = null;
+    document.getElementById('aboutImageInput').value = '';
+    showAboutImagePreview(null);
+    localStorage.removeItem('store_about_image');
+    hideAboutImageError();
+}
+
+// Show about image error
+function showAboutImageError(message) {
+    const errorDiv = document.getElementById('aboutImageError');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('d-none');
+    }
+}
+
+// Hide about image error
+function hideAboutImageError() {
+    const errorDiv = document.getElementById('aboutImageError');
+    if (errorDiv) {
+        errorDiv.classList.add('d-none');
+        errorDiv.textContent = '';
+    }
 }
 
 

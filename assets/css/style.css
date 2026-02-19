@@ -4,6 +4,12 @@
     --primary-color: #0D47A1;
     --secondary-color: #1A73E8;
     --text-color: #424242;
+    --primary: #2563EB;
+    --secondary: #0F172A;
+    --accent: #10B981;
+    --bg: #F8FAFC;
+    --text-main: #1E293B;
+    --text-secondary: #64748B;
 }
 
 body {
@@ -28,20 +34,9 @@ input[type="submit"],
 input[type="button"],
 input[type="reset"],
 label[for],
-select,
-.form-check-input,
-.form-switch input,
-.card:hover,
-.vehicle-card:hover,
-.vehicle-card-modern:hover,
-.dropdown-toggle,
-.dropdown-item,
-.pagination .page-link,
-.modal-header .btn-close,
-.alert-dismissible .btn-close,
-.badge[href],
-img[onclick],
-.clickable-image {
+select:not(:disabled),
+input[type="checkbox"],
+input[type="radio"] {
     cursor: pointer;
 }
 
@@ -95,12 +90,8 @@ body.loading,
 
 /* Elementos informativos - cursor default (mantém padrão) */
 p,
-span,
-h1, h2, h3, h4, h5, h6,
-.text-muted,
-.alert:not(.alert-dismissible),
-.badge:not([href]),
-small {
+span:not([onclick]),
+h1, h2, h3, h4, h5, h6 {
     cursor: default;
 }
 
@@ -401,7 +392,7 @@ html {
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+
         z-index: -1;
         animation: fadeIn 0.3s ease;
     }
@@ -556,14 +547,58 @@ html {
     
     /* Imagens de veículos nos cards mobile */
     .table-mobile-cards .card-body img.vehicle-thumbnail,
-    .table-mobile-cards .card-body .d-flex img {
+    .table-mobile-cards .card-body .d-flex img,
+    img.vehicle-thumbnail {
         max-width: 100px !important;
         width: 100px !important;
         height: 75px !important;
         object-fit: cover !important;
         border-radius: 8px;
         display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
         flex-shrink: 0;
+    }
+    
+    /* Garantir que imagens na tabela apareçam em mobile */
+    table img.vehicle-thumbnail {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 64px !important;
+        height: 48px !important;
+        object-fit: cover !important;
+    }
+    
+    /* Imagens na página de edição de veículos */
+    img.vehicle-edit-image,
+    #imagesPreview img {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+        height: 100px !important;
+        object-fit: cover !important;
+        max-width: 100% !important;
+    }
+    
+    /* Garantir que imagens data URI apareçam */
+    img[src^="data:image"],
+    img[src^="data:Image"] {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Preview de imagens */
+    #imagesPreview {
+        min-height: 50px;
+    }
+    
+    #imagesPreview .col-6,
+    #imagesPreview .col-md-4,
+    #imagesPreview .col-lg-3 {
+        display: block !important;
     }
     
     .table-mobile-cards .card-body .d-flex {
@@ -861,5 +896,112 @@ html {
     
     img[loading="lazy"].loaded {
         opacity: 1;
+    }
+}
+
+/* ============================================
+   ABOUT IMAGE UPLOAD SECTION
+   ============================================ */
+.about-image-upload {
+    margin-top: 0;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.image-preview {
+    width: 100%;
+    max-width: 400px;
+    height: 250px;
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.image-preview.has-image {
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none !important;
+}
+
+.image-preview img.show {
+    display: block !important;
+}
+
+.placeholder-text {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.placeholder-text.hidden {
+    display: none;
+}
+
+.upload-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.upload-actions .btn {
+    min-width: 150px;
+}
+
+/* Dark Mode */
+body.dark-mode .image-preview {
+    background: #1E293B;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .image-preview.has-image {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+body.dark-mode .placeholder-text {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .upload-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .image-preview {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .upload-actions {
+        width: 100%;
+    }
+
+    .upload-actions .btn {
+        flex: 1;
+        min-width: auto;
     }
 }

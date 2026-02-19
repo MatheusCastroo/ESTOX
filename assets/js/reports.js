@@ -16,7 +16,7 @@ function getAuthToken() {
 
 async function loadDashboardStats() {
     try {
-        const response = await fetch(`${API_URL}/dashboard?action=stats`, {
+        const response = await fetch(window.buildApiUrl('dashboard?action=stats'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -44,7 +44,7 @@ async function loadDashboardStats() {
 
 async function loadTopVehicles() {
     try {
-        const response = await fetch(`${API_URL}/dashboard?action=top-vehicles&limit=5`, {
+        const response = await fetch(window.buildApiUrl('dashboard?action=top-vehicles&limit=5'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -89,7 +89,7 @@ async function loadTopVehicles() {
 
 async function loadMonthlyStats() {
     try {
-        const response = await fetch(`${API_URL}/dashboard?action=monthly-stats&months=3`, {
+        const response = await fetch(window.buildApiUrl('dashboard?action=monthly-stats&months=3'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }

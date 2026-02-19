@@ -208,6 +208,22 @@ if ($isPublic && $storeSlug) {
     
     switch ($method) {
         case 'GET':
+        // #region agent log
+        $logData = [
+            'location' => 'api/endpoints/vehicles.php:227',
+            'message' => 'Handler GET autenticado iniciado',
+            'data' => [
+                'method' => $method,
+                'queryString' => $_SERVER['QUERY_STRING'] ?? '',
+                'getParams' => $_GET,
+                'hasAuth' => isset($_SERVER['HTTP_AUTHORIZATION'])
+            ],
+            'timestamp' => time() * 1000,
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ];
+        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion
             if ($vehicleId) {
                 // Get single vehicle
                 $vehicle = $db->fetchOne(

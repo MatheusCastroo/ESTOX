@@ -4,7 +4,7 @@
 (async function() {
     'use strict';
 
-    const API_URL = window.API_URL || 'http://localhost/ESTOCX/api/index.php';
+    const API_URL = window.API_URL || 'http://localhost/ESTOX/api/index.php';
 
     /**
      * Format price to Brazilian Real format
@@ -62,7 +62,7 @@
         console.log('📄 Página planos.html?', isPlanos);
         
         try {
-            const response = await fetch(`${API_URL}/plans`);
+            const response = await fetch(window.buildApiUrl('plans'));
             console.log('📡 Resposta da API:', response.status);
             
             if (!response.ok) {

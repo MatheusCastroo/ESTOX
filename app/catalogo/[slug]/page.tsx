@@ -1,72 +1,102 @@
 "use client"
 
-import { use, useState, useMemo } from "react"
+import { use, useState, useEffect } from "react"
 import { CatalogHeader } from "@/components/catalog/catalog-header"
 import { VehicleFilters, type FilterState, initialFilters } from "@/components/catalog/vehicle-filters"
 import { VehicleGrid } from "@/components/catalog/vehicle-grid"
-import { mockStore, mockVehicles } from "@/lib/mock-data"
 import { Footer } from "@/components/landing/footer"
+import { getPublicStore, getPublicVehicles, ApiError } from "@/lib/api/client"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function CatalogPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [filters, setFilters] = useState<FilterState>(initialFilters)
+  const [store, setStore] = useState<any>(null)
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Filter vehicles based on current filters
-  const filteredVehicles = useMemo(() => {
-    return mockVehicles.filter((vehicle) => {
-      // Search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
-        const matchesSearch =
-          vehicle.brand.toLowerCase().includes(searchLower) || vehicle.model.toLowerCase().includes(searchLower)
-        if (!matchesSearch) return false
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const [storeData, vehiclesData] = await Promise.all([
+          getPublicStore(slug),
+          getPublicVehicles(slug, {
+            status: 'available',
+            ...(filters.brand && filters.brand !== 'all' && { brand: filters.brand }),
+            ...(filters.minPrice && { minPrice: Number.parseInt(filters.minPrice) }),
+            ...(filters.maxPrice && { maxPrice: Number.parseInt(filters.maxPrice) }),
+            ...(filters.minYear && filters.minYear !== 'all' && { minYear: Number.parseInt(filters.minYear) }),
+            ...(filters.transmission && filters.transmission !== 'all' && { transmission: filters.transmission }),
+            ...(filters.search && { search: filters.search }),
+          })
+        ])
+        
+        setStore(storeData)
+        setVehicles(vehiclesData.vehicles || [])
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(err.message)
+        } else {
+          setError('Erro ao carregar dados. Tente novamente.')
+        }
+      } finally {
+        setLoading(false)
       }
+    }
 
-      // Brand filter
-      if (filters.brand && filters.brand !== "all" && vehicle.brand !== filters.brand) {
-        return false
-      }
-
-      // Price filters
-      if (filters.minPrice && vehicle.price < Number.parseInt(filters.minPrice)) {
-        return false
-      }
-      if (filters.maxPrice && vehicle.price > Number.parseInt(filters.maxPrice)) {
-        return false
-      }
-
-      // Year filter
-      if (filters.minYear && filters.minYear !== "all" && vehicle.year < Number.parseInt(filters.minYear)) {
-        return false
-      }
-
-      // Transmission filter
-      if (filters.transmission && filters.transmission !== "all" && vehicle.transmission !== filters.transmission) {
-        return false
-      }
-
-      return true
-    })
-  }, [filters])
+    loadData()
+  }, [slug, filters])
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
-      <CatalogHeader store={mockStore} />
-
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#424242]">Veículos Disponíveis</h2>
-          <p className="text-[#424242]/70 mt-1">
-            {filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? "s" : ""} encontrado
-            {filteredVehicles.length !== 1 ? "s" : ""}
-          </p>
+    <div className="min-h-screen bg-background">
+      {loading ? (
+        <>
+          <div className="border-b border-border bg-card">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+              <Skeleton className="h-12 w-64 mb-4" />
+              <Skeleton className="h-6 w-96" />
+            </div>
+          </div>
+          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <Skeleton className="h-8 w-48 mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-96" />
+              ))}
+            </div>
+          </main>
+        </>
+      ) : error ? (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         </div>
+      ) : store ? (
+        <>
+          <CatalogHeader store={store} />
+          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Veículos Disponíveis</h2>
+              <p className="text-muted-foreground mt-1">
+                {vehicles.length} veículo{vehicles.length !== 1 ? "s" : ""} encontrado
+                {vehicles.length !== 1 ? "s" : ""}
+              </p>
+            </div>
 
-        <VehicleFilters filters={filters} onFilterChange={setFilters} />
-        <VehicleGrid vehicles={filteredVehicles} storeSlug={slug} />
-      </main>
-
-      <Footer />
+            <VehicleFilters filters={filters} onFilterChange={setFilters} />
+            <VehicleGrid vehicles={vehicles} storeSlug={slug} />
+          </main>
+          <Footer />
+        </>
+      ) : null}
     </div>
   )
 }

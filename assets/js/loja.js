@@ -2,6 +2,15 @@
 // Landing Page Pública da Revenda (Catálogo Completo de Veículos)
 // API_URL is defined in config.js
 
+// Ensure buildApiUrl is available (fallback if config.js didn't load)
+if (typeof window.buildApiUrl !== 'function') {
+    window.buildApiUrl = function(endpoint) {
+        const apiBase = (window.API_URL || 'http://localhost/ESTOX/api/index.php').replace(/\/$/, '');
+        const base = apiBase.endsWith('/index.php') ? apiBase : apiBase + '/index.php';
+        return `${base}/${endpoint.replace(/^\//, '')}`;
+    };
+}
+
 // Get store slug from URL parameter
 const urlParams = new URLSearchParams(window.location.search);
 const storeSlug = urlParams.get('store_slug') || urlParams.get('slug') || null;
@@ -14,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
         showError('Parâmetro store_slug é obrigatório na URL. Exemplo: loja.html?store_slug=nome-da-loja');
         return;
     }
+    
+    // Load about image from localStorage immediately
+    loadAboutImage();
     
     loadStoreInfo();
     loadAllVehicles();
@@ -71,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadStoreInfo() {
     try {
         // Try public endpoint first
-        const response = await fetch(`${API_URL}/stores?public=true&slug=${storeSlug}`);
+        const response = await fetch(window.buildApiUrl(`stores?public=true&slug=${storeSlug}`));
         const data = await response.json();
         
         if (data.success && data.data && data.data.store) {
@@ -79,7 +91,7 @@ async function loadStoreInfo() {
             displayStoreInfo(storeData);
         } else {
             // Try alternative endpoint (from vehicles)
-            const altResponse = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
+            const altResponse = await fetch(window.buildApiUrl(`vehicles?public=true&store_slug=${storeSlug}`));
             const altData = await altResponse.json();
             
             if (altData.success && altData.data && altData.data.store) {
@@ -93,7 +105,7 @@ async function loadStoreInfo() {
         console.error('Error loading store info:', error);
         // Try alternative endpoint (from vehicles)
         try {
-            const altResponse = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}`);
+            const altResponse = await fetch(window.buildApiUrl(`vehicles?public=true&store_slug=${storeSlug}`));
             const altData = await altResponse.json();
             
             if (altData.success && altData.data && altData.data.store) {
@@ -400,7 +412,7 @@ function getWhatsAppUrl(phone, message = '') {
 async function loadAllVehicles() {
     try {
         // REQ-FR-021: API now filters by available by default, but we'll also filter on frontend
-        const response = await fetch(`${API_URL}/vehicles?public=true&store_slug=${storeSlug}&status=available`);
+        const response = await fetch(window.buildApiUrl(`vehicles?public=true&store_slug=${storeSlug}&status=available`));
         const data = await response.json();
         
         if (data.success && data.data && data.data.vehicles) {
@@ -414,6 +426,9 @@ async function loadAllVehicles() {
             
             // Display all vehicles - REQ-FR-LP-001
             displayAllVehicles(allVehicles);
+            
+            // Load about image
+            loadAboutImage();
             updateBrandFilter(allVehicles);
             
             // Atualizar contador inicial - REQ-FR-LP-001 4.4
@@ -463,14 +478,10 @@ function createVehicleCard(vehicle, isFeatured = false) {
                     ${hasImage ? `<img src="${mainImage}" 
                          alt="${vehicle.brand} ${vehicle.model}"
                          loading="lazy"
-<<<<<<< HEAD
                          crossorigin="anonymous"
                          style="width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.3s;"
                          onerror="console.error('Erro ao carregar imagem:', this.src); this.style.display='none'; this.parentElement.classList.add('no-image'); this.onerror=null;"
                          onload="this.style.opacity='1'; this.parentElement.classList.remove('no-image');">` : ''}
-=======
-                         onerror="this.style.display='none'; this.parentElement.classList.add('no-image');">` : ''}
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
                     ${isFeatured ? '<span class="vehicle-card-badge">Novidade</span>' : ''}
                     <button class="vehicle-card-favorite" onclick="event.stopPropagation(); toggleFavorite('${vehicle.id}')" title="Adicionar aos favoritos">
                         <i class="bi bi-heart"></i>
@@ -551,7 +562,6 @@ function getVehicleImage(vehicle) {
         images = vehicle.images;
     }
     
-<<<<<<< HEAD
     if (images.length === 0) {
         return null;
     }
@@ -559,9 +569,6 @@ function getVehicleImage(vehicle) {
     // Normalizar a primeira imagem
     const firstImage = images[0];
     return normalizeImageUrl(firstImage);
-=======
-    return images.length > 0 ? images[0] : null; // Retorna null para usar placeholder elegante
->>>>>>> c419d7409fc2ed89b8b5260eeec8e765073caf44
 }
 
 // Filter vehicles - REQ-FR-LP-001: Filtros completos e ordenação
@@ -835,4 +842,21 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+// Load about image from localStorage or API
+function loadAboutImage() {
+    const aboutImageElement = document.querySelector('.about-image img');
+    if (!aboutImageElement) return;
+    
+    // First try to get from localStorage
+    const savedImage = localStorage.getItem('store_about_image');
+    if (savedImage && savedImage.trim() !== '') {
+        aboutImageElement.src = savedImage;
+        return;
+    }
+    
+    // If not in localStorage, try to get from API (if store has about_image field)
+    // This would be loaded from storeData if available
+    // For now, keep the placeholder or default image
 }

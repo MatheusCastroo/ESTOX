@@ -60,6 +60,7 @@
         window.addEventListener('resize', adjustNavbarPosition);
 
         // Em mobile, controlar o menu do navbar
+        const navbar = document.querySelector('.navbar');
         if (navbar) {
             const navbarToggler = navbar.querySelector('.navbar-toggler');
             const navbarCollapse = navbar.querySelector('.navbar-collapse');
@@ -567,6 +568,11 @@
     // ============================================
     
     function initFiltersModal() {
+        // Se já existe o offcanvas do Bootstrap (#mobileMenuOffcanvas), não criar modal duplicado
+        if (document.getElementById('mobileMenuOffcanvas')) {
+            return; // Usar o offcanvas do Bootstrap em vez do modal customizado
+        }
+        
         const filtersSidebar = document.querySelector('.filters-sidebar');
         if (!filtersSidebar) return;
 

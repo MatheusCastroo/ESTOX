@@ -1,5 +1,13 @@
 // New Vehicle JavaScript
-// API_URL is defined in config.js
+// API_URL and buildApiUrl are defined in config.js
+// Ensure buildApiUrl is available (fallback if config.js didn't load)
+if (typeof window.buildApiUrl !== 'function') {
+    window.buildApiUrl = function(endpoint) {
+        const apiBase = (window.API_URL || 'http://localhost/ESTOX/api/index.php').replace(/\/$/, '');
+        const base = apiBase.endsWith('/index.php') ? apiBase : apiBase + '/index.php';
+        return `${base}/${endpoint.replace(/^\//, '')}`;
+    };
+}
 
 let features = [];
 let images = [];
@@ -32,7 +40,7 @@ function getAuthToken() {
 // Verificar limite de veículos antes de permitir cadastro
 async function checkVehicleLimit() {
     try {
-        const response = await fetch(`${API_URL}/dashboard?action=stats`, {
+        const response = await fetch(window.buildApiUrl('dashboard?action=stats'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -235,7 +243,8 @@ async function saveVehicle(e) {
         
         console.log('Enviando dados do veículo:', vehicleData);
         
-        const response = await fetch(`${API_URL}/vehicles`, {
+        const url = window.buildApiUrl('vehicles');
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -295,11 +304,11 @@ async function saveVehicle(e) {
         let errorMessage = 'Erro ao criar veículo. Tente novamente.';
         
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage = 'Erro de conexão. Verifique se a API está acessível em: ' + API_URL;
+            errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
         } else if (error.message.includes('JSON')) {
-            errorMessage = 'Erro ao processar resposta do servidor.';
+            errorMessage = 'Erro ao processar resposta do servidor. Tente novamente.';
         } else {
-            errorMessage = 'Erro: ' + error.message;
+            errorMessage = 'Erro ao salvar veículo. Tente novamente.';
         }
         
         Toast.error(errorMessage);
@@ -313,7 +322,7 @@ async function saveVehicle(e) {
 // Verificar limite de veículos antes de submeter o formulário
 async function checkVehicleLimitBeforeSubmit() {
     try {
-        const response = await fetch(`${API_URL}/dashboard?action=stats`, {
+        const response = await fetch(window.buildApiUrl('dashboard?action=stats'), {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }

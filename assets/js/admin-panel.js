@@ -4,7 +4,7 @@
 // API_URL is defined in config.js (loaded before this file)
 // Usar window.API_URL para evitar erro de redeclaração
 function getApiUrl() {
-    return window.API_URL || 'http://localhost/ESTOCX/api/index.php';
+    return window.API_URL || 'http://localhost/ESTOX/api/index.php';
 }
 
 // Global state
